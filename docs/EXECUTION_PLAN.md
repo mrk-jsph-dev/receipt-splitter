@@ -42,7 +42,7 @@ Each module lists the prompt to paste, what it touches, and how you know it is d
 ### Module 0: Scaffold (done in the cloud, PR #1)
 
 Repo layout, `CLAUDE.md`, spec, design files, empty .NET 10 solution with a `/healthz`
-endpoint, empty React app, `ci-cd.yml` with the `test` job.
+endpoint, empty React app (replaced by Vue in module 4), `ci-cd.yml` with the `test` job.
 
 **First thing to do locally:** `dotnet build && dotnet test && (cd web && npm ci && npm test)`.
 The scaffold was written in a cloud session without the .NET SDK, so this is the first real
@@ -144,7 +144,7 @@ compile. If anything fails, fix it as the first commit of module 1.
 
 **Prompt**
 
-> Implement module 4 from docs/EXECUTION_PLAN.md: the React + TypeScript + Vite app in web/.
+> Implement module 4 from docs/EXECUTION_PLAN.md: the Vue 3 + TypeScript + Vite app in web/.
 > Port the design tokens (graphite and deep teal, light and dark) and components from
 > docs/design/walkthrough.html into CSS variables and small components. Build Welcome,
 > Your name, and Home (steps 1 to 3 of the walkthrough), the API client, 10-second polling

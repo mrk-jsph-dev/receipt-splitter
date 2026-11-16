@@ -752,7 +752,7 @@ interface Adjustment {
 <section id="infra">
   <span class="eyebrow">8 · Platform</span>
   <h2>Architecture, deployment, cost and privacy</h2>
-<pre>Browser (React + TypeScript + Vite)  — display only, no money maths
+<pre>Browser (Vue + TypeScript + Vite)    — display only, no money maths
   │  static files
   ├─▶ Azure Static Web Apps — Free plan
   │  https://api.[DOMAIN]/…  (CORS: the SWA origin only)
@@ -771,7 +771,7 @@ interface Adjustment {
     <div class="box"><h3>Cold starts</h3>
       <p>After about 5 idle minutes the API scales to zero. The first request after that waits a few seconds while the container starts; the page shows "Waking up…". While anyone has a bill open, 10-second polling keeps it warm.</p></div>
     <div class="box"><h3>Project layout</h3>
-      <p><code>src/ReceiptSplitter.Core</code> (money maths, models, no I/O), <code>src/ReceiptSplitter.Api</code> (.NET 10 minimal API, <code>Program.cs</code> + endpoint groups), <code>tests/ReceiptSplitter.Core.Tests</code> and <code>tests/ReceiptSplitter.Api.Tests</code> (xUnit: maths, isolation, security), <code>web/</code> (React), <code>infra/</code> (Bicep), <code>samples/</code>, <code>.github/workflows/ci-cd.yml</code>.</p></div>
+      <p><code>src/ReceiptSplitter.Core</code> (money maths, models, no I/O), <code>src/ReceiptSplitter.Api</code> (.NET 10 minimal API, <code>Program.cs</code> + endpoint groups), <code>tests/ReceiptSplitter.Core.Tests</code> and <code>tests/ReceiptSplitter.Api.Tests</code> (xUnit: maths, isolation, security), <code>web/</code> (Vue), <code>infra/</code> (Bicep), <code>samples/</code>, <code>.github/workflows/ci-cd.yml</code>.</p></div>
     <div class="box"><h3>Why Blob for bills</h3>
       <p>Bills grow with items and people, and a Table property caps at 64 KB. A blob per bill has the same ETag concurrency, no size worry, and a lifecycle rule ("delete 30 days after last modified") does retention with no timer code.</p></div>
   </div>

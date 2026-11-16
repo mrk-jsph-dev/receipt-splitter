@@ -31,7 +31,9 @@ Read before changing anything substantial:
   `Receipts/`, `Bills/`, `Settlement/`. API: one folder per endpoint under `Features/`
   (request, handler, endpoint mapping together); cross-cutting code (storage, auth, rate
   limits) under `Infrastructure/`. Test projects mirror the same folders.
-- Web: React + TypeScript + Vite in `web/`, on Azure Static Web Apps Free.
+- Web: Vue 3 + TypeScript + Vite in `web/` (`<script setup>` single-file components, Vue
+  Router), on Azure Static Web Apps Free. Code is by feature here too (`welcome/`, `home/`,
+  `bill/`), with `design/` for tokens and components and `shared/` for the API client and storage.
 - Storage: Blob Storage, one JSON blob per bill, ETag concurrency, lifecycle deletes.
 - Scanning: Azure AI Document Intelligence F0, prebuilt receipt model.
 - Infra: Bicep in `infra/`. Deploy: one manual workflow, `.github/workflows/ci-cd.yml`.
