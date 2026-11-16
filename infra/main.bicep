@@ -10,8 +10,15 @@ param webLocation string = 'eastasia'
 @description('Prefix for resource names.')
 param namePrefix string = 'receipt-splitter'
 
-@description('API container image. Empty skips the Container App, for the first infra run before any image exists.')
+@description('API container image. Empty runs a public placeholder until the first release.')
 param apiImage string = ''
+
+@description('GitHub user that owns the ghcr.io registry token.')
+param registryUsername string = ''
+
+@secure()
+@description('read:packages token for the private ghcr.io image. infra/deploy.sh reads it back from the app.')
+param registryToken string = ''
 
 @description('Monthly budget in the billing currency.')
 param budgetAmount int = 1
@@ -49,23 +56,25 @@ module web 'modules/staticwebapp.bicep' = {
   }
 }
 
-module api 'modules/containerapp.bicep' = if (!empty(apiImage)) {
+module api 'modules/containerapp.bicep' = {
   name: 'containerapp'
   params: {
     location: location
     environmentName: '${namePrefix}-env'
     appName: '${namePrefix}-api'
     image: apiImage
+    registryUsername: registryUsername
+    registryToken: registryToken
     blobEndpoint: storage.outputs.blobEndpoint
     docIntelEndpoint: docIntel.outputs.endpoint
     webOrigin: web.outputs.origin
   }
 }
 
-module roles 'modules/roles.bicep' = if (!empty(apiImage)) {
+module roles 'modules/roles.bicep' = {
   name: 'roles'
   params: {
-    principalId: api!.outputs.principalId
+    principalId: api.outputs.principalId
     storageName: storage.outputs.name
     docIntelName: docIntel.outputs.name
   }
@@ -82,4 +91,4 @@ module budget 'modules/budget.bicep' = {
 }
 
 output webUrl string = web.outputs.origin
-output apiUrl string = empty(apiImage) ? '' : 'https://${api!.outputs.fqdn}'
+output apiUrl string = 'https://${api.outputs.fqdn}'

@@ -88,17 +88,12 @@ jobs:
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
-      # Passes the image that is running now back in, so an infra run never rolls back the API.
-      # Before the first API release there is no image, and main.bicep skips the Container App.
+      # Keeps the running image and the ghcr.io registry credential (see infra/deploy.sh).
       - name: Deploy Bicep
         env:
           RG: ${{ vars.AZURE_RESOURCE_GROUP }}
           BUDGET_ALERT_EMAIL: ${{ vars.BUDGET_ALERT_EMAIL }}
-        run: |
-          API_IMAGE=$(az resource show -g "$RG" -n "$API_APP" --resource-type Microsoft.App/containerApps \
-            --query 'properties.template.containers[0].image' -o tsv 2>/dev/null || true)
-          export API_IMAGE
-          az deployment group create -g "$RG" -n main -p infra/main.bicepparam --query properties.outputs
+        run: infra/deploy.sh
 
   api:
     needs: [test, infra]
@@ -133,15 +128,6 @@ jobs:
           docker build -f src/ReceiptSplitter.Api/Dockerfile -t "$IMAGE" .
           docker push "$IMAGE"
 
-      # Container Apps pulls without a login, so the package has to be public.
-      - name: Check the image is public
-        run: |
-          docker logout ghcr.io
-          if ! docker manifest inspect "$IMAGE" > /dev/null; then
-            echo "::error::Make the package public, then run target=api again: https://github.com/${GITHUB_REPOSITORY}/pkgs/container/receipt-splitter-api/settings"
-            exit 1
-          fi
-
       - uses: azure/login@v2
         with:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
@@ -149,12 +135,13 @@ jobs:
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
       # The same Bicep as infra with the new image, so port, probes, settings and roles stay in one
-      # place. The new revision takes traffic only once its /healthz probe passes.
+      # place. The image is private: the app pulls it with the registry credential that deploy.sh
+      # carries over. The new revision takes traffic only once its /healthz probe passes.
       - name: Release
         env:
           RG: ${{ vars.AZURE_RESOURCE_GROUP }}
           BUDGET_ALERT_EMAIL: ${{ vars.BUDGET_ALERT_EMAIL }}
-        run: API_IMAGE="$IMAGE" az deployment group create -g "$RG" -n main -p infra/main.bicepparam --query properties.outputs
+        run: infra/deploy.sh "$IMAGE"
 
       - name: Wait for /healthz
         env:
