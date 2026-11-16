@@ -1,0 +1,27 @@
+{
+  "title": "Ramen dinner",
+  "currency": { "code": "PHP", "digits": 2 },
+  "headcountHint": 12,
+  "people": ["Ana", "Ben", "Carla", "Dan", "Eli", "Fay", "Gio", "Hana", "Ivan", "Jo", "Kai", "Lia"],
+  "receipt": {
+    "label": "Dinner",
+    "merchant": "Ramen Nagi",
+    "receiptDate": "2026-09-25",
+    "confirmedTotal": 525580,
+    "lines": [
+      { "name": "Butao King", "quantity": 8, "unitPrice": 48500 },
+      { "name": "Classic Gyoza", "quantity": 1, "unitPrice": 19000 },
+      { "name": "Coke Zero", "quantity": 1, "unitPrice": 11500 },
+      { "name": "Kaedama (thick)", "quantity": 1, "unitPrice": 9500 },
+      { "name": "Kaedama (thin)", "quantity": 3, "unitPrice": 9500 },
+      { "name": "Gyu King", "quantity": 2, "unitPrice": 79500 },
+      { "name": "Kakuni Belly", "quantity": 1, "unitPrice": 19500 },
+      { "name": "Red King", "quantity": 2, "unitPrice": 59500 },
+      { "name": "Tamago", "quantity": 1, "unitPrice": 8500 }
+    ],
+    "adjustments": [
+      { "kind": "service", "label": "SERVICE CHARGE", "amount": 68080, "split": "equal" },
+      { "kind": "discount", "label": "40% BDO OFF", "amount": -305000, "rate": 4000, "split": "proportional" }
+    ]
+  }
+}
