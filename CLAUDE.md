@@ -8,6 +8,8 @@ Read before changing anything substantial:
 - `docs/SPEC.md`: the source of truth (data model, maths rules, API, security, deployment).
 - `docs/EXECUTION_PLAN.md`: build order, one module at a time, with done criteria.
 - `docs/design/walkthrough.html`: every screen in order. Match it.
+- `docs/design/responsive.html`: phone, tablet and desktop layouts. Every screen must work
+  from 360 px to 1600 px (SPEC.md, "Responsive layout"). Never cap the app at phone width.
 
 ## How to work
 

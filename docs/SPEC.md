@@ -66,9 +66,75 @@ MVP ships first. Next follows once the MVP is live. Later is out of scope until 
 
 [Open the clickable end-to-end walkthrough](https://claude.ai/artifact/4SR3rM6twuBoUXJUywnKTZ) for all 28 screens in order, including an ending with a second receipt, from scan to settled.
 
-Mobile first, because people claim at the table. Cool graphite and deep teal, soft glass cards, big rounded pills, a gradient band at the top of each screen and one black card for the key action. Teal means yours, amber means still unclaimed, red means check this, green means paid. Receipt lines keep a mono face like the printed slip. Numbers use the bundled sample receipt and made-up names (Ana, Ben, Carla, Dan), and are worked out with the rules in section 6.
+Mobile first, because people claim at the table, and responsive at every size (see "Responsive layout" below). Cool graphite and deep teal, soft glass cards, big rounded pills, a gradient band at the top of each screen and one black card for the key action. Teal means yours, amber means still unclaimed, red means check this, green means paid. Receipt lines keep a mono face like the printed slip. Numbers use the bundled sample receipt and made-up names (Ana, Ben, Carla, Dan), and are worked out with the rules in section 6.
 
-See `docs/design/walkthrough.html` for every screen, and `docs/design/spec.html` for the rendered mockups.
+See `docs/design/walkthrough.html` for every screen, `docs/design/responsive.html` for tablet and desktop layouts, and `docs/design/spec.html` for the rendered mockups.
+
+## Responsive layout
+
+The app is one responsive site, not a phone layout framed on a big screen. It fits phones,
+tablets, laptops and large monitors with the same routes, components and data. See
+`docs/design/responsive.html` for Home, Bill (claim), Review receipt and Settle up at
+390 px, 834 px and 1280 px.
+
+Look and feel follow the clean card style: white cards on a light graphite-grey ground, solid
+deep teal buttons, one dark balance card, a paid-percentage ring on each bill, a receipt card
+with a torn edge, and Recent · Unfinished · Settled tabs. Colors stay graphite and deep teal,
+light and dark, from `web/src/design/tokens.css`.
+
+### Breakpoints
+
+Mobile-first: base CSS is the phone layout, and each size adds rules with `min-width`.
+
+| Size | Width | Typical device | Navigation | Sheets and dialogs |
+|---|---|---|---|---|
+| Compact | < 640 px | Phones, portrait | Bottom tab bar: Home, Bills, New split (centre), Settle, Me | Bottom sheets |
+| Medium | 640 to 1023 px | Tablets, phones in landscape, narrow windows | 84 px icon rail on the left | Centred dialog, max 480 px |
+| Expanded | ≥ 1024 px | Laptops, desktops | 248 px sidebar: labels, New split button, recent bills on this device, your name | Side drawer for breakdowns, dialog for edits |
+| Wide | ≥ 1240 px | Large monitors | Same as expanded | Same |
+
+Content stops growing at 1280 px and centres. Nothing on any screen has a fixed 480 px width.
+
+### Screens per size
+
+| Screen | Compact | Medium | Expanded |
+|---|---|---|---|
+| Welcome, Your name | One column, centred card | Centred card, max 480 px | Two columns: intro left, card right. No app shell (no nav before a name exists). |
+| Home | One column: balance card, New split tiles, bills tabs, bill cards | Two columns: balance and New split side by side; bill cards two across | Three columns: balance + New split + bills (three across) on the left, activity rail on the right |
+| Bill (claim) | Tabs: Items · People · Summary. "Your share" bar pinned above the tab bar | Items and people on the left, summary pinned on the right | Three columns: unclaimed items · people grid · sticky summary with receipt. Drag items onto people |
+| Review receipt | Receipt card, then line editor below | Receipt card left, editor right | Receipt card left, editor centre, total check and fees right |
+| Settle up | One column: transfers, then paid list | Two columns: transfers and paid list | Transfers and paid list, plus "who owes whom" summary card |
+
+### Input and accessibility rules
+
+- Every tap target is at least 44 × 44 px at every size.
+- Drag and drop only under `(pointer: fine)` and the expanded size. Tap to assign always works.
+- Hover styles only under `(hover: hover)`.
+- Every action works with Tab, Enter and Escape. The focus ring is always visible.
+- Text runs at most about 70 characters wide. Amounts never wrap. Long names and shop names
+  truncate with an ellipsis and show in full on hover or in the detail view.
+- Numbers use tabular figures so columns line up.
+- Fixed bars add `env(safe-area-inset-*)` so notches and home bars never cover them.
+- `prefers-reduced-motion` turns off sheet and drawer slide animations.
+
+### How it is built
+
+- One `AppShell.vue` owns the bottom tab bar, icon rail and sidebar, switched by CSS only.
+  Screens render inside it and lay out their own content with CSS grid.
+- Breakpoints live once in `web/src/design/breakpoints.css` as comments plus the three
+  `@media` values; a small `useBreakpoint()` composable exists only for behaviour that CSS
+  can't do (for example, sheet vs drawer, drag and drop on or off).
+- One `Overlay.vue` renders as a bottom sheet, a centred dialog or a side drawer by size.
+- `HeroBand` stays only on Welcome and Your name at compact size. Inside the shell, screens
+  use a plain top bar.
+- No separate mobile and desktop pages, no CSS framework, no UI library.
+
+### Checks
+
+Playwright screenshots at 360, 390, 768, 1024, 1280 and 1600 px, light and dark, for each
+built screen. At every width: no horizontal page scroll, no clipped text, nav visible, and
+the primary action on screen without scrolling. Rotate a phone to landscape: medium layout.
+Browser zoom at 200 %: still usable.
 
 ## User flows
 
