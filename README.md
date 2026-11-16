@@ -31,7 +31,7 @@ No accounts. Friends join by link. Bills delete themselves 30 days after the las
 
 ## Stack
 
-React + TypeScript + Vite on Azure Static Web Apps (Free) · .NET 10 minimal API on Azure
+Vue + TypeScript + Vite on Azure Static Web Apps (Free) · .NET 10 minimal API on Azure
 Container Apps (Consumption, scales to zero) · Blob Storage · Azure AI Document Intelligence (F0).
 Managed identity everywhere, no stored keys. Infrastructure in Bicep.
 

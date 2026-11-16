@@ -9,7 +9,7 @@ main.bicepparam          names, regions and budget (image and alert email come f
 modules/storage.bicep    Blob Storage for bills and rate-limit counters
 modules/docintel.bicep   Document Intelligence F0 for receipt scanning
 modules/containerapp.bicep  Container Apps environment and the API app
-modules/staticwebapp.bicep  Static Web App (Free) for the React app
+modules/staticwebapp.bicep  Static Web App (Free) for the Vue app
 modules/roles.bicep      the API identity's two data roles
 modules/budget.bicep     monthly cost budget with email alerts
 setup-oidc.sh            one-time GitHub to Azure sign-in setup
@@ -119,7 +119,7 @@ changing the start date once the budget exists.
 ```bash
 gh workflow run ci-cd.yml -f target=infra   # first time: everything except the API
 gh workflow run ci-cd.yml -f target=api     # build, push, release the API, wait for /healthz
-gh workflow run ci-cd.yml -f target=web     # build and upload the React app
+gh workflow run ci-cd.yml -f target=web     # build and upload the Vue app
 gh workflow run ci-cd.yml -f target=all     # infra, then api, then web
 ```
 
