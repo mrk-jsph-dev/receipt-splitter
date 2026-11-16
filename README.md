@@ -26,6 +26,7 @@ No accounts. Friends join by link. Bills delete themselves 30 days after the las
 | [`docs/SPEC.md`](docs/SPEC.md) | Data model, maths rules, API, security, deployment |
 | [`docs/EXECUTION_PLAN.md`](docs/EXECUTION_PLAN.md) | Build order with Claude Code CLI prompts and done criteria |
 | [`docs/design/walkthrough.html`](docs/design/walkthrough.html) | Every screen in order (open in a browser) |
+| [`docs/design/responsive.html`](docs/design/responsive.html) | Phone, tablet and desktop layouts and breakpoints |
 | [`docs/design/spec.html`](docs/design/spec.html) | Rendered spec with mockups |
 | [`CLAUDE.md`](CLAUDE.md) | Rules for Claude when working in this repo |
 
