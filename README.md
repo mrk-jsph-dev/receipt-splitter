@@ -50,6 +50,14 @@ npm test
 npm run dev                                       # http://localhost:5173
 ```
 
+### Screenshots at every size
+
+`npm run screens` (in `web/`) screenshots each screen at 360, 390, 768, 1024, 1280 and 1600 px,
+light and dark, into `web/screens/` (git-ignored), and fails if a page scrolls sideways. It needs
+no API: requests are answered from `web/scripts/fixtures/`, which `node scripts/make-fixtures.mjs`
+rebuilds from a locally running API. First time only: `npx playwright install chromium`.
+Local only; it is not part of CI.
+
 ## CI/CD
 
 One workflow, started by hand only: `.github/workflows/ci-cd.yml`.

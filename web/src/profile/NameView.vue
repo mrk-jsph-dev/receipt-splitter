@@ -2,9 +2,7 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import AppButton from '../design/components/AppButton.vue';
-import AvatarBadge from '../design/components/AvatarBadge.vue';
-import HeroBand from '../design/components/HeroBand.vue';
-import PillCard from '../design/components/PillCard.vue';
+import AppHeader from '../design/components/AppHeader.vue';
 import TextField from '../design/components/TextField.vue';
 import { getProfileName, setProfileName } from '../shared/storage';
 import { welcomeSkipped } from '../welcome/welcome';
@@ -16,6 +14,7 @@ const router = useRouter();
 const name = ref(getProfileName() ?? '');
 
 function save() {
+  if (name.value.trim() === '') return;
   setProfileName(name.value);
   void router.push('/');
 }
@@ -24,37 +23,33 @@ function skip() {
   welcomeSkipped.value = true;
   void router.push('/');
 }
-
-function back() {
-  if (window.history.state?.back) router.back();
-  else void router.push('/');
-}
 </script>
 
 <template>
-  <main class="screen">
-    <HeroBand back @back="back">
+  <AppHeader />
+  <main class="page narrow">
+    <div class="intro">
       <p class="eyebrow">First things first</p>
       <h1>What should we call you?</h1>
-      <p class="sub">Friends see this name on bills you share</p>
-    </HeroBand>
-    <form class="body" @submit.prevent="save">
-      <div class="avatar"><AvatarBadge :name="name" large /></div>
+      <p class="muted">Friends see this name on bills you share.</p>
+    </div>
+    <form class="card form" @submit.prevent="save">
       <TextField v-model="name" label="Your name" :maxlength="maxName" autocomplete="given-name" />
-      <PillCard>
-        <b class="card-title">Stays on this phone</b>
-        <span class="small">
-          Your name is saved in this browser only. It is added to a bill only when you create or join one, and you can
-          change it in each bill.
-        </span>
-      </PillCard>
-      <AppButton variant="primary" :disabled="name.trim() === ''" @click="save">Continue</AppButton>
-      <AppButton variant="ghost" @click="skip">Skip for now</AppButton>
+      <p class="sm muted">
+        Saved in this browser only. It is added to a bill only when you create or join one, and you can change it in
+        each bill.
+      </p>
+      <div class="actions">
+        <AppButton variant="primary" type="submit" :disabled="name.trim() === ''">Continue</AppButton>
+        <AppButton variant="quiet" @click="skip">Skip for now</AppButton>
+      </div>
     </form>
   </main>
 </template>
 
 <style scoped>
-.avatar { display: flex; justify-content: center; margin-top: 6px; }
-.card-title { font-size: 14px; }
+.narrow { max-width: 560px; display: flex; flex-direction: column; gap: 20px; padding-top: 32px; padding-bottom: 32px; }
+.intro { display: flex; flex-direction: column; gap: 6px; }
+h1 { font-size: clamp(24px, 5vw, 30px); font-weight: 700; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
 </style>
