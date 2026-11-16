@@ -1,0 +1,3 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Pure money maths and bill models. No I/O and no package references. -->
+</Project>

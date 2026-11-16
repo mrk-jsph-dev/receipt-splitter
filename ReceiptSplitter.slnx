@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ReceiptSplitter.Core/ReceiptSplitter.Core.csproj" />
+    <Project Path="src/ReceiptSplitter.Api/ReceiptSplitter.Api.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ReceiptSplitter.Core.Tests/ReceiptSplitter.Core.Tests.csproj" />
+    <Project Path="tests/ReceiptSplitter.Api.Tests/ReceiptSplitter.Api.Tests.csproj" />
+  </Folder>
+</Solution>
