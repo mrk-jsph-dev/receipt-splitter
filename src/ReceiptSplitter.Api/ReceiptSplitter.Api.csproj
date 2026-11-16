@@ -3,6 +3,7 @@
     <ProjectReference Include="..\ReceiptSplitter.Core\ReceiptSplitter.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Azure.AI.DocumentIntelligence" Version="1.0.0" />
     <PackageReference Include="Azure.Identity" Version="1.21.0" />
     <PackageReference Include="Azure.Storage.Blobs" Version="12.30.1" />
   </ItemGroup>

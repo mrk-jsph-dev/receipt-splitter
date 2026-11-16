@@ -2,9 +2,9 @@
  "bill": {
   "id": "Sample0000000000000001",
   "version": 1,
-  "createdAt": "2026-11-16T15:32:58.4246902+00:00",
-  "updatedAt": "2026-11-16T15:32:58.4246902+00:00",
-  "expiresAt": "2026-12-16T15:32:58.4246902+00:00",
+  "createdAt": "2026-11-16T16:05:26.2209112+00:00",
+  "updatedAt": "2026-11-16T16:05:26.2209112+00:00",
+  "expiresAt": "2026-12-16T16:05:26.2209112+00:00",
   "title": "Ramen dinner",
   "currency": {
    "code": "PHP",
@@ -13,69 +13,69 @@
   "status": "draft",
   "people": [
    {
-    "id": "FUMKdmmL",
+    "id": "A2Epjn6V",
     "name": "Ana",
     "card": "none"
    },
    {
-    "id": "iWcnzYyf",
+    "id": "083QqHvs",
     "name": "Ben",
     "card": "none"
    },
    {
-    "id": "rDLelCrH",
+    "id": "D9gyuE46",
     "name": "Carla",
     "card": "none"
    },
    {
-    "id": "5lJq2DHY",
+    "id": "rjRzTl6l",
     "name": "Dan",
     "card": "none"
    },
    {
-    "id": "C2fGGsvw",
+    "id": "O4jxbcYK",
     "name": "Eli",
     "card": "none"
    },
    {
-    "id": "ICbFxsMl",
+    "id": "B1X3eDTY",
     "name": "Fay",
     "card": "none"
    },
    {
-    "id": "7fUONTBU",
+    "id": "DPIlUwKD",
     "name": "Gio",
     "card": "none"
    },
    {
-    "id": "WkO3Bxhv",
+    "id": "aX70cxRz",
     "name": "Hana",
     "card": "none"
    },
    {
-    "id": "N49qMMSx",
+    "id": "YYiLXrC9",
     "name": "Ivan",
     "card": "none"
    },
    {
-    "id": "rUG48muZ",
+    "id": "p0Ar68ep",
     "name": "Jo",
     "card": "none"
    },
    {
-    "id": "cKB4cuhA",
+    "id": "IOjU8u6T",
     "name": "Kai",
     "card": "none"
    },
    {
-    "id": "Nl9dWzzw",
+    "id": "n3anfzEI",
     "name": "Lia",
     "card": "none"
    }
   ],
   "receipts": [
    {
-    "id": "jPMVuJgW",
+    "id": "J7quk4Lu",
     "label": "Dinner",
     "merchant": "Ramen Nagi",
     "receiptDate": "2026-09-25",
@@ -84,7 +84,7 @@
     "confirmedTotal": 525580,
     "lines": [
      {
-      "id": "VIxEQm05",
+      "id": "VFx8K74a",
       "name": "Butao King",
       "quantity": 8,
       "unitPrice": 48500,
@@ -92,41 +92,41 @@
       "confidence": null,
       "units": [
        {
-        "id": "VIxEQm05-1",
+        "id": "VFx8K74a-1",
         "claims": []
        },
        {
-        "id": "VIxEQm05-2",
+        "id": "VFx8K74a-2",
         "claims": []
        },
        {
-        "id": "VIxEQm05-3",
+        "id": "VFx8K74a-3",
         "claims": []
        },
        {
-        "id": "VIxEQm05-4",
+        "id": "VFx8K74a-4",
         "claims": []
        },
        {
-        "id": "VIxEQm05-5",
+        "id": "VFx8K74a-5",
         "claims": []
        },
        {
-        "id": "VIxEQm05-6",
+        "id": "VFx8K74a-6",
         "claims": []
        },
        {
-        "id": "VIxEQm05-7",
+        "id": "VFx8K74a-7",
         "claims": []
        },
        {
-        "id": "VIxEQm05-8",
+        "id": "VFx8K74a-8",
         "claims": []
        }
       ]
      },
      {
-      "id": "sVF3uk79",
+      "id": "GRHc5b7g",
       "name": "Classic Gyoza",
       "quantity": 1,
       "unitPrice": 19000,
@@ -134,13 +134,13 @@
       "confidence": null,
       "units": [
        {
-        "id": "sVF3uk79-1",
+        "id": "GRHc5b7g-1",
         "claims": []
        }
       ]
      },
      {
-      "id": "6mDRrq8l",
+      "id": "shzbQ4tF",
       "name": "Coke Zero",
       "quantity": 1,
       "unitPrice": 11500,
@@ -148,13 +148,13 @@
       "confidence": null,
       "units": [
        {
-        "id": "6mDRrq8l-1",
+        "id": "shzbQ4tF-1",
         "claims": []
        }
       ]
      },
      {
-      "id": "8DtKJqJT",
+      "id": "xu1FjjNT",
       "name": "Kaedama (thick)",
       "quantity": 1,
       "unitPrice": 9500,
@@ -162,13 +162,13 @@
       "confidence": null,
       "units": [
        {
-        "id": "8DtKJqJT-1",
+        "id": "xu1FjjNT-1",
         "claims": []
        }
       ]
      },
      {
-      "id": "blUaFfL8",
+      "id": "B3rKSSsA",
       "name": "Kaedama (thin)",
       "quantity": 3,
       "unitPrice": 9500,
@@ -176,21 +176,21 @@
       "confidence": null,
       "units": [
        {
-        "id": "blUaFfL8-1",
+        "id": "B3rKSSsA-1",
         "claims": []
        },
        {
-        "id": "blUaFfL8-2",
+        "id": "B3rKSSsA-2",
         "claims": []
        },
        {
-        "id": "blUaFfL8-3",
+        "id": "B3rKSSsA-3",
         "claims": []
        }
       ]
      },
      {
-      "id": "BYJqIlrH",
+      "id": "1z08239W",
       "name": "Gyu King",
       "quantity": 2,
       "unitPrice": 79500,
@@ -198,17 +198,17 @@
       "confidence": null,
       "units": [
        {
-        "id": "BYJqIlrH-1",
+        "id": "1z08239W-1",
         "claims": []
        },
        {
-        "id": "BYJqIlrH-2",
+        "id": "1z08239W-2",
         "claims": []
        }
       ]
      },
      {
-      "id": "MSdz4x6J",
+      "id": "iJQyparO",
       "name": "Kakuni Belly",
       "quantity": 1,
       "unitPrice": 19500,
@@ -216,13 +216,13 @@
       "confidence": null,
       "units": [
        {
-        "id": "MSdz4x6J-1",
+        "id": "iJQyparO-1",
         "claims": []
        }
       ]
      },
      {
-      "id": "Q39sBrBq",
+      "id": "OdOtjqhz",
       "name": "Red King",
       "quantity": 2,
       "unitPrice": 59500,
@@ -230,17 +230,17 @@
       "confidence": null,
       "units": [
        {
-        "id": "Q39sBrBq-1",
+        "id": "OdOtjqhz-1",
         "claims": []
        },
        {
-        "id": "Q39sBrBq-2",
+        "id": "OdOtjqhz-2",
         "claims": []
        }
       ]
      },
      {
-      "id": "WZ4VuXd7",
+      "id": "wXwB9w06",
       "name": "Tamago",
       "quantity": 1,
       "unitPrice": 8500,
@@ -248,7 +248,7 @@
       "confidence": null,
       "units": [
        {
-        "id": "WZ4VuXd7-1",
+        "id": "wXwB9w06-1",
         "claims": []
        }
       ]
@@ -256,7 +256,7 @@
     ],
     "adjustments": [
      {
-      "id": "Nw93KLzw",
+      "id": "hLlCbA7E",
       "kind": "service",
       "label": "SERVICE CHARGE",
       "amount": 68080,
@@ -267,7 +267,7 @@
       "source": "manual"
      },
      {
-      "id": "ge7H1Z1J",
+      "id": "Rcivcr3M",
       "kind": "discount",
       "label": "40% BDO OFF",
       "amount": -305000,
@@ -283,7 +283,7 @@
     "participants": [],
     "payers": [
      {
-      "personId": "FUMKdmmL",
+      "personId": "A2Epjn6V",
       "amount": 525580
      }
     ]
@@ -300,113 +300,113 @@
   "canSettle": false,
   "receipts": [
    {
-    "receiptId": "jPMVuJgW",
+    "receiptId": "J7quk4Lu",
     "people": [
      {
-      "personId": "FUMKdmmL",
+      "personId": "A2Epjn6V",
       "subtotal": 0,
       "adjustments": {
-       "Nw93KLzw": 5674,
-       "ge7H1Z1J": 0
+       "hLlCbA7E": 5674,
+       "Rcivcr3M": 0
       },
       "total": 5674
      },
      {
-      "personId": "iWcnzYyf",
+      "personId": "083QqHvs",
       "subtotal": 0,
       "adjustments": {
-       "Nw93KLzw": 5674,
-       "ge7H1Z1J": 0
+       "hLlCbA7E": 5674,
+       "Rcivcr3M": 0
       },
       "total": 5674
      },
      {
-      "personId": "rDLelCrH",
+      "personId": "D9gyuE46",
       "subtotal": 0,
       "adjustments": {
-       "Nw93KLzw": 5674,
-       "ge7H1Z1J": 0
+       "hLlCbA7E": 5674,
+       "Rcivcr3M": 0
       },
       "total": 5674
      },
      {
-      "personId": "5lJq2DHY",
+      "personId": "rjRzTl6l",
       "subtotal": 0,
       "adjustments": {
-       "Nw93KLzw": 5674,
-       "ge7H1Z1J": 0
+       "hLlCbA7E": 5674,
+       "Rcivcr3M": 0
       },
       "total": 5674
      },
      {
-      "personId": "C2fGGsvw",
+      "personId": "O4jxbcYK",
       "subtotal": 0,
       "adjustments": {
-       "Nw93KLzw": 5673,
-       "ge7H1Z1J": 0
+       "hLlCbA7E": 5673,
+       "Rcivcr3M": 0
       },
       "total": 5673
      },
      {
-      "personId": "ICbFxsMl",
+      "personId": "B1X3eDTY",
       "subtotal": 0,
       "adjustments": {
-       "Nw93KLzw": 5673,
-       "ge7H1Z1J": 0
+       "hLlCbA7E": 5673,
+       "Rcivcr3M": 0
       },
       "total": 5673
      },
      {
-      "personId": "7fUONTBU",
+      "personId": "DPIlUwKD",
       "subtotal": 0,
       "adjustments": {
-       "Nw93KLzw": 5673,
-       "ge7H1Z1J": 0
+       "hLlCbA7E": 5673,
+       "Rcivcr3M": 0
       },
       "total": 5673
      },
      {
-      "personId": "WkO3Bxhv",
+      "personId": "aX70cxRz",
       "subtotal": 0,
       "adjustments": {
-       "Nw93KLzw": 5673,
-       "ge7H1Z1J": 0
+       "hLlCbA7E": 5673,
+       "Rcivcr3M": 0
       },
       "total": 5673
      },
      {
-      "personId": "N49qMMSx",
+      "personId": "YYiLXrC9",
       "subtotal": 0,
       "adjustments": {
-       "Nw93KLzw": 5673,
-       "ge7H1Z1J": 0
+       "hLlCbA7E": 5673,
+       "Rcivcr3M": 0
       },
       "total": 5673
      },
      {
-      "personId": "rUG48muZ",
+      "personId": "p0Ar68ep",
       "subtotal": 0,
       "adjustments": {
-       "Nw93KLzw": 5673,
-       "ge7H1Z1J": 0
+       "hLlCbA7E": 5673,
+       "Rcivcr3M": 0
       },
       "total": 5673
      },
      {
-      "personId": "cKB4cuhA",
+      "personId": "IOjU8u6T",
       "subtotal": 0,
       "adjustments": {
-       "Nw93KLzw": 5673,
-       "ge7H1Z1J": 0
+       "hLlCbA7E": 5673,
+       "Rcivcr3M": 0
       },
       "total": 5673
      },
      {
-      "personId": "Nl9dWzzw",
+      "personId": "n3anfzEI",
       "subtotal": 0,
       "adjustments": {
-       "Nw93KLzw": 5673,
-       "ge7H1Z1J": 0
+       "hLlCbA7E": 5673,
+       "Rcivcr3M": 0
       },
       "total": 5673
      }
@@ -415,87 +415,189 @@
      "personId": null,
      "subtotal": 762500,
      "adjustments": {
-      "Nw93KLzw": 0,
-      "ge7H1Z1J": -305000
+      "hLlCbA7E": 0,
+      "Rcivcr3M": -305000
      },
      "total": 457500
     },
     "computedTotal": 525580,
     "confirmedTotal": 525580,
     "warnings": [],
+    "items": [
+     {
+      "unitId": "VFx8K74a-1",
+      "personId": null,
+      "amount": 48500
+     },
+     {
+      "unitId": "VFx8K74a-2",
+      "personId": null,
+      "amount": 48500
+     },
+     {
+      "unitId": "VFx8K74a-3",
+      "personId": null,
+      "amount": 48500
+     },
+     {
+      "unitId": "VFx8K74a-4",
+      "personId": null,
+      "amount": 48500
+     },
+     {
+      "unitId": "VFx8K74a-5",
+      "personId": null,
+      "amount": 48500
+     },
+     {
+      "unitId": "VFx8K74a-6",
+      "personId": null,
+      "amount": 48500
+     },
+     {
+      "unitId": "VFx8K74a-7",
+      "personId": null,
+      "amount": 48500
+     },
+     {
+      "unitId": "VFx8K74a-8",
+      "personId": null,
+      "amount": 48500
+     },
+     {
+      "unitId": "GRHc5b7g-1",
+      "personId": null,
+      "amount": 19000
+     },
+     {
+      "unitId": "shzbQ4tF-1",
+      "personId": null,
+      "amount": 11500
+     },
+     {
+      "unitId": "xu1FjjNT-1",
+      "personId": null,
+      "amount": 9500
+     },
+     {
+      "unitId": "B3rKSSsA-1",
+      "personId": null,
+      "amount": 9500
+     },
+     {
+      "unitId": "B3rKSSsA-2",
+      "personId": null,
+      "amount": 9500
+     },
+     {
+      "unitId": "B3rKSSsA-3",
+      "personId": null,
+      "amount": 9500
+     },
+     {
+      "unitId": "1z08239W-1",
+      "personId": null,
+      "amount": 79500
+     },
+     {
+      "unitId": "1z08239W-2",
+      "personId": null,
+      "amount": 79500
+     },
+     {
+      "unitId": "iJQyparO-1",
+      "personId": null,
+      "amount": 19500
+     },
+     {
+      "unitId": "OdOtjqhz-1",
+      "personId": null,
+      "amount": 59500
+     },
+     {
+      "unitId": "OdOtjqhz-2",
+      "personId": null,
+      "amount": 59500
+     },
+     {
+      "unitId": "wXwB9w06-1",
+      "personId": null,
+      "amount": 8500
+     }
+    ],
     "difference": 0,
     "matches": true
    }
   ],
   "people": [
    {
-    "personId": "FUMKdmmL",
+    "personId": "A2Epjn6V",
     "owed": 5674,
     "paid": 525580,
     "net": 519906
    },
    {
-    "personId": "iWcnzYyf",
+    "personId": "083QqHvs",
     "owed": 5674,
     "paid": 0,
     "net": -5674
    },
    {
-    "personId": "rDLelCrH",
+    "personId": "D9gyuE46",
     "owed": 5674,
     "paid": 0,
     "net": -5674
    },
    {
-    "personId": "5lJq2DHY",
+    "personId": "rjRzTl6l",
     "owed": 5674,
     "paid": 0,
     "net": -5674
    },
    {
-    "personId": "C2fGGsvw",
+    "personId": "O4jxbcYK",
     "owed": 5673,
     "paid": 0,
     "net": -5673
    },
    {
-    "personId": "ICbFxsMl",
+    "personId": "B1X3eDTY",
     "owed": 5673,
     "paid": 0,
     "net": -5673
    },
    {
-    "personId": "7fUONTBU",
+    "personId": "DPIlUwKD",
     "owed": 5673,
     "paid": 0,
     "net": -5673
    },
    {
-    "personId": "WkO3Bxhv",
+    "personId": "aX70cxRz",
     "owed": 5673,
     "paid": 0,
     "net": -5673
    },
    {
-    "personId": "N49qMMSx",
+    "personId": "YYiLXrC9",
     "owed": 5673,
     "paid": 0,
     "net": -5673
    },
    {
-    "personId": "rUG48muZ",
+    "personId": "p0Ar68ep",
     "owed": 5673,
     "paid": 0,
     "net": -5673
    },
    {
-    "personId": "cKB4cuhA",
+    "personId": "IOjU8u6T",
     "owed": 5673,
     "paid": 0,
     "net": -5673
    },
    {
-    "personId": "Nl9dWzzw",
+    "personId": "n3anfzEI",
     "owed": 5673,
     "paid": 0,
     "net": -5673
@@ -504,7 +606,7 @@
   "problems": [
    {
     "code": "unclaimedItems",
-    "receiptId": "jPMVuJgW",
+    "receiptId": "J7quk4Lu",
     "amount": 457500
    }
   ],
@@ -513,7 +615,9 @@
    "total": 525580,
    "owing": 11,
    "confirmed": 0,
-   "paidPercent": 0
+   "paidPercent": 0,
+   "collected": 0,
+   "toCollect": 62406
   }
  }
 }

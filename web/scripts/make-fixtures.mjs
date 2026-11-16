@@ -82,4 +82,15 @@ await call('PATCH', `/api/bills/${two.id}`, { op: 'markPaid', personId: person(j
 await call('POST', `/api/bills/${two.id}/confirm`, { personId: person(json.bill, 'Carla') }, two.organizerKey);
 await call('POST', `/api/bills/${two.id}/confirm`, { personId: person(json.bill, 'Hana') }, two.organizerKey);
 void etag;
-save('two-receipts', (await get(two.id)).json, two.id, ids.two);
+const finished = (await get(two.id)).json;
+save('two-receipts', finished, two.id, ids.two);
+
+// 4. The total check the receipt editor shows for receipt 1 of the two-receipt bill.
+const first = finished.bill.receipts[0];
+const draft = {
+  label: first.label, merchant: first.merchant, receiptDate: first.receiptDate, confirmedTotal: first.confirmedTotal,
+  lines: first.lines.map((l) => ({ id: l.id, name: l.name, quantity: l.quantity, unitPrice: l.unitPrice })),
+  adjustments: first.adjustments.map((a) => ({ id: a.id, kind: a.kind, label: a.label, amount: a.amount, rate: a.rate, split: a.split })),
+  splitMode: first.splitMode, participants: first.participants, payers: first.payers,
+};
+save('check-dinner', (await call('POST', `/api/bills/${two.id}/receipts/check`, { draft, receiptId: first.id }, two.organizerKey)).json, two.id, ids.two);
