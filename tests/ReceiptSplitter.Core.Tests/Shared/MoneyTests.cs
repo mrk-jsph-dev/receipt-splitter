@@ -1,6 +1,5 @@
-using ReceiptSplitter.Core;
 
-namespace ReceiptSplitter.Core.Tests;
+namespace ReceiptSplitter.Core.Tests.Shared;
 
 public class MoneyTests
 {

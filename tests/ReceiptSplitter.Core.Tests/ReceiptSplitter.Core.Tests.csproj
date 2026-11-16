@@ -10,6 +10,10 @@
   </ItemGroup>
   <ItemGroup>
     <Using Include="Xunit" />
+    <Using Include="ReceiptSplitter.Core.Shared" />
+    <Using Include="ReceiptSplitter.Core.Receipts" />
+    <Using Include="ReceiptSplitter.Core.Bills" />
+    <Using Include="ReceiptSplitter.Core.Settlement" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\ReceiptSplitter.Core\ReceiptSplitter.Core.csproj" />
