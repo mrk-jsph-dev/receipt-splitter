@@ -17,6 +17,8 @@ public static class ShareBill
         {
             if (bill.Receipts.Count == 0)
                 return OpError.Unprocessable("no-receipts");
+            if (bill.Receipts.Any(r => r.Lines.Count == 0))
+                return OpError.Unprocessable("empty-receipt");
             if (bill.People.Count == 0)
                 return OpError.Unprocessable("no-people");
             if (!BillResponse.CanShare(bill))

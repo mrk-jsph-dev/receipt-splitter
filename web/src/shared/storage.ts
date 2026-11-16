@@ -4,6 +4,8 @@ import { isBillId } from './api';
 // one bill never reads another's, and there is no shared list to leak from.
 
 const profileName = 'profile:name';
+const profileFriends = 'profile:friends';
+const maxFriends = 30;
 const billPrefix = 'bill:';
 
 export type BillField = 'me' | 'key' | 'seen';
@@ -47,6 +49,23 @@ export function setProfileName(name: string) {
   write(profileName, trimmed === '' ? null : trimmed);
 }
 
+/** Names used on bills on this device, newest first. Suggestions only; never sent unless tapped. */
+export function friends(): string[] {
+  try {
+    const list = JSON.parse(read(profileFriends) ?? '[]') as unknown;
+    return Array.isArray(list) ? list.filter((n): n is string => typeof n === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+export function rememberFriend(name: string) {
+  const trimmed = name.trim();
+  if (trimmed === '') return;
+  const rest = friends().filter((n) => n.toLowerCase() !== trimmed.toLowerCase());
+  write(profileFriends, JSON.stringify([trimmed, ...rest].slice(0, maxFriends)));
+}
+
 export function getBillValue(id: string, field: BillField): string | null {
   return isBillId(id) ? read(`${billPrefix}${id}:${field}`) : null;
 }
@@ -75,7 +94,12 @@ export function recentBills(): RecentBill[] {
   return bills.sort((a, b) => b.openedAt.localeCompare(a.openedAt));
 }
 
-/** "Forget this device": the saved name, recent bills, who you are in each bill and organizer keys. */
+/** "Forget this device": the saved name, friends, recent bills, who you are in each bill and organizer keys. */
 export function forgetDevice() {
-  for (const key of keys()) if (key === profileName || key.startsWith(billPrefix)) write(key, null);
+  for (const key of keys()) if (key.startsWith('profile:') || key.startsWith(billPrefix)) write(key, null);
+}
+
+/** After "Delete this bill now": everything this browser kept about one bill. */
+export function forgetBill(id: string) {
+  for (const key of keys()) if (key.startsWith(`${billPrefix}${id}:`)) write(key, null);
 }

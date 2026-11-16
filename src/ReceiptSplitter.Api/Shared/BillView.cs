@@ -45,7 +45,9 @@ public sealed record BreakdownView(
 /// <param name="Owing">People who owe money overall (net below zero).</param>
 /// <param name="Confirmed">Of those, how many the organizer has confirmed as paid.</param>
 /// <param name="PaidPercent">Confirmed out of owing, 0 to 100, rounded down. 0 when nobody owes yet.</param>
-public sealed record BillProgress(long Total, int Owing, int Confirmed, int PaidPercent)
+/// <param name="Collected">What the confirmed people owed in total.</param>
+/// <param name="ToCollect">What everyone not yet confirmed still owes.</param>
+public sealed record BillProgress(long Total, int Owing, int Confirmed, int PaidPercent, long Collected, long ToCollect)
 {
     public static BillProgress From(BillDocument doc, IReadOnlyList<PersonBalance> people)
     {
@@ -53,7 +55,9 @@ public sealed record BillProgress(long Total, int Owing, int Confirmed, int Paid
         var confirmed = doc.Payments.Where(p => p.Status == PaymentStatus.Confirmed).Select(p => p.PersonId).ToHashSet();
         var owing = people.Where(p => p.Net < 0).ToList();
         var paid = owing.Count(p => confirmed.Contains(p.PersonId));
-        return new BillProgress(total, owing.Count, paid, owing.Count == 0 ? 0 : paid * 100 / owing.Count);
+        var collected = owing.Where(p => confirmed.Contains(p.PersonId)).Sum(p => -p.Net);
+        var toCollect = owing.Where(p => !confirmed.Contains(p.PersonId)).Sum(p => -p.Net);
+        return new BillProgress(total, owing.Count, paid, owing.Count == 0 ? 0 : paid * 100 / owing.Count, collected, toCollect);
     }
 }
 

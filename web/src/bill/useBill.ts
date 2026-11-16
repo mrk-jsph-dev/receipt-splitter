@@ -1,6 +1,6 @@
 import { computed, inject, provide, ref, watch, type InjectionKey, type Ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { ApiError, getBill, isBillId, type BillResponse } from '../shared/api';
+import { ApiError, getBill, isBillId, latestFrom, patchBill, type Bill, type BillResponse, type Op, type Written } from '../shared/api';
 import { getBillValue, rememberBill, setBillValue } from '../shared/storage';
 import { usePolling } from './usePolling';
 
@@ -23,6 +23,25 @@ export interface BillState {
   /** Shows a response from a write: new data and its ETag. Also nudges polling back to 10 s. */
   accept: (data: BillResponse, etag: string | null) => void;
   setMe: (personId: string | null) => void;
+  /** A short message about the last change, read out by screen readers. Clears itself. */
+  notice: Ref<string>;
+  say: (message: string) => void;
+  /** When the screen last matched the server. */
+  syncedAt: Ref<number | null>;
+  /**
+   * Sends one op. `optimistic` changes a copy of the bill on screen straight away; totals wait
+   * for the server. On a 409 the latest bill is shown and `onConflict` says what happened.
+   */
+  run: (op: Op, options?: { optimistic?: (bill: Bill) => void; onConflict?: (latest: BillResponse, reason: string) => string }) => Promise<boolean>;
+  /** Shows the outcome of any write call: new data, or the latest bill and a message on refusal. */
+  write: (call: () => Promise<Written>, onConflict?: (latest: BillResponse, reason: string) => string) => Promise<boolean>;
+  /**
+   * An organizer write. Makes sure the screen has an ETag first, so a replace or settings change
+   * is checked against the version on screen and never overwrites someone else's edit.
+   */
+  organize: (call: (key: string, etag: string) => Promise<Written>, onConflict?: (latest: BillResponse, reason: string) => string) => Promise<boolean>;
+  /** The breakdown sheet for one person, or null when closed. */
+  breakdownFor: Ref<string | null>;
 }
 
 const key: InjectionKey<BillState> = Symbol('bill');
@@ -38,6 +57,10 @@ export function provideBill(id: string): BillState {
   const waking = ref(false);
   const organizerKey = ref(getBillValue(id, 'key'));
   const me = ref(getBillValue(id, 'me'));
+  const notice = ref('');
+  const syncedAt = ref<number | null>(null);
+  const breakdownFor = ref<string | null>(null);
+  let noticeTimer: ReturnType<typeof setTimeout> | undefined;
 
   // An organizer link carries the key after #, which browsers never send to servers. Keep it on
   // this device and take it out of the address bar so it isn't copied or shared by accident.
@@ -70,6 +93,7 @@ export function provideBill(id: string): BillState {
       etag.value = result.etag;
       if (result.changed) show(result.data);
       problem.value = '';
+      syncedAt.value = Date.now();
     } catch (e) {
       if (e instanceof ApiError && e.status === 404) missing.value = true;
       else if (e instanceof ApiError && e.status === 429) problem.value = 'Too many requests. Trying again shortly.';
@@ -93,6 +117,64 @@ export function provideBill(id: string): BillState {
     setBillValue(id, 'me', personId);
   }
 
+  function say(message: string) {
+    notice.value = message;
+    clearTimeout(noticeTimer);
+    noticeTimer = setTimeout(() => (notice.value = ''), 6000);
+  }
+
+  async function write(call: () => Promise<Written>, onConflict?: (latest: BillResponse, reason: string) => string): Promise<boolean> {
+    try {
+      const result = await call();
+      accept(result.data, result.etag);
+      syncedAt.value = Date.now();
+      return true;
+    } catch (e) {
+      const latest = latestFrom(e);
+      if (latest && e instanceof ApiError) {
+        // No ETag comes with a refusal, so the next poll fetches in full.
+        accept(latest, null);
+        if (e.reason === 'locked') say('This bill is locked, so it can only be viewed.');
+        else say(onConflict?.(latest, e.reason ?? '') ?? 'Someone changed this a moment ago. Here is the latest.');
+      } else {
+        if (e instanceof ApiError && e.status === 429) say('Too many changes at once. Wait a moment and try again.');
+        else if (e instanceof ApiError && e.status === 403) say('Only the organizer can change this. Open the organizer link on this device.');
+        else if (e instanceof ApiError && e.status === 400) say("That didn't work. The bill may have changed; it has been reloaded.");
+        else say("Couldn't save. Check your connection and try again.");
+        etag.value = null;
+        await load();
+      }
+      return false;
+    }
+  }
+
+  async function run(op: Op, options: { optimistic?: (bill: Bill) => void; onConflict?: (latest: BillResponse, reason: string) => string } = {}) {
+    if (options.optimistic && data.value) {
+      const copy = JSON.parse(JSON.stringify(data.value)) as BillResponse;
+      options.optimistic(copy.bill);
+      data.value = copy;
+    }
+    return write(() => patchBill(id, op), options.onConflict);
+  }
+
+  async function organize(call: (key: string, etag: string) => Promise<Written>, onConflict?: (latest: BillResponse, reason: string) => string) {
+    const key = organizerKey.value;
+    if (!key) {
+      say('Only the organizer can change this. Open the organizer link on this device.');
+      return false;
+    }
+    if (!etag.value) await load();
+    const current = etag.value;
+    if (!current) {
+      say("Couldn't reach the server. Check your connection and try again.");
+      return false;
+    }
+    return write(() => call(key, current), (latest, reason) => {
+      if (reason === 'changed') return onConflict?.(latest, reason) ?? 'Someone else changed this bill a moment ago. Here is the latest.';
+      return onConflict?.(latest, reason) ?? 'That change was refused. Here is the latest.';
+    });
+  }
+
   const state: BillState = {
     id,
     data,
@@ -106,6 +188,13 @@ export function provideBill(id: string): BillState {
     load,
     accept,
     setMe,
+    notice,
+    say,
+    syncedAt,
+    run,
+    write,
+    organize,
+    breakdownFor,
   };
   provide(key, state);
   return state;
