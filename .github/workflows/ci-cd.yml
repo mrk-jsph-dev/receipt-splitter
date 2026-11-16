@@ -242,10 +242,11 @@ jobs:
         env:
           RG: ${{ vars.AZURE_RESOURCE_GROUP }}
         run: |
-          fqdn=$(az resource show -g "$RG" -n "$API_APP" --resource-type Microsoft.App/containerApps \
-            --query properties.configuration.ingress.fqdn -o tsv 2>/dev/null || true)
-          if [ -z "$fqdn" ]; then
-            echo "No API deployed yet, nothing to check."
+          app=$(az resource show -g "$RG" -n "$API_APP" --resource-type Microsoft.App/containerApps -o json 2>/dev/null || true)
+          image=$(jq -r '.properties.template.containers[0].image // empty' <<<"$app")
+          # Before the first release the app runs a placeholder with no API (see infra/deploy.sh).
+          if [ -z "$image" ] || [[ "$image" == mcr.microsoft.com/k8se/quickstart* ]]; then
+            echo "No API released yet, nothing to check. Run target=api."
             exit 0
           fi
-          infra/smoke.sh "https://$fqdn"
+          infra/smoke.sh "https://$(jq -r .properties.configuration.ingress.fqdn <<<"$app")"
