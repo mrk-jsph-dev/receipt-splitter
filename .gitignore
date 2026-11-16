@@ -25,6 +25,8 @@ receipts/
 # ...but the Receipts code slice is source, not photos
 !src/ReceiptSplitter.Core/Receipts/
 !tests/ReceiptSplitter.Core.Tests/Receipts/
+!src/ReceiptSplitter.Api/Features/Receipts/
+!tests/ReceiptSplitter.Api.Tests/Features/Receipts/
 
 # Editors and OS
 .vs/
