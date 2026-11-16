@@ -62,4 +62,24 @@ public class ConfirmAndUndoTests(ApiFactory factory) : IClassFixture<ApiFactory>
         Assert.Equal("already-undone", (await again.ReadAsync<ConflictBody>())!.Reason);
         Assert.Equal(HttpStatusCode.BadRequest, notAClaim.StatusCode);
     }
+
+    [Fact]
+    public async Task Not_yet_sends_a_payment_back_to_unpaid()
+    {
+        using var client = factory.NewClient();
+        var created = await client.CreateSampleAsync();
+        var ben = (await client.GetBillAsync(created.Id)).Bill.PersonId("Ben");
+        await client.PatchAsync(created.Id, new { op = "markPaid", personId = ben, from = (string?)null });
+        var url = $"/api/bills/{created.Id}/decline";
+
+        var noKey = await client.OrganizerAsync(HttpMethod.Post, url, null, new { personId = ben });
+        var decline = await client.OrganizerAsync(HttpMethod.Post, url, created.OrganizerKey, new { personId = ben });
+        var again = await client.OrganizerAsync(HttpMethod.Post, url, created.OrganizerKey, new { personId = ben });
+
+        Assert.Equal(HttpStatusCode.Forbidden, noKey.StatusCode);
+        var bill = (await decline.ReadAsync<BillResponse>())!.Bill;
+        Assert.Empty(bill.Payments);
+        Assert.Equal("Ben's payment hasn't arrived yet", bill.Activity[^1].Text);
+        Assert.Equal(HttpStatusCode.Conflict, again.StatusCode);
+    }
 }

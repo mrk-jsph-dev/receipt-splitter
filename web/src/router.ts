@@ -4,6 +4,8 @@ import ItemsView from './bill/ItemsView.vue';
 import PeopleView from './bill/PeopleView.vue';
 import ReceiptsView from './bill/ReceiptsView.vue';
 import SettleView from './bill/SettleView.vue';
+import ReceiptEditor from './bill/edit/ReceiptEditor.vue';
+import ShareView from './bill/edit/ShareView.vue';
 import HomeView from './home/HomeView.vue';
 import NameView from './profile/NameView.vue';
 import WelcomeView from './welcome/WelcomeView.vue';
@@ -24,7 +26,9 @@ export function createAppRouter(history: RouterHistory = createWebHistory()) {
           { path: '', name: 'items', component: ItemsView },
           { path: 'people', name: 'people', component: PeopleView },
           { path: 'receipts', name: 'receipts', component: ReceiptsView },
+          { path: 'receipts/:receiptId', name: 'receipt', component: ReceiptEditor, props: true },
           { path: 'settle', name: 'settle', component: SettleView },
+          { path: 'share', name: 'share', component: ShareView },
         ],
       },
       { path: '/:rest(.*)*', redirect: '/' },

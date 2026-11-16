@@ -43,11 +43,13 @@ PatchBill.Map(app);
 // Organizer only: X-Organizer-Key on every call.
 AddReceipt.Map(app);
 ReplaceReceipt.Map(app);
+CheckReceipt.Map(app);
 DeleteReceipt.Map(app);
 UpdateSettings.Map(app);
 ShareBill.Map(app);
 LockBill.Map(app);
 ConfirmPayment.Map(app);
+DeclinePayment.Map(app);
 UndoClaim.Map(app);
 DeleteBill.Map(app);
 

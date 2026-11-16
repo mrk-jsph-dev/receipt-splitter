@@ -7,7 +7,8 @@ import AppHeader from '../design/components/AppHeader.vue';
 import Overlay from '../design/components/Overlay.vue';
 import PaidRing from '../design/components/PaidRing.vue';
 import SegmentedControl from '../design/components/SegmentedControl.vue';
-import { startError, startSample } from '../bill/startSample';
+import { startError, startManual, startSample } from '../bill/startSample';
+import { currencies, currency } from '../shared/currencies';
 import { formatMoney } from '../shared/money';
 import { forgetDevice, getProfileName } from '../shared/storage';
 import { isSettled, useDeviceBills, type DeviceBill } from './deviceBills';
@@ -58,6 +59,21 @@ async function sample() {
   }
 }
 
+const typing = ref(false);
+const code = ref('PHP');
+async function typeIn() {
+  busy.value = true;
+  error.value = '';
+  try {
+    await router.push(await startManual(currency(code.value)));
+  } catch (e) {
+    typing.value = false;
+    error.value = startError(e);
+  } finally {
+    busy.value = false;
+  }
+}
+
 function picked(files: File[]) {
   notice.value = `${files.length === 1 ? '1 photo' : `${files.length} photos`} picked. Reading receipts is coming soon, so for now try the sample or type it in.`;
 }
@@ -84,9 +100,9 @@ onMounted(load);
         <div class="starts">
           <ScanCard @picked="picked" />
           <p v-if="notice" class="sm muted" role="status">{{ notice }}</p>
-          <button type="button" class="start" disabled aria-describedby="type-note">
+          <button type="button" class="start" :disabled="busy" @click="typing = true">
             <span class="tile acc"><PencilLine /></span>
-            <span class="grow"><b>Type it in</b><span id="type-note" class="sm muted">Coming soon</span></span>
+            <span class="grow"><b>Type it in</b><span class="sm muted">Enter the lines and total yourself</span></span>
             <ChevronRight class="chev" />
           </button>
           <button type="button" class="start" :disabled="busy" :aria-busy="busy || undefined" @click="sample">
@@ -133,6 +149,20 @@ onMounted(load);
     </div>
   </main>
 
+  <Overlay :open="typing" title="Type in a receipt" @close="typing = false">
+    <label class="cur">
+      <span class="sm">Currency on the receipt</span>
+      <select v-model="code" class="select">
+        <option v-for="c in currencies" :key="c.code" :value="c.code">{{ c.code }} · {{ c.name }}</option>
+      </select>
+    </label>
+    <p class="sm muted">You'll add the lines, fees and the printed total next. Then share the link.</p>
+    <template #actions>
+      <AppButton @click="typing = false">Cancel</AppButton>
+      <AppButton variant="primary" :busy="busy" @click="typeIn">Start</AppButton>
+    </template>
+  </Overlay>
+
   <Overlay :open="forgetting" title="Forget this device?" @close="forgetting = false">
     <p class="prose">This clears recent bills, friends' names, your name and organizer links from this browser. It can't be undone, and organizer links you haven't saved elsewhere are lost.</p>
     <template #actions>
@@ -143,6 +173,11 @@ onMounted(load);
 </template>
 
 <style scoped>
+.cur { display: flex; flex-direction: column; gap: 6px; font-weight: 600; color: var(--ink-2); }
+.select {
+  min-height: 44px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+  padding: 0 12px; font: inherit; font-weight: 400;
+}
 .home { padding-top: 20px; padding-bottom: max(32px, env(safe-area-inset-bottom)); }
 .grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; align-items: start; max-width: 1120px; margin: 0 auto; }
 .col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }

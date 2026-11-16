@@ -18,6 +18,8 @@ const byId = Object.fromEntries(Object.values(bills).map((b) => [b.bill.id, b]))
 const personId = (bill, name) => bill.bill.people.find((p) => p.name === name).id;
 const dinner = bills.dinner.bill.id;
 const two = bills['two-receipts'].bill.id;
+const twoBill = bills['two-receipts'].bill;
+const check = fixture('check-dinner');
 
 // Who this browser is on each bill: Ben as a friend on dinner, Ana as the organizer on two receipts.
 const storage = {
@@ -37,6 +39,8 @@ export const routes = [
   { name: 'bill-people', path: `/b/${dinner}/people` },
   { name: 'bill-receipts', path: `/b/${two}/receipts` },
   { name: 'bill-settle', path: `/b/${two}/settle` },
+  { name: 'bill-share', path: `/b/${two}/share` },
+  { name: 'receipt-edit', path: `/b/${two}/receipts/${twoBill.receipts[0].id}` },
   { name: 'not-found', path: '/b/Missing000000000000001' },
 ];
 
@@ -62,6 +66,8 @@ try {
         deviceScaleFactor: 1,
       });
       await context.route('**/api/**', async (route) => {
+        if (route.request().url().endsWith('/receipts/check'))
+          return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(check) });
         const match = /\/api\/bills\/([0-9A-Za-z]{22})/.exec(route.request().url());
         const body = match && byId[match[1]];
         if (!body) return route.fulfill({ status: 404, contentType: 'application/json', body: '{"error":"not-found"}' });

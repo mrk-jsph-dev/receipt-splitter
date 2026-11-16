@@ -35,6 +35,11 @@ export interface BillState {
   run: (op: Op, options?: { optimistic?: (bill: Bill) => void; onConflict?: (latest: BillResponse, reason: string) => string }) => Promise<boolean>;
   /** Shows the outcome of any write call: new data, or the latest bill and a message on refusal. */
   write: (call: () => Promise<Written>, onConflict?: (latest: BillResponse, reason: string) => string) => Promise<boolean>;
+  /**
+   * An organizer write. Makes sure the screen has an ETag first, so a replace or settings change
+   * is checked against the version on screen and never overwrites someone else's edit.
+   */
+  organize: (call: (key: string, etag: string) => Promise<Written>, onConflict?: (latest: BillResponse, reason: string) => string) => Promise<boolean>;
   /** The breakdown sheet for one person, or null when closed. */
   breakdownFor: Ref<string | null>;
 }
@@ -133,6 +138,7 @@ export function provideBill(id: string): BillState {
         else say(onConflict?.(latest, e.reason ?? '') ?? 'Someone changed this a moment ago. Here is the latest.');
       } else {
         if (e instanceof ApiError && e.status === 429) say('Too many changes at once. Wait a moment and try again.');
+        else if (e instanceof ApiError && e.status === 403) say('Only the organizer can change this. Open the organizer link on this device.');
         else if (e instanceof ApiError && e.status === 400) say("That didn't work. The bill may have changed; it has been reloaded.");
         else say("Couldn't save. Check your connection and try again.");
         etag.value = null;
@@ -149,6 +155,24 @@ export function provideBill(id: string): BillState {
       data.value = copy;
     }
     return write(() => patchBill(id, op), options.onConflict);
+  }
+
+  async function organize(call: (key: string, etag: string) => Promise<Written>, onConflict?: (latest: BillResponse, reason: string) => string) {
+    const key = organizerKey.value;
+    if (!key) {
+      say('Only the organizer can change this. Open the organizer link on this device.');
+      return false;
+    }
+    if (!etag.value) await load();
+    const current = etag.value;
+    if (!current) {
+      say("Couldn't reach the server. Check your connection and try again.");
+      return false;
+    }
+    return write(() => call(key, current), (latest, reason) => {
+      if (reason === 'changed') return onConflict?.(latest, reason) ?? 'Someone else changed this bill a moment ago. Here is the latest.';
+      return onConflict?.(latest, reason) ?? 'That change was refused. Here is the latest.';
+    });
   }
 
   const state: BillState = {
@@ -169,6 +193,7 @@ export function provideBill(id: string): BillState {
     syncedAt,
     run,
     write,
+    organize,
     breakdownFor,
   };
   provide(key, state);
