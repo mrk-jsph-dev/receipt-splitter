@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ChevronRight, PencilLine } from 'lucide-vue-next';
+import { Camera, ChevronRight, PencilLine } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import AppButton from '../design/components/AppButton.vue';
 import { addReceipt } from '../shared/api';
 import { formatMoney } from '../shared/money';
+import { fillTray } from '../scan/tray';
 import { payerNames } from './summary';
 import { useBill } from './useBill';
 
@@ -20,6 +21,16 @@ const matches = (id: string) => data.value!.breakdown?.receipts.find((r) => r.re
 const modes = { items: 'By item', equal: 'Equally', shares: 'By shares' } as const;
 const editable = computed(() => isOrganizer.value && bill.value.status !== 'locked');
 const there = (n: number) => (n === 0 ? `${bill.value.people.length} people` : `${n} ${n === 1 ? 'person' : 'people'}`);
+
+const picker = ref<HTMLInputElement | null>(null);
+function scanPicked(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const files = Array.from(input.files ?? []).filter((f) => /^(image\/|application\/pdf$)/.test(f.type));
+  input.value = '';
+  if (files.length === 0) return;
+  fillTray(files, state.id);
+  void router.push('/scan');
+}
 
 const adding = ref(false);
 async function typeIn() {
@@ -61,7 +72,12 @@ async function typeIn() {
     <div v-if="editable && bill.receipts.length < 10" class="card add">
       <b>Add another receipt</b>
       <span class="sm muted">Drinks after dinner, dessert, a second page of a long receipt. Each one keeps its own fees and payer.</span>
-      <AppButton sm :busy="adding" @click="typeIn"><PencilLine class="s" /> Type in</AppButton>
+      <div class="two">
+        <AppButton sm @click="picker?.click()"><Camera class="s" /> Scan</AppButton>
+        <AppButton sm :busy="adding" @click="typeIn"><PencilLine class="s" /> Type in</AppButton>
+      </div>
+      <span class="sm muted">Long receipt? Scan it as two photos and they join into one.</span>
+      <input ref="picker" class="visually-hidden" type="file" accept="image/*,application/pdf" multiple tabindex="-1" aria-hidden="true" @change="scanPicked" />
     </div>
     <p v-if="editable" class="sm muted">You can add receipts later too, even after sharing. Everyone with the link sees them within 10 seconds.</p>
   </section>
@@ -73,5 +89,5 @@ async function typeIn() {
 a.rc:hover { border-color: var(--accent); }
 .end { display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; }
 .add { display: flex; flex-direction: column; gap: 8px; border: 1.5px dashed var(--line); background: transparent; box-shadow: none; }
-.add :deep(.btn) { align-self: flex-start; }
+.two { display: flex; gap: 8px; flex-wrap: wrap; }
 </style>

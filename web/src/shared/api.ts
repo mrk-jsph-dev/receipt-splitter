@@ -193,7 +193,7 @@ export const isBillId = (id: string) => /^[0-9A-Za-z]{22}$/.test(id);
 async function send(path: string, init: RequestInit = {}): Promise<Response> {
   const response = await fetch(`${baseUrl}${path}`, {
     ...init,
-    headers: { Accept: 'application/json', ...(init.body ? { 'Content-Type': 'application/json' } : {}), ...init.headers },
+    headers: { Accept: 'application/json', ...(init.body && !(init.body instanceof FormData) ? { 'Content-Type': 'application/json' } : {}), ...init.headers },
   });
   if (response.ok || response.status === 304) return response;
 
@@ -306,14 +306,19 @@ function organizer(key: string, ifMatch?: string | null): Record<string, string>
   return { 'X-Organizer-Key': key, ...(ifMatch ? { 'If-Match': ifMatch } : {}) };
 }
 
-export async function createManualBill(organizerName: string | null, currency: Currency, draft?: ReceiptDraft): Promise<Created> {
-  const body = { source: 'manual', organizerName, currency, draft };
+export async function createManualBill(
+  organizerName: string | null,
+  currency: Currency,
+  draft?: ReceiptDraft,
+  source: 'manual' | 'scan' = 'manual',
+): Promise<Created> {
+  const body = { source, organizerName, currency, draft };
   const response = await send('/api/bills', { method: 'POST', body: JSON.stringify(body) });
   return (await response.json()) as Created;
 }
 
-export async function addReceipt(id: string, key: string, draft: ReceiptDraft | null): Promise<Written> {
-  const body = draft ? { source: 'manual', draft } : { source: 'sample' };
+export async function addReceipt(id: string, key: string, draft: ReceiptDraft | null, source: 'manual' | 'scan' = 'manual'): Promise<Written> {
+  const body = draft ? { source, draft } : { source: 'sample' };
   return written(await send(`/api/bills/${id}/receipts`, { method: 'POST', headers: organizer(key), body: JSON.stringify(body) }));
 }
 
@@ -360,4 +365,27 @@ export async function organizerAction(
 
 export async function deleteBill(id: string, key: string): Promise<void> {
   await send(`/api/bills/${id}`, { method: 'DELETE', headers: organizer(key) });
+}
+
+// Scanning. The photo goes to the API once, is read and dropped; nothing is saved until a bill is made.
+
+export interface ScanResult {
+  draft: ReceiptDraft;
+  remainingToday: number;
+  readCurrency: string | null;
+}
+
+export async function scanReceipt(file: Blob, currency: Currency, previous?: ReceiptDraft, signal?: AbortSignal): Promise<ScanResult> {
+  const form = new FormData();
+  form.append('file', file, file instanceof File ? file.name : 'receipt.jpg');
+  form.append('currencyCode', currency.code);
+  form.append('currencyDigits', String(currency.digits));
+  if (previous) form.append('previous', JSON.stringify(previous));
+  const response = await send('/api/scans', { method: 'POST', body: form, signal });
+  return (await response.json()) as ScanResult;
+}
+
+export async function scanQuota(): Promise<number> {
+  const response = await send('/api/scans/quota');
+  return ((await response.json()) as { remainingToday: number }).remainingToday;
 }
