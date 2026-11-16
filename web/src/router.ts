@@ -8,6 +8,7 @@ import ReceiptEditor from './bill/edit/ReceiptEditor.vue';
 import ShareView from './bill/edit/ShareView.vue';
 import HomeView from './home/HomeView.vue';
 import NameView from './profile/NameView.vue';
+import ScanView from './scan/ScanView.vue';
 import WelcomeView from './welcome/WelcomeView.vue';
 import { needsWelcome } from './welcome/welcome';
 
@@ -18,6 +19,7 @@ export function createAppRouter(history: RouterHistory = createWebHistory()) {
       { path: '/', component: HomeView, beforeEnter: () => (needsWelcome() ? '/welcome' : true) },
       { path: '/welcome', component: WelcomeView },
       { path: '/name', component: NameView },
+      { path: '/scan', component: ScanView },
       {
         path: '/b/:id',
         component: BillShell,
