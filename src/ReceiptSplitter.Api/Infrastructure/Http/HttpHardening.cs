@@ -9,6 +9,11 @@ public static class HttpHardening
     public const string CorsPolicy = "app";
     public const int MaxBodyBytes = 256 * 1024;
 
+    /// <summary>A scan: one file of up to 4 MB plus the small form fields around it.</summary>
+    public const int MaxScanBodyBytes = 4 * 1024 * 1024 + 64 * 1024;
+
+    public static bool IsScan(HttpRequest request) => request.Path.StartsWithSegments("/api/scans");
+
     public static IServiceCollection AddHttpHardening(this IServiceCollection services, IConfiguration config)
     {
         var origins = config.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
@@ -44,7 +49,11 @@ public static class HttpHardening
             headers["X-Content-Type-Options"] = "nosniff";
             headers.ContentSecurityPolicy = "default-src 'none'; frame-ancestors 'none'";
 
-            if (http.Request.ContentLength > MaxBodyBytes)
+            // Kestrel allows a scan's size; everything else keeps the small limit, chunked or not.
+            var limit = IsScan(http.Request) ? MaxScanBodyBytes : MaxBodyBytes;
+            if (http.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpMaxRequestBodySizeFeature>() is { IsReadOnly: false } size)
+                size.MaxRequestBodySize = limit;
+            if (http.Request.ContentLength > limit)
             {
                 http.Response.StatusCode = StatusCodes.Status413PayloadTooLarge;
                 return;
