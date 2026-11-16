@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   forgetDevice,
+  friends,
+  rememberFriend,
   getBillValue,
   getProfileName,
   recentBills,
@@ -64,16 +66,27 @@ describe('recent bills', () => {
   });
 });
 
+describe('friends', () => {
+  it('keeps names newest first, once each, ignoring case', () => {
+    rememberFriend('Fay');
+    rememberFriend('Gio');
+    rememberFriend('fay');
+    expect(friends()).toEqual(['fay', 'Gio']);
+  });
+});
+
 describe('forgetDevice', () => {
   it('clears the name and every bill entry and leaves other keys alone', () => {
     setProfileName('Ana');
     setBillValue(billA, 'key', 'organizer-key');
     rememberBill(billB, 'Lunch', new Date());
+    rememberFriend('Fay');
     localStorage.setItem('unrelated', 'keep');
 
     forgetDevice();
 
     expect(getProfileName()).toBeNull();
+    expect(friends()).toEqual([]);
     expect(getBillValue(billA, 'key')).toBeNull();
     expect(recentBills()).toEqual([]);
     expect(localStorage.getItem('unrelated')).toBe('keep');

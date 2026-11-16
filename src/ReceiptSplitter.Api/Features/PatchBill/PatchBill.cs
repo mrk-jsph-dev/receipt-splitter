@@ -30,6 +30,7 @@ public static class PatchBill
         UnclaimOp unclaim => Unclaim(bill, unclaim, now),
         SetWeightOp setWeight => SetWeight(bill, setWeight, now),
         MarkPaidOp markPaid => MarkPaid(bill, markPaid, now),
+        UnmarkPaidOp unmarkPaid => UnmarkPaid(bill, unmarkPaid, now),
         _ => OpError.Invalid("op"),
     };
 
@@ -142,6 +143,24 @@ public static class PatchBill
 
         bill.Payments.Add(new PaymentDoc { PersonId = person.Id, Status = PaymentStatus.Waiting });
         bill.Log(now, ActivityKind.MarkPaid, $"{person.Name} says they've paid", person.Id);
+        return null;
+    }
+
+    private static OpError? UnmarkPaid(BillDocument bill, UnmarkPaidOp op, DateTimeOffset now)
+    {
+        var person = bill.FindPerson(op.PersonId);
+        if (person is null)
+            return OpError.Invalid("unknown-person");
+        var payment = bill.Payments.Find(p => p.PersonId == person.Id);
+        if (payment?.Status != op.From)
+            return OpError.Conflict("changed");
+        if (payment is null)
+            return OpError.Invalid("not-paid");
+        if (payment.Status == PaymentStatus.Confirmed)
+            return OpError.Invalid("already-confirmed");
+
+        bill.Payments.Remove(payment);
+        bill.Log(now, ActivityKind.UnmarkPaid, $"{person.Name} hasn't paid yet after all", person.Id);
         return null;
     }
 

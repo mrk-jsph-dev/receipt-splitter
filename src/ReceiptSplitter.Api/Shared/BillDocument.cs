@@ -16,7 +16,7 @@ public enum PaymentStatus { Waiting, Confirmed }
 
 public enum ActivityKind
 {
-    AddPerson, Join, Rename, RemovePerson, Claim, Unclaim, SetWeight, MarkPaid,
+    AddPerson, Join, Rename, RemovePerson, Claim, Unclaim, SetWeight, MarkPaid, UnmarkPaid,
     AddReceipt, EditReceipt, RemoveReceipt, ClaimRemoved, Settings, Share, Lock, Confirm, Undo,
 }
 

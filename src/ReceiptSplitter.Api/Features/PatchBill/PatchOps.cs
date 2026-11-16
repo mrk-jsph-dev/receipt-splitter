@@ -16,6 +16,7 @@ namespace ReceiptSplitter.Api.Features.PatchBill;
 [JsonDerivedType(typeof(UnclaimOp), "unclaim")]
 [JsonDerivedType(typeof(SetWeightOp), "setWeight")]
 [JsonDerivedType(typeof(MarkPaidOp), "markPaid")]
+[JsonDerivedType(typeof(UnmarkPaidOp), "unmarkPaid")]
 public record PatchOp;
 
 /// <summary>Adds a friend, for example one without a phone. Two people can't share a name.</summary>
@@ -41,3 +42,7 @@ public sealed record SetWeightOp(string UnitId, string PersonId, long Weight, IR
 /// <summary>"I've paid". Sets waiting; only the organizer can confirm.</summary>
 /// <param name="From">The payment status the client saw, or null for none.</param>
 public sealed record MarkPaidOp(string PersonId, PaymentStatus? From) : PatchOp;
+
+/// <summary>"I haven't paid yet": takes back a waiting payment. A confirmed one stays; only the organizer changes it.</summary>
+/// <param name="From">The payment status the client saw.</param>
+public sealed record UnmarkPaidOp(string PersonId, PaymentStatus? From) : PatchOp;

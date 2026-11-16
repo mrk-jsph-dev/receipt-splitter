@@ -1,29 +1,35 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import AvatarBadge from '../design/components/AvatarBadge.vue';
-import { formatMoney } from '../shared/money';
-import { balanceOf } from './summary';
+import PersonCard from './PersonCard.vue';
 import { useBill } from './useBill';
 
-const { data } = useBill();
+// Everyone on the bill with what they owe so far. Tap a person for their breakdown.
+
+const { data, me, breakdownFor } = useBill();
 const bill = computed(() => data.value!.bill);
-const money = (minor: number) => formatMoney(minor, bill.value.currency);
 </script>
 
 <template>
   <section class="col" aria-labelledby="people-h">
-    <div class="h"><span id="people-h">People</span><span class="sm muted">{{ bill.people.length }}</span></div>
-    <ul class="card list">
-      <li v-for="p in bill.people" :key="p.id" class="li">
-        <AvatarBadge :name="p.name" />
-        <b class="grow truncate">{{ p.name }}</b>
-        <span class="amt">{{ money(balanceOf(data!.breakdown, p.id)?.owed ?? 0) }}</span>
-      </li>
-    </ul>
+    <div class="h"><span id="people-h">People</span><span class="sm muted">{{ bill.people.length }}<template v-if="bill.headcountHint"> · the receipt says {{ bill.headcountHint }}</template></span></div>
+    <div class="people">
+      <PersonCard
+        v-for="p in bill.people"
+        :key="p.id"
+        :bill="bill"
+        :breakdown="data!.breakdown"
+        :person="p"
+        :me="me"
+        :can-drop="false"
+        @open="breakdownFor = p.id"
+      />
+    </div>
   </section>
 </template>
 
 <style scoped>
-.col { display: flex; flex-direction: column; gap: 12px; max-width: 720px; }
-.list { padding-block: 4px; gap: 0; }
+.col { display: flex; flex-direction: column; gap: 12px; }
+.people { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (min-width: 640px) { .people { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1240px) { .people { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 </style>
