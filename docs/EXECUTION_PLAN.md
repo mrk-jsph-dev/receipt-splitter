@@ -177,7 +177,8 @@ responsive site. Do it before module 5 so every later screen is built responsive
 > remove any greeting, profile avatar, "Me" tab, bell and cross-bill money totals. Apply the
 > minimal look: the colour tokens in the spec table (light and dark), flat white cards with
 > 1 px borders, neutral avatars, Inter only (drop Sora), JetBrains Mono for receipt lines,
-> Lucide icons through `lucide-vue-next` (stroke 1.75). Remove the 480 px `.screen` cap, the
+> Lucide icons through `lucide-vue-next` (stroke 1.75), and the peso receipt logo from the spec
+> (never a dollar sign). Remove the 480 px `.screen` cap, the
 > phone frame on wide screens and `HeroBand`. Add `web/src/design/breakpoints.css` (compact
 > < 640, medium 640 to 1023, expanded >= 1024, wide >= 1240), mobile-first `min-width`
 > queries only. Rebuild Home as "Split a bill" (scan card with Take photo and From gallery on

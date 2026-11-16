@@ -112,6 +112,9 @@ Minimal and flat. Graphite neutrals with one deep teal accent, light and dark.
 - Icons: Lucide only, via `lucide-vue-next`, stroke 1.75, 20 px (16 px in chips and small
   buttons). No emoji, no filled icons, no second icon set. Icon-only buttons get an
   `aria-label`.
+- Logo: a receipt outline with a peso sign (₱), drawn in the Lucide style as
+  `web/src/design/icons/ReceiptPeso.vue` (Lucide's `receipt` path plus a ₱ inside; Lucide
+  has no peso receipt). Never a dollar sign. Inside a bill, Receipts uses Lucide `receipt-text`.
 
 ### Breakpoints
 
