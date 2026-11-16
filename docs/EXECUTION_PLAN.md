@@ -163,6 +163,55 @@ compile. If anything fails, fix it as the first commit of module 1.
 
 ---
 
+### Module 4b: Responsive layout (phone, tablet, desktop)
+
+Module 4 built the screens as a phone layout: `.screen` in `web/src/design/base.css` caps the
+app at 480 px and frames it like a phone on bigger screens. This module makes it one
+responsive site. Do it before module 5 so every later screen is built responsive from the start.
+
+**Prompt**
+
+> Implement module 4b from docs/EXECUTION_PLAN.md: the "Responsive layout" section of
+> docs/SPEC.md, matching docs/design/responsive.html (open it in a browser; it shows Home,
+> Bill, Check receipt and Settle at 390, 834 and 1280 px). Nothing may look like an account:
+> remove any greeting, profile avatar, "Me" tab, bell and cross-bill money totals. Apply the
+> minimal look: the colour tokens in the spec table (light and dark), flat white cards with
+> 1 px borders, neutral avatars, Inter only (drop Sora), JetBrains Mono for receipt lines,
+> Lucide icons through `lucide-vue-next` (stroke 1.75), and the peso receipt logo from the spec
+> (never a dollar sign). Remove the 480 px `.screen` cap, the
+> phone frame on wide screens and `HeroBand`. Add `web/src/design/breakpoints.css` (compact
+> < 640, medium 640 to 1023, expanded >= 1024, wide >= 1240), mobile-first `min-width`
+> queries only. Rebuild Home as "Split a bill" (scan card with Take photo and From gallery on
+> touch sizes, Upload photos and a drop zone on expanded; Type it in; Try the sample) plus
+> "On this device" with a paid-percentage ring per bill (from the API, no money maths in the
+> browser) and the Forget this device footnote. Add `BillShell.vue` (bottom tab bar, 76 px
+> icon rail, 240 px sidebar with Items, People, Receipts, Settle) and put the bill route in
+> it. Add `Overlay.vue` (bottom sheet, centred dialog or side drawer by size) and a
+> `useBreakpoint()` composable for behaviour only. Follow the input rules: 44 px targets,
+> hover only under (hover: hover), drag only under (pointer: fine), safe-area insets, reduced
+> motion. The scan inputs only pick files for now; module 8 sends them. Add a local
+> Playwright script (`npm run screens`) that screenshots each route at 360, 390, 768, 1024,
+> 1280 and 1600 px in light and dark into `web/screens/` (git-ignored) and fails on
+> horizontal scroll. Do not add it to CI. Show me the plan first.
+
+**Touches:** `web/src/design/`, `web/src/App.vue`, `web/src/home/`, `web/src/bill/`,
+`web/package.json` (adds `lucide-vue-next`), `web/.gitignore`
+
+**Done when**
+- `cd web && npm test && npm run build` pass.
+- `npm run screens` passes: no horizontal scroll at any of the six widths, light and dark.
+- Home at 390, 834 and 1280 px matches docs/design/responsive.html, with no greeting, avatar,
+  bell or "Me" tab. A bill shows the bottom tab bar at 390 px, the icon rail at 834 px and
+  the sidebar at 1280 px.
+- On a phone, From gallery opens the photo library and Take photo opens the camera.
+- At 1600 px content stops at 1280 px and centres; no phone frame.
+- `grep -rn "max-width: *480px" web/src` finds nothing outside dialogs.
+- Tab through Home with the keyboard: every control reachable, focus ring visible.
+
+**Deploy:** `web`.
+
+---
+
 ### Module 5: Friend flow (join, claim, share, pay)
 
 **Prompt**
@@ -178,6 +227,8 @@ compile. If anything fails, fix it as the first commit of module 1.
 - Two browsers on the same bill see each other's claims within 10 seconds.
 - Claiming the same unit at the same time gives one winner and a clear message to the other.
 - Ben's numbers in the sample match the walkthrough (385.74).
+- Layout checked with `cd web && npm run screens` (360 to 1600 px, light and dark), per the
+  "Responsive layout" section of docs/SPEC.md.
 
 **Deploy:** `web`.
 
@@ -198,6 +249,8 @@ compile. If anything fails, fix it as the first commit of module 1.
 - A bill built by hand from the Ramen Nagi receipt reproduces every number in the walkthrough.
 - The senior lunch example gives 400.00 and 3 × 560.00.
 - The two-receipt example gives Ben +64.26.
+- Layout checked with `cd web && npm run screens` (360 to 1600 px, light and dark), per the
+  "Responsive layout" section of docs/SPEC.md.
 
 **Deploy:** `web` (and `api` if endpoints changed).
 
@@ -213,6 +266,8 @@ compile. If anything fails, fix it as the first commit of module 1.
 > plan first.
 
 **Done when** the settle-up list for the two-receipt example has 11 transfers and Ben sends nothing.
+- Layout checked with `cd web && npm run screens` (360 to 1600 px, light and dark), per the
+  "Responsive layout" section of docs/SPEC.md.
 
 **Deploy:** `web`, `api`.
 
@@ -227,7 +282,8 @@ compile. If anything fails, fix it as the first commit of module 1.
 > memory only and never logged or stored, daily cap and per-IP limit, quota endpoint, append
 > mode for long receipts, and the keyword/sign classifier for service charge, discounts, tax,
 > senior/PWD and VAT exempt lines with flags for review. In the web app (walkthrough steps 4, 5, 21
-> and 22): camera capture via file input, client-side resize under 4 MB, the receipt tray, "new receipt or next page?",
+> and 22): camera capture and gallery upload via file inputs (the module 4b scan card; several files at
+> once, plus drag and drop on desktop), client-side resize under 4 MB, the receipt tray, "new receipt or next page?",
 > and the reading screen. Check the current Document Intelligence receipt field list first and
 > update the [VERIFY] notes in SPEC.md. Show me the plan first.
 
@@ -235,7 +291,10 @@ compile. If anything fails, fix it as the first commit of module 1.
 - Scanning the Ramen Nagi photo (kept outside the repo) produces the 9 lines, flags the
   service charge and discount, and matches 5,255.80 after review.
 - Tests prove the image bytes never reach storage or logs.
+- A receipt photo picked from the phone gallery scans the same as one taken with the camera.
 - At the cap, Scan is disabled and Sample still works.
+- Layout checked with `cd web && npm run screens` (360 to 1600 px, light and dark), per the
+  "Responsive layout" section of docs/SPEC.md.
 
 **Deploy:** `infra` (if Document Intelligence was not deployed yet), `api`, `web`.
 

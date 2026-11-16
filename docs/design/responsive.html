@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="en">
+<!-- Icons: Lucide (https://lucide.dev), ISC license. -->
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Receipt Splitter Responsive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: intro, screen tabs, three device frames (desktop 1280, phone 390, tablet 834) rendering the SAME app markup; the app responds to its frame width with container queries. Minimal: flat white cards with hairline borders, one teal accent, neutral avatars, Lucide icons. */
+:root{
+  --page:#ECEFEF; --bg:#F6F7F7; --surface:#FFFFFF; --ink:#111618; --ink-2:#3B4548; --muted:#6B777B; --line:#E3E7E8; --soft:#F0F2F2;
+  --accent:#0E6B6B; --accent-hover:#0B5757; --accent-soft:#E2F0EF; --on-accent:#FFFFFF;
+  --amber:#9A6210; --amber-soft:#FAF0DE; --ok:#1F7A55; --ok-soft:#E1F2EA; --warn:#B4442B; --warn-soft:#F9E5DF;
+  --frame:#D9DFE0; --lift:0 1px 2px rgba(17,22,24,.04),0 12px 32px -20px rgba(17,22,24,.25);
+  --f-ui:"Inter","Segoe UI",system-ui,-apple-system,sans-serif; --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --page:#070A0B; --bg:#0D1112; --surface:#151A1C; --ink:#E9EEEF; --ink-2:#C3CDD0; --muted:#8C989C; --line:#252C2F; --soft:#1B2124;
+  --accent:#4DBDB5; --accent-hover:#6CCDC6; --accent-soft:#123230; --on-accent:#061312;
+  --amber:#E3B25A; --amber-soft:#33270F; --ok:#5CCB9B; --ok-soft:#12301F; --warn:#EE8B71; --warn-soft:#3A1E17;
+  --frame:#1E2528; --lift:0 1px 2px rgba(0,0,0,.4),0 12px 32px -20px rgba(0,0,0,.9); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --page:#070A0B; --bg:#0D1112; --surface:#151A1C; --ink:#E9EEEF; --ink-2:#C3CDD0; --muted:#8C989C; --line:#252C2F; --soft:#1B2124;
+  --accent:#4DBDB5; --accent-hover:#6CCDC6; --accent-soft:#123230; --on-accent:#061312;
+  --amber:#E3B25A; --amber-soft:#33270F; --ok:#5CCB9B; --ok-soft:#12301F; --warn:#EE8B71; --warn-soft:#3A1E17;
+  --frame:#1E2528; --lift:0 1px 2px rgba(0,0,0,.4),0 12px 32px -20px rgba(0,0,0,.9); color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:14px/1.5 var(--f-ui);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px 64px}
+h1,h2,h3{margin:0;letter-spacing:-.02em;text-wrap:balance}
+p{margin:0}
+code{font-family:var(--f-mono);font-size:.86em;background:var(--surface);border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+.page{max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:24px}
+.intro{display:flex;flex-direction:column;gap:10px;max-width:720px}
+.intro h1{font-size:clamp(28px,4vw,38px);font-weight:700}
+.intro p{color:var(--muted);font-size:15px}
+.tabs{display:flex;flex-wrap:wrap;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px;align-self:flex-start}
+.tabs button{all:unset;cursor:pointer;padding:8px 14px;border-radius:8px;font-weight:600;font-size:13px;color:var(--muted)}
+.tabs button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+.tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.dev{display:flex;flex-direction:column;gap:10px;min-width:0}
+.dev-h{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.dev-h b{font-size:14px}
+.dev-h span{color:var(--muted);font-size:13px}
+.viewport{position:relative;overflow:hidden;border-radius:20px;background:var(--frame);padding:8px}
+.scaler{transform-origin:0 0}
+.row2{display:grid;grid-template-columns:minmax(0,390fr) minmax(0,834fr);gap:28px;align-items:start}
+@media (max-width:900px){.row2{grid-template-columns:minmax(0,1fr)}}
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.rule{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.rule h3{font-size:15px;display:flex;align-items:center;gap:8px}
+.rule h3 svg{color:var(--accent)}
+.rule ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px;color:var(--ink-2)}
+.tbl{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:14px}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:760px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:500 11px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--soft)}
+tr:last-child td{border-bottom:0}
+h2.sec{font-size:22px}
+.swatches{display:flex;flex-wrap:wrap;gap:8px}
+.sw{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:6px 10px 6px 6px;font-size:12px}
+.sw i{width:22px;height:22px;border-radius:6px;display:block;border:1px solid var(--line)}
+.sw code{background:none;border:0;padding:0;color:var(--muted)}
+
+/* ================= THE APP ================= */
+.app{container:app/inline-size;background:var(--bg);color:var(--ink);font:14px/1.45 var(--f-ui);border-radius:14px;overflow:hidden;position:relative}
+.i{width:20px;height:20px;flex:0 0 auto}
+.i.s{width:16px;height:16px}
+.app .shell{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;height:100%}
+.side{display:none}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;background:var(--bg);border-bottom:1px solid var(--line);min-width:0}
+.tb-l{display:flex;align-items:center;gap:10px;min-width:0}
+.t{font-weight:650;font-size:16px;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sub{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand{display:flex;align-items:center;gap:10px;font-weight:650;letter-spacing:-.01em}
+.mark{width:32px;height:32px;border-radius:9px;background:var(--accent);color:var(--on-accent);display:grid;place-items:center;flex:0 0 auto}
+.mark .i{width:18px;height:18px}
+.main{overflow:auto;padding:16px 16px 140px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.main.home{padding-bottom:32px}
+.tabbar{position:absolute;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface);border-top:1px solid var(--line);padding:6px 6px 14px}
+.tab{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:500;color:var(--muted);padding:6px 0;border-radius:10px;min-height:44px}
+.tab.on{color:var(--accent)}
+.tab.on .i{stroke-width:2.1}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;min-width:0}
+.gap6{display:flex;align-items:center;gap:6px}
+.amt{font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.big{font-weight:700;font-size:30px;line-height:1.1;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)} .sm{font-size:12.5px}
+.h{font-weight:650;font-size:14px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.h .lnk{font-weight:500;font-size:12.5px;color:var(--accent);display:inline-flex;align-items:center;gap:4px}
+.eyebrow{font:500 11px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:10px;min-height:40px;padding:0 14px;font:600 13.5px var(--f-ui);border:1px solid var(--line);background:var(--surface);color:var(--ink);white-space:nowrap}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.sm{min-height:34px;padding:0 11px;font-size:12.5px;border-radius:9px}
+.btn.block{width:100%}
+.ib{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;color:var(--ink-2);flex:0 0 auto}
+.chip{display:inline-flex;align-items:center;gap:5px;border-radius:7px;padding:3px 8px;font-size:11.5px;font-weight:550;background:var(--soft);color:var(--ink-2);white-space:nowrap}
+.chip .i{width:13px;height:13px}
+.chip.me{background:var(--accent-soft);color:var(--accent)} .chip.open{background:var(--amber-soft);color:var(--amber)} .chip.ok{background:var(--ok-soft);color:var(--ok)} .chip.flag{background:var(--warn-soft);color:var(--warn)}
+.av{width:28px;height:28px;border-radius:50%;display:inline-grid;place-items:center;font-weight:600;font-size:11px;background:var(--soft);color:var(--ink-2);border:2px solid var(--surface);flex:0 0 auto}
+.av.you{background:var(--accent);color:var(--on-accent)}
+.avs{display:flex}.avs .av{margin-left:-7px}.avs .av:first-child{margin-left:0}
+.ring{--p:64;width:40px;height:40px;border-radius:50%;background:conic-gradient(var(--accent) calc(var(--p)*1%),var(--line) 0);display:grid;place-items:center;flex:0 0 auto}
+.ring span{width:32px;height:32px;border-radius:50%;background:var(--surface);display:grid;place-items:center;font-size:10.5px;font-weight:600;font-variant-numeric:tabular-nums}
+.tile{width:40px;height:40px;border-radius:10px;background:var(--soft);color:var(--ink-2);display:grid;place-items:center;flex:0 0 auto}
+.tile.acc{background:var(--accent-soft);color:var(--accent)}
+.seg{display:inline-flex;background:var(--soft);border-radius:10px;padding:3px;gap:2px}
+.seg span{padding:6px 12px;border-radius:8px;font-size:12.5px;font-weight:550;color:var(--muted);white-space:nowrap}
+.seg .on{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.bar{height:6px;border-radius:999px;background:var(--soft);overflow:hidden}.bar i{display:block;height:100%;background:var(--accent);border-radius:inherit}
+.list{display:flex;flex-direction:column}
+.li{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);min-width:0}
+.li:last-child{border-bottom:0}
+.grow{flex:1;min-width:0}
+.grow b{display:block;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.grow .sm{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* home */
+.home-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:20px;align-items:start;width:100%;max-width:1120px;margin:0 auto}
+.hero{display:flex;flex-direction:column;gap:6px}
+.hero h1{font-size:26px;font-weight:700}
+.hero p{color:var(--muted)}
+.starts{display:flex;flex-direction:column;gap:8px}
+.start{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;min-height:64px}
+.start.main-act{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.start.main-act .tile{background:rgba(255,255,255,.16);color:var(--on-accent)}
+.start.main-act .sm{color:var(--on-accent);opacity:.8}
+.scan{background:var(--accent);color:var(--on-accent);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.scan .tile{background:rgba(255,255,255,.16);color:var(--on-accent)}
+.scan .sm{opacity:.8}
+.scan .grow .sm{white-space:normal}
+.scan .btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.scan .btn{background:var(--surface);border-color:transparent;color:var(--ink)}
+.scan .btn.alt{background:rgba(255,255,255,.14);color:var(--on-accent)}
+.scan .btns.desk{display:none}
+.scan .dropz{display:none;border:1.5px dashed rgba(255,255,255,.45);border-radius:10px;padding:12px;font-size:12.5px;text-align:center;gap:8px;align-items:center;justify-content:center}
+.start .chev{color:var(--muted)} .start.main-act .chev{color:var(--on-accent)}
+.billlist{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+.billrow{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;min-width:0}
+.billrow .right{display:flex;align-items:center;gap:12px}
+.billrow .right .amt{text-align:right}
+.note{display:flex;gap:10px;align-items:flex-start;font-size:12.5px;color:var(--muted);padding:4px 2px}
+.note a{color:var(--accent);font-weight:550}
+/* bill */
+.grid-bill,.grid-review,.grid-settle{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start}
+.col{display:flex;flex-direction:column;gap:12px;min-width:0}
+.item{gap:10px;padding:14px}
+.item .name{display:flex;align-items:center;gap:8px;min-width:0}
+.item .name b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.grip{color:var(--muted);display:none}
+.people{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.person{gap:8px;padding:14px}
+.person .amt{font-size:16px}
+.person.you{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.person.drop{border-style:dashed;border-color:var(--accent);background:var(--accent-soft)}
+.sharebar{position:absolute;left:12px;right:12px;bottom:78px;background:var(--ink);color:var(--surface);border-radius:14px;padding:10px 10px 10px 16px;display:flex;justify-content:space-between;align-items:center;box-shadow:var(--lift)}
+.sharebar .cap2{font-size:12.5px;opacity:.7}
+.sharebar .btn{background:var(--surface);color:var(--ink);border:0}
+.receipt{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--lift);padding:18px 18px 0;display:flex;flex-direction:column;gap:8px;position:relative}
+.receipt .shop{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;padding-bottom:8px;border-bottom:1px dashed var(--line);margin-bottom:4px}
+.receipt .ln{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:12px;font:12.5px var(--f-mono);color:var(--ink-2)}
+.receipt .ln span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.receipt .ln.flag{color:var(--warn);background:var(--warn-soft);margin:0 -18px;padding:4px 18px}
+.tear{border-top:2px dashed var(--line);margin:10px -18px 0;position:relative;height:0}
+.tear::before,.tear::after{content:"";position:absolute;top:-11px;width:20px;height:20px;border-radius:50%;background:var(--bg);border:1px solid var(--line)}
+.tear::before{left:-11px;clip-path:inset(0 0 0 50%)}.tear::after{right:-11px;clip-path:inset(0 50% 0 0)}
+.receipt .foot{padding:12px 0 16px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pay{display:flex;align-items:center;gap:12px}
+.only-compact{display:revert}
+.not-compact{display:none!important}
+.desk-only{display:none!important}
+.compact-seg{align-self:stretch;display:flex}.compact-seg span{flex:1;text-align:center}
+
+/* ---------- MEDIUM 640–1023 ---------- */
+@container app (min-width:640px){
+  .app .shell.billshell{grid-template-columns:76px minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)}
+  .billshell .side{display:flex;grid-row:1/3;flex-direction:column;align-items:center;gap:4px;background:var(--surface);border-right:1px solid var(--line);padding:12px 8px}
+  .side .home-l{margin-bottom:14px}
+  .side .nv{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px;border-radius:10px;font-size:11px;font-weight:500;color:var(--muted);width:100%;min-height:44px}
+  .side .nv.on{background:var(--accent-soft);color:var(--accent)}
+  .side .nv .cnt{display:none}
+  .side .lbl-full,.side .others,.side .foot{display:none}
+  .tabbar,.sharebar{display:none}
+  .topbar{padding:14px 24px}
+  .t{font-size:18px}
+  .main{padding:20px 24px 32px;gap:20px}
+  .only-compact{display:none!important}
+  .not-compact{display:revert!important}
+  .home-grid{grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:28px}
+  .grid-bill{grid-template-columns:minmax(0,1fr) minmax(0,280px)}
+  .grid-bill .people-col{grid-column:1;grid-row:2}
+  .grid-bill .sum-col{grid-column:2;grid-row:1/3;position:sticky;top:0}
+  .grid-review{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .grid-settle{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .grid-settle .wide{grid-column:1/-1}
+}
+/* ---------- EXPANDED ≥1024 ---------- */
+@container app (min-width:1024px){
+  .app .shell.billshell{grid-template-columns:240px minmax(0,1fr)}
+  .billshell .side{align-items:stretch;padding:16px 12px;gap:2px}
+  .side .home-l{margin:0 4px 18px;justify-content:flex-start}
+  .side .lbl-full{display:block}
+  .side .cap{font:500 10.5px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:12px 10px 6px}
+  .side .nv{flex-direction:row;justify-content:flex-start;gap:10px;padding:9px 10px;font-size:13.5px;min-height:40px}
+  .side .nv .cnt{display:inline;margin-left:auto;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .side .others{display:flex;flex-direction:column;gap:2px}
+  .side .others a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;font-size:13px;color:var(--ink-2)}
+  .side .others a .muted{margin-left:auto;font-size:12px}
+  .side .foot{display:flex;gap:8px;align-items:flex-start;margin-top:auto;padding:12px 10px 0;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+  .topbar{padding:16px 32px}
+  .main{padding:24px 32px 40px;gap:24px}
+  .desk-only{display:revert!important}
+  .grip{display:inline-flex}
+  .scan .btns.touch{display:none}
+  .scan .dropz{display:flex}
+  .scan .btns.desk{display:grid;grid-template-columns:1fr}
+  .home-grid{grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:40px}
+  .home-grid .startcol{position:sticky;top:0}
+  .billlist{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grid-bill{grid-template-columns:minmax(0,280px) minmax(0,1fr) minmax(0,300px)}
+  .grid-bill .people-col{grid-column:2;grid-row:1}
+  .grid-bill .sum-col{grid-column:3;grid-row:1}
+  .grid-review{grid-template-columns:minmax(0,380px) minmax(0,1fr)}
+  .grid-settle{grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,300px)}
+  .grid-settle .wide{grid-column:1/3}
+  .grid-settle .aside{grid-column:3;grid-row:1/3}
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+  <div class="intro">
+    <h1>Responsive layout</h1>
+    <p>One app for phone, tablet and desktop, with no accounts anywhere. Home is a start page and a list of bills saved in this browser. Inside a bill, you are a name in that bill only. Flat white cards, hairline borders, one teal accent and one icon set.</p>
+  </div>
+  <div class="tabs" role="group" aria-label="Screen">
+    <button data-s="home" aria-pressed="true">Home</button>
+    <button data-s="bill" aria-pressed="false">Bill · claim</button>
+    <button data-s="review" aria-pressed="false">Check receipt</button>
+    <button data-s="settle" aria-pressed="false">Settle up</button>
+  </div>
+
+  <div class="dev" id="d-desk"><div class="dev-h"><b>Laptop and desktop</b><span>1280 px · bill sidebar, three columns, drag and drop</span></div><div class="viewport"><div class="scaler"></div></div></div>
+  <div class="row2">
+    <div class="dev" id="d-phone"><div class="dev-h"><b>Phone</b><span>390 px · one column, bill tabs at the bottom</span></div><div class="viewport" style="border-radius:34px"><div class="scaler"></div></div></div>
+    <div class="dev" id="d-tab"><div class="dev-h"><b>Tablet</b><span>834 px · icon rail, two columns</span></div><div class="viewport"><div class="scaler"></div></div></div>
+  </div>
+
+  <h2 class="sec">No accounts, and it shows</h2>
+  <div class="rules">
+    <div class="rule"><h3 data-i="x">Removed</h3><ul>
+      <li>"Hi Ana" greeting, profile avatar and the "Me" tab.</li>
+      <li>Notification bell. There is nothing to sign in to, so nothing to notify.</li>
+      <li>"You're owed" totals across bills. Money is shown per bill only.</li>
+      <li>App-wide Settle and Activity. Both live inside each bill.</li>
+    </ul></div>
+    <div class="rule"><h3 data-i="smartphone">Instead</h3><ul>
+      <li>Home is "Split a bill" plus <b>On this device</b>: bills this browser has opened.</li>
+      <li>Scan takes a new photo or one from the gallery. On desktop: upload or drag photos in.</li>
+      <li>Your name belongs to one bill: "You're Ben · Change" in the bill header.</li>
+      <li>A footnote says where data lives and offers <b>Forget this device</b>.</li>
+      <li>Navigation appears only inside a bill: Items, People, Receipts, Settle.</li>
+    </ul></div>
+    <div class="rule"><h3 data-i="sliders-horizontal">Look</h3><ul>
+      <li>Flat white cards with 1 px borders. Only the receipt card lifts.</li>
+      <li>One accent: deep teal for actions and "you". Amber means unclaimed, green means paid, red means check this.</li>
+      <li>Avatars are neutral grey initials. Yours is teal.</li>
+      <li>Inter for everything, JetBrains Mono for receipt lines.</li>
+    </ul></div>
+    <div class="rule"><h3 data-i="list-checks">Icons</h3><ul>
+      <li>Lucide only (<code>lucide-vue-next</code>), 1.75 stroke, 20 px, 16 px in chips.</li>
+      <li>Every icon button has a text label or <code>aria-label</code>.</li>
+      <li>No emoji, no mixed icon sets, no filled icons.</li>
+    </ul></div>
+  </div>
+
+  <h2 class="sec">Colors</h2>
+  <div class="swatches" id="sw"></div>
+
+  <h2 class="sec">Layout rules</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Width</th><th>Typical device</th><th>Home</th><th>Inside a bill</th><th>Sheets and dialogs</th></tr></thead>
+    <tbody>
+      <tr><td><b>&lt; 640 px</b><br>compact</td><td>Phones, portrait</td><td>One column: start actions, then bills on this device</td><td>Tab bar at the bottom: Items, People, Receipts, Settle. Your share pinned above it</td><td>Bottom sheets</td></tr>
+      <tr><td><b>640 – 1023 px</b><br>medium</td><td>Tablets, phones in landscape, narrow windows</td><td>Two columns: start actions left, bills right</td><td>76 px icon rail with the same four sections. Items and people left, summary pinned right</td><td>Centred dialog, max 480 px</td></tr>
+      <tr><td><b>≥ 1024 px</b><br>expanded</td><td>Laptops, desktops</td><td>Start actions pinned left, bills in two columns right</td><td>240 px sidebar: back to home, the four sections with counts, other bills on this device. Three columns: unclaimed · people · summary. Drag items onto people</td><td>Side drawer for breakdowns, dialog for edits</td></tr>
+      <tr><td><b>≥ 1240 px</b><br>wide</td><td>Large monitors</td><td>Content stops at 1120 px and centres</td><td>People grid goes to three across</td><td>Same</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="rules">
+    <div class="rule"><h3 data-i="smartphone">Build it with</h3><ul>
+      <li>Mobile-first CSS, then <code>@media (min-width: 640px)</code> and <code>(min-width: 1024px)</code>.</li>
+      <li><code>BillShell</code> owns the tab bar, rail and sidebar. Home has no shell nav.</li>
+      <li>Same components and routes at every size.</li>
+      <li>Remove the 480 px <code>.screen</code> cap.</li>
+    </ul></div>
+    <div class="rule"><h3 data-i="hand-coins">Touch and mouse</h3><ul>
+      <li>Every tap target at least 44 × 44 px.</li>
+      <li>Drag and drop only with <code>(pointer: fine)</code> on expanded. Mine and Share always work.</li>
+      <li>Hover styles only under <code>(hover: hover)</code>. Focus ring always visible.</li>
+    </ul></div>
+    <div class="rule"><h3 data-i="circle-check">Check before merging</h3><ul>
+      <li>Screenshots at 360, 390, 768, 1024, 1280 and 1600 px, light and dark.</li>
+      <li>No horizontal scroll. Amounts never wrap. Long names truncate.</li>
+      <li>Browser zoom at 200%: still usable.</li>
+    </ul></div>
+  </div>
+</div>
+<script>
+const LUCIDE={"receipt": "<path d=\"M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z\" /> <path d=\"M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8\" /> <path d=\"M12 17.5v-11\" />", "receipt-text": "<path d=\"M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z\" /> <path d=\"M14 8H8\" /> <path d=\"M16 12H8\" /> <path d=\"M13 16H8\" />", "scan-line": "<path d=\"M3 7V5a2 2 0 0 1 2-2h2\" /> <path d=\"M17 3h2a2 2 0 0 1 2 2v2\" /> <path d=\"M21 17v2a2 2 0 0 1-2 2h-2\" /> <path d=\"M7 21H5a2 2 0 0 1-2-2v-2\" /> <path d=\"M7 12h10\" />", "pencil-line": "<path d=\"M12 20h9\" /> <path d=\"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z\" /> <path d=\"m15 5 3 3\" />", "ellipsis": "<circle cx=\"12\" cy=\"12\" r=\"1\" /> <circle cx=\"19\" cy=\"12\" r=\"1\" /> <circle cx=\"5\" cy=\"12\" r=\"1\" />", "arrow-left": "<path d=\"m12 19-7-7 7-7\" /> <path d=\"M19 12H5\" />", "share-2": "<circle cx=\"18\" cy=\"5\" r=\"3\" /> <circle cx=\"6\" cy=\"12\" r=\"3\" /> <circle cx=\"18\" cy=\"19\" r=\"3\" /> <line x1=\"8.59\" x2=\"15.42\" y1=\"13.51\" y2=\"17.49\" /> <line x1=\"15.41\" x2=\"8.59\" y1=\"6.51\" y2=\"10.49\" />", "link": "<path d=\"M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71\" /> <path d=\"M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71\" />", "users": "<path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\" /> <circle cx=\"9\" cy=\"7\" r=\"4\" /> <path d=\"M22 21v-2a4 4 0 0 0-3-3.87\" /> <path d=\"M16 3.13a4 4 0 0 1 0 7.75\" />", "list-checks": "<path d=\"m3 17 2 2 4-4\" /> <path d=\"m3 7 2 2 4-4\" /> <path d=\"M13 6h8\" /> <path d=\"M13 12h8\" /> <path d=\"M13 18h8\" />", "arrow-left-right": "<path d=\"M8 3 4 7l4 4\" /> <path d=\"M4 7h16\" /> <path d=\"m16 21 4-4-4-4\" /> <path d=\"M20 17H4\" />", "utensils": "<path d=\"M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2\" /> <path d=\"M7 2v20\" /> <path d=\"M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7\" />", "coffee": "<path d=\"M10 2v2\" /> <path d=\"M14 2v2\" /> <path d=\"M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1\" /> <path d=\"M6 2v2\" />", "shopping-basket": "<path d=\"m15 11-1 9\" /> <path d=\"m19 11-4-7\" /> <path d=\"M2 11h20\" /> <path d=\"m3.5 11 1.6 7.4a2 2 0 0 0 2 1.6h9.8a2 2 0 0 0 2-1.6l1.7-7.4\" /> <path d=\"M4.5 15.5h15\" /> <path d=\"m5 11 4-7\" /> <path d=\"m9 11 1 9\" />", "check": "<path d=\"M20 6 9 17l-5-5\" />", "plus": "<path d=\"M5 12h14\" /> <path d=\"M12 5v14\" />", "circle-check": "<circle cx=\"12\" cy=\"12\" r=\"10\" /> <path d=\"m9 12 2 2 4-4\" />", "clock": "<circle cx=\"12\" cy=\"12\" r=\"10\" /> <polyline points=\"12 6 12 12 16 14\" />", "chevron-right": "<path d=\"m9 18 6-6-6-6\" />", "info": "<circle cx=\"12\" cy=\"12\" r=\"10\" /> <path d=\"M12 16v-4\" /> <path d=\"M12 8h.01\" />", "hand-coins": "<path d=\"M11 15h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 17\" /> <path d=\"m7 21 1.6-1.4c.3-.4.8-.6 1.4-.6h4c1.1 0 2.1-.4 2.8-1.2l4.6-4.4a2 2 0 0 0-2.75-2.91l-4.2 3.9\" /> <path d=\"m2 16 6 6\" /> <circle cx=\"16\" cy=\"9\" r=\"2.9\" /> <circle cx=\"6\" cy=\"5\" r=\"3\" />", "camera": "<path d=\"M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z\" /> <circle cx=\"12\" cy=\"13\" r=\"3\" />", "user-plus": "<path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\" /> <circle cx=\"9\" cy=\"7\" r=\"4\" /> <line x1=\"19\" x2=\"19\" y1=\"8\" y2=\"14\" /> <line x1=\"22\" x2=\"16\" y1=\"11\" y2=\"11\" />", "copy": "<rect width=\"14\" height=\"14\" x=\"8\" y=\"8\" rx=\"2\" ry=\"2\" /> <path d=\"M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2\" />", "trash-2": "<path d=\"M3 6h18\" /> <path d=\"M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6\" /> <path d=\"M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2\" /> <line x1=\"10\" x2=\"10\" y1=\"11\" y2=\"17\" /> <line x1=\"14\" x2=\"14\" y1=\"11\" y2=\"17\" />", "smartphone": "<rect width=\"14\" height=\"20\" x=\"5\" y=\"2\" rx=\"2\" ry=\"2\" /> <path d=\"M12 18h.01\" />", "sliders-horizontal": "<line x1=\"21\" x2=\"14\" y1=\"4\" y2=\"4\" /> <line x1=\"10\" x2=\"3\" y1=\"4\" y2=\"4\" /> <line x1=\"21\" x2=\"12\" y1=\"12\" y2=\"12\" /> <line x1=\"8\" x2=\"3\" y1=\"12\" y2=\"12\" /> <line x1=\"21\" x2=\"16\" y1=\"20\" y2=\"20\" /> <line x1=\"12\" x2=\"3\" y1=\"20\" y2=\"20\" /> <line x1=\"14\" x2=\"14\" y1=\"2\" y2=\"6\" /> <line x1=\"8\" x2=\"8\" y1=\"10\" y2=\"14\" /> <line x1=\"16\" x2=\"16\" y1=\"18\" y2=\"22\" />", "percent": "<line x1=\"19\" x2=\"5\" y1=\"5\" y2=\"19\" /> <circle cx=\"6.5\" cy=\"6.5\" r=\"2.5\" /> <circle cx=\"17.5\" cy=\"17.5\" r=\"2.5\" />", "x": "<path d=\"M18 6 6 18\" /> <path d=\"m6 6 12 12\" />", "grip-vertical": "<circle cx=\"9\" cy=\"12\" r=\"1\" /> <circle cx=\"9\" cy=\"5\" r=\"1\" /> <circle cx=\"9\" cy=\"19\" r=\"1\" /> <circle cx=\"15\" cy=\"12\" r=\"1\" /> <circle cx=\"15\" cy=\"5\" r=\"1\" /> <circle cx=\"15\" cy=\"19\" r=\"1\" />", "wallet": "<path d=\"M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1\" /> <path d=\"M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4\" />", "history": "<path d=\"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8\" /> <path d=\"M3 3v5h5\" /> <path d=\"M12 7v5l4 2\" />", "image": "<rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\" ry=\"2\" /> <circle cx=\"9\" cy=\"9\" r=\"2\" /> <path d=\"m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21\" />", "upload": "<path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\" /> <polyline points=\"17 8 12 3 7 8\" /> <line x1=\"12\" x2=\"12\" y1=\"3\" y2=\"15\" />", "receipt-peso": "<path d=\"M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z\" /><path d=\"M10 17V7h2.5a3 3 0 0 1 0 6H10\" /><path d=\"M8 9h8\" /><path d=\"M8 11h8\" />"};
+const I=(n,c='')=>`<svg class="i ${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${LUCIDE[n]}</svg>`;
+const av=(l,you)=>`<span class="av ${you?'you':''}">${l}</span>`;
+const ring=p=>`<span class="ring" style="--p:${p}" aria-label="${p}% paid"><span>${p}%</span></span>`;
+
+function billShell(active,top,main,extra=''){
+ const nv=(k,l,i,c)=>`<a class="nv ${active===k?'on':''}" aria-label="${l}">${I(i)}<span>${l}</span><span class="cnt">${c}</span></a>`;
+ const tb=(k,l,i)=>`<a class="tab ${active===k?'on':''}">${I(i)}<span>${l}</span></a>`;
+ return `<div class="shell billshell">
+  <aside class="side">
+   <a class="brand home-l" aria-label="Home"><span class="mark">${I('receipt-peso')}</span><span class="lbl-full">Receipt Splitter</span></a>
+   <span class="cap lbl-full">Ramen dinner</span>
+   ${nv('items','Items','list-checks','6 left')}${nv('people','People','users','12')}${nv('receipts','Receipts','receipt-text','2')}${nv('settle','Settle','arrow-left-right','6 of 11')}
+   <div class="others"><span class="cap">On this device</span>
+    <a>${I('utensils','s')}<span>Team lunch</span><span class="muted">25%</span></a>
+    <a>${I('coffee','s')}<span>Coffee run</span><span class="muted">50%</span></a>
+   </div>
+   <div class="foot">${I('smartphone','s')}<span>Saved in this browser only. Anyone with the link can open this bill.</span></div>
+  </aside>
+  <header class="topbar">${top}</header>
+  <main class="main">${main}</main>
+  <nav class="tabbar">${tb('items','Items','list-checks')}${tb('people','People','users')}${tb('receipts','Receipts','receipt-text')}${tb('settle','Settle','arrow-left-right')}</nav>
+  ${extra}
+ </div>`;
+}
+const billTop=(title,sub,right)=>`<div class="tb-l"><span class="ib only-compact" aria-label="Back">${I('arrow-left')}</span><div style="min-width:0"><div class="t">${title}</div><div class="sub">${sub}</div></div></div><div class="gap6">${right}</div>`;
+const youChip=`<span class="chip me">${I('check')}You're Ben</span><span class="sm muted not-compact" style="text-decoration:underline">Change</span>`;
+
+const billRow=(icon,name,meta,amt,p)=>`<div class="billrow"><span class="tile">${I(icon)}</span><div class="grow"><b>${name}</b><span class="sm muted">${meta}</span></div><div class="right"><span class="amt">${amt}</span>${p===100?`<span class="chip ok">${I('check')}Settled</span>`:ring(p)}</div></div>`;
+
+const S={
+home:()=>`<div class="shell"><header class="topbar"><span class="brand"><span class="mark">${I('receipt-peso')}</span>Receipt Splitter</span><span class="ib" aria-label="More">${I('ellipsis')}</span></header>
+ <main class="main home"><div class="home-grid">
+  <div class="col startcol" style="gap:16px">
+   <div class="hero"><h1>Split a bill</h1><p>No sign-up. Add the receipt, share the link, and everyone taps what they had.</p></div>
+   <div class="starts">
+    <div class="scan"><div class="row" style="justify-content:flex-start;gap:12px"><span class="tile">${I('scan-line')}</span><div class="grow"><b>Scan a receipt</b><span class="sm">Take a photo or use one you already have. 9 of 15 scans left today.</span></div></div>
+     <div class="btns touch"><span class="btn">${I('camera','s')}Take photo</span><span class="btn alt">${I('image','s')}From gallery</span></div>
+     <div class="btns desk"><span class="btn">${I('upload','s')}Upload photos</span></div>
+     <div class="dropz">${I('image','s')}or drop receipt photos here · JPG, PNG, HEIC, PDF</div>
+    </div>
+    <div class="start"><span class="tile acc">${I('pencil-line')}</span><div class="grow"><b>Type it in</b><span class="sm muted">Add lines and fees by hand</span></div>${I('chevron-right','chev')}</div>
+    <div class="start"><span class="tile acc">${I('receipt-text')}</span><div class="grow"><b>Try the sample</b><span class="sm muted">A ready bill, nothing to upload</span></div>${I('chevron-right','chev')}</div>
+   </div>
+  </div>
+  <div class="col">
+   <div class="h"><span>On this device</span><span class="seg"><span class="on">All</span><span>Open</span><span>Settled</span></span></div>
+   <div class="billlist">
+    ${billRow('utensils','Ramen dinner','25 Sep · 12 people · 2 receipts','₱5,855.80',64)}
+    ${billRow('utensils','Team lunch','24 Sep · 6 people','₱2,080.00',25)}
+    ${billRow('coffee','Coffee run','14 Nov · 4 people','₱860.00',50)}
+    ${billRow('shopping-basket','Weekend groceries','8 Nov · 3 people','₱3,412.50',100)}
+   </div>
+   <div class="note">${I('smartphone','s')}<span>These links are saved in this browser only. Bills delete 30 days after the last change. <a>Forget this device</a></span></div>
+  </div>
+ </div></main></div>`,
+
+bill:()=>billShell('items',
+ billTop('Ramen dinner','2 receipts · ₱5,855.80',`${youChip}<span class="btn sm" aria-label="Share link">${I('link','s')}<span class="not-compact">Share link</span></span>`),
+ `<div class="seg compact-seg only-compact"><span class="on">Unclaimed 6</span><span>Mine 3</span><span>All 20</span></div>
+  <div class="grid-bill">
+   <div class="col">
+    <div class="h"><span>Unclaimed</span><span class="chip open">₱1,098.00 left</span></div>
+    <div class="card item"><div class="row"><span class="name"><span class="grip">${I('grip-vertical','s')}</span><b>Kakuni Belly</b></span><span class="amt">195.00</span></div><div class="row"><span class="chip open">Unclaimed</span><span class="gap6"><span class="btn sm pri">Mine</span><span class="btn sm">Share</span></span></div></div>
+    <div class="card item"><div class="row"><span class="name"><span class="grip">${I('grip-vertical','s')}</span><b>Butao King</b></span><span class="amt">485.00</span></div><div class="row"><div class="avs">${av('A')}${av('B',1)}${av('E')}${av('F')}${av('+1')}</div><span class="sm muted">5 of 8 claimed</span></div><div class="row"><span class="chip me">${I('check')}1 is yours</span><span class="btn sm">${I('plus','s')}Claim another</span></div></div>
+    <div class="card item"><div class="row"><span class="name"><span class="grip">${I('grip-vertical','s')}</span><b>Tamago</b></span><span class="amt">85.00</span></div><div class="row"><span class="chip open">Unclaimed</span><span class="gap6"><span class="btn sm pri">Mine</span><span class="btn sm">Share</span></span></div></div>
+    <span class="sm muted desk-only">Drag an item onto a person, or use Mine and Share.</span>
+   </div>
+   <div class="col people-col not-compact">
+    <div class="h"><span>People</span><span class="lnk">${I('user-plus','s')}Add person</span></div>
+    <div class="people">
+     <div class="card person"><div class="row">${av('A')}<span class="chip ok">${I('check')}Paid</span></div><b>Ana</b><span class="amt">₱554.74</span><span class="sm muted">Butao King, Noodles, Milk tea</span></div>
+     <div class="card person you"><div class="row">${av('B',1)}<span class="chip me">You</span></div><b>Ben</b><span class="amt">₱535.74</span><span class="sm muted">Butao King, ⅓ Gyoza, Milk tea</span></div>
+     <div class="card person drop"><div class="row">${av('C')}<span class="chip">Not paid</span></div><b>Carla</b><span class="amt">₱683.74</span><span class="sm muted">Drop to give Carla this item</span></div>
+     <div class="card person"><div class="row">${av('D')}<span class="chip">Not paid</span></div><b>Dan</b><span class="amt">₱632.74</span><span class="sm muted">Red King, Coke Zero, Milk tea</span></div>
+     <div class="card person"><div class="row">${av('E')}<span class="chip">Not paid</span></div><b>Eli</b><span class="amt">₱347.73</span><span class="sm muted">Butao King</span></div>
+     <div class="card person" style="align-items:center;justify-content:center;text-align:center;border-style:dashed"><span class="tile">${I('users')}</span><span class="sm muted">7 more people</span></div>
+    </div>
+   </div>
+   <div class="col sum-col not-compact">
+    <div class="card"><span class="eyebrow">Your share · Ben</span><div class="big">₱535.74</div>
+     <div class="row sm"><span class="muted">Dinner</span><span class="amt">385.74</span></div><div class="row sm"><span class="muted">Milk tea</span><span class="amt">150.00</span></div><div class="row sm"><span class="muted">You paid for milk tea</span><span class="amt">−600.00</span></div>
+     <div class="row" style="border-top:1px solid var(--line);padding-top:10px"><b>You get back</b><span class="amt" style="color:var(--ok)">₱64.26</span></div>
+     <span class="btn block">See breakdown</span></div>
+    <div class="card"><div class="row sm"><span class="muted">Claimed</span><span class="amt">4,157.80 of 5,255.80</span></div><div class="bar"><i style="width:79%"></i></div><span class="sm muted gap6">${I('clock','s')}Synced 4 s ago</span></div>
+   </div>
+  </div>`,
+ `<div class="sharebar"><div><div class="cap2">You get back</div><div class="amt" style="font-size:18px">₱64.26</div></div><span class="btn sm">Breakdown</span></div>`),
+
+review:()=>billShell('receipts',
+ billTop('Check receipt 1','Fix anything that looks wrong',`<span class="chip ok">${I('circle-check')}Matches</span>`),
+ `<div class="grid-review">
+   <div class="receipt">
+    <div class="shop"><span class="tile">${I('utensils')}</span><b style="font-size:16px">Ramen Nagi</b><span class="sm muted">25 Sep 2026 · 18:22</span></div>
+    <div class="ln"><span>Butao King</span><span>×8</span><span>3,880.00</span></div>
+    <div class="ln"><span>Classic Gyoza 3pcs</span><span>×1</span><span>190.00</span></div>
+    <div class="ln"><span>Coke Zero</span><span>×1</span><span>115.00</span></div>
+    <div class="ln flag"><span>Kakuni Belly · check</span><span>×1</span><span>195.00</span></div>
+    <div class="ln"><span>Gyu King</span><span>×2</span><span>1,590.00</span></div>
+    <div class="ln"><span>+ 4 more lines</span><span></span><span>1,655.00</span></div>
+    <div class="ln" style="border-top:1px dashed var(--line);padding-top:6px"><span>Service charge 10%</span><span></span><span>680.80</span></div>
+    <div class="ln"><span>40% card discount</span><span></span><span>−3,050.00</span></div>
+    <div class="row" style="padding-top:6px"><b>Total</b><span class="amt" style="font-size:18px">₱5,255.80</span></div>
+    <div class="tear"></div>
+    <div class="foot"><span class="chip ok">${I('check')}Adds up to the printed total</span><span class="sm muted mono">PHP</span></div>
+   </div>
+   <div class="col">
+    <div class="card"><div class="h">How to split</div><div class="seg" style="align-self:flex-start"><span class="on">By item</span><span>Equally</span><span>By shares</span></div><span class="sm muted">Everyone claims what they had. Fees follow the rules below.</span></div>
+    <div class="card" style="gap:0"><div class="h" style="padding-bottom:4px"><span>Fees and discounts</span><span class="lnk">${I('plus','s')}Add</span></div>
+     <div class="li"><span class="tile">${I('percent')}</span><div class="grow"><b>Service charge 10%</b><span class="sm muted">Split equally among 12</span></div><span class="amt">680.80</span></div>
+     <div class="li"><span class="tile">${I('percent')}</span><div class="grow"><b>40% card discount</b><span class="sm muted">By what each ordered</span></div><span class="amt">−3,050.00</span></div>
+     <div class="li"><span class="tile">${I('info')}</span><div class="grow"><b>Senior or PWD at the table?</b><span class="sm muted">Their 20% stays with them</span></div><span class="btn sm">Add</span></div>
+    </div>
+    <div class="card"><div class="h">Who paid, who was there</div><div class="row"><span class="gap6">${av('A')}<span>Ana paid</span></span><span class="btn sm">Change</span></div><div class="row"><div class="avs">${av('A')}${av('B',1)}${av('C')}${av('D')}${av('+8')}</div><span class="sm muted">12 were there</span></div></div>
+    <div class="row" style="gap:10px"><span class="btn" style="flex:1">${I('plus','s')}Another receipt</span><span class="btn pri" style="flex:1.3">Looks right</span></div>
+   </div>
+  </div>`),
+
+settle:()=>billShell('settle',
+ billTop('Settle up','Ramen dinner · Ana and Ben paid',`${youChip}<span class="btn sm" aria-label="Copy summary">${I('copy','s')}<span class="not-compact">Copy summary</span></span>`),
+ `<div class="grid-settle">
+   <div class="card"><span class="eyebrow">Still to collect</span><div class="big">₱1,748.65</div><div class="bar"><i style="width:64%"></i></div><div class="row sm"><span class="muted">6 of 11 transfers confirmed</span><span class="amt">₱3,102.41 in</span></div></div>
+   <div class="card"><span class="eyebrow">You · Ben</span><div class="big" style="color:var(--ok)">+₱64.26</div><span class="sm muted">You paid more than you owe across both receipts. Eli pays you back; everyone else pays Ana.</span></div>
+   <div class="card wide" style="gap:0"><div class="h" style="padding-bottom:4px"><span>Transfers</span><span class="lnk">Show confirmed</span></div>
+    <div class="li">${av('E')}<div class="grow"><b>Eli → you</b><span class="sm muted">Eli says it's sent</span></div><span class="amt">64.26</span><span class="btn sm pri">Confirm</span></div>
+    <div class="li">${av('C')}<div class="grow"><b>Carla → Ana</b><span class="sm muted">Confirmed 7:58 PM</span></div><span class="amt">683.74</span><span class="chip ok">${I('check')}Paid</span></div>
+    <div class="li">${av('D')}<div class="grow"><b>Dan → Ana</b><span class="sm muted">Waiting for Ana</span></div><span class="amt">632.74</span><span class="chip">Sent</span></div>
+    <div class="li">${av('E')}<div class="grow"><b>Eli → Ana</b><span class="sm muted">Not paid yet</span></div><span class="amt">283.47</span><span class="chip open">Open</span></div>
+    <div class="li"><span class="av">+7</span><div class="grow"><b>7 more to Ana</b><span class="sm muted">2,412.92 in total</span></div>${I('chevron-right','chev')}</div>
+   </div>
+   <div class="col aside desk-only">
+    <div class="card"><div class="h">How to pay Ana</div><div class="li" style="padding:0"><span class="tile">${I('wallet')}</span><div class="grow"><b>GCash 0917 ••• 4821</b><span class="sm muted">Note from Ana</span></div><span class="ib" aria-label="Copy">${I('copy','s')}</span></div></div>
+    <div class="card"><div class="h">Recent in this bill</div><div class="list">
+     <div class="li">${I('history','s')}<div class="grow"><span class="sm">Carla's payment confirmed</span><span class="sm muted">7:58 PM</span></div></div>
+     <div class="li">${I('history','s')}<div class="grow"><span class="sm">Dan marked 632.74 sent</span><span class="sm muted">7:41 PM</span></div></div>
+    </div></div>
+   </div>
+  </div>`)
+};
+
+const devs=[['d-desk',1280,800],['d-phone',390,844],['d-tab',834,720]];
+let cur='home';
+try{const v=localStorage.getItem('rs-resp2');if(v&&S[v])cur=v}catch(e){}
+function render(){
+ devs.forEach(([id,w,h])=>{document.querySelector('#'+id+' .scaler').innerHTML=`<div class="app" style="width:${w}px;height:${h}px">${S[cur]()}</div>`});
+ fit();
+ document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.s===cur));
+}
+function fit(){
+ devs.forEach(([id,w,h])=>{const vp=document.querySelector('#'+id+' .viewport');const sc=vp.querySelector('.scaler');const k=Math.min(1,(vp.clientWidth-16)/w);sc.style.transform=`scale(${k})`;sc.style.width=w+'px';vp.style.height=(h*k+16)+'px'});
+}
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{cur=b.dataset.s;try{localStorage.setItem('rs-resp2',cur)}catch(e){}render()});
+document.querySelectorAll('[data-i]').forEach(h=>h.insertAdjacentHTML('afterbegin',I(h.dataset.i)));
+const sw=[['Ground','--bg'],['Card','--surface'],['Ink','--ink'],['Muted','--muted'],['Line','--line'],['Teal · action, you','--accent'],['Amber · unclaimed','--amber'],['Green · paid','--ok'],['Red · check this','--warn']];
+document.getElementById('sw').innerHTML=sw.map(([n,v])=>`<span class="sw"><i style="background:var(${v})"></i>${n} <code>${getComputedStyle(document.documentElement).getPropertyValue(v).trim()}</code></span>`).join('');
+addEventListener('resize',fit);
+render();
+</script>
+</body>
+</html>
