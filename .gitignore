@@ -22,6 +22,9 @@ __blobstorage__/
 *.jpeg
 *.heic
 receipts/
+# ...but the Receipts code slice is source, not photos
+!src/ReceiptSplitter.Core/Receipts/
+!tests/ReceiptSplitter.Core.Tests/Receipts/
 
 # Editors and OS
 .vs/
