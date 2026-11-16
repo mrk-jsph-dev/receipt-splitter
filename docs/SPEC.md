@@ -119,7 +119,7 @@ One JSON document per bill. Money is always an integer count of the currency's m
       receipts: Receipt[];          // one or more; maths runs per receipt
       paymentNote?: string;         // free text, max 280 chars
       payments: { personId: Id; status: "waiting" | "confirmed" }[];
-      activity: { at: string; personId?: Id; text: string }[];   // last 100
+      activity: { id: Id; at: string; kind: string; text: string; personId?: Id; unitId?: Id }[];   // last 100; id and unitId let the organizer undo a claim
       lockedAt?: string;
       organizerKeyHash: string;     // SHA-256 of the organizer key
     }
@@ -293,6 +293,15 @@ JSON over HTTPS. No accounts. The bill id in the link grants claim access. The o
 | `POST /api/bills/{id}/confirm` · `/undo`        | organizer | Confirm a payment, or undo a claim by activity entry.                                                                                                                                                                                                                                                                                                                                   |
 | `DELETE /api/bills/{id}`                        | organizer | Delete now.                                                                                                                                                                                                                                                                                                                                                                             |
 
+Details settled while building the API (module 2):
+
+- All money on the wire is integer minor units. Responses are `{ bill, breakdown }`; `breakdown` is null until the bill has at least one person.
+- Organizer calls send the key in `X-Organizer-Key` only. A missing or wrong key is `403`. Receipt replace and delete and settings need `If-Match`: missing is `428`, stale is `412` with the latest bill.
+- `from` mismatches and other "the bill moved on" refusals are `409` with the latest bill. Bad input, including an id from another bill, is `400` and writes nothing. A locked bill refuses every write except delete.
+- A receipt replace keeps claims on lines sent with their `id`, up to the new quantity. Claims on units that went away are removed with a notice in the activity list. An organizer edit that leaves a shared bill not matching its totals moves it back to draft.
+- `confirm` also works without "I've paid" first, for cash. `undo` takes `{ activityId }` of a claim entry.
+- Shares in "shares" mode accept up to 2 decimals (a kid as 0.5). Claim weights are whole numbers from 1 to 100.
+
 Polling: every 10 s while the tab is visible, stopped when hidden, slowed to 30 s after 5 minutes without local changes. Writes retry on ETag mismatch with jittered backoff, as today.
 
 ## Architecture, deployment, cost and privacy
@@ -437,6 +446,7 @@ Anyone can use the app for any number of bills. Each bill is sealed off: a perso
 | Domain                       | \[DOMAIN\] SWA's default `*.azurestaticapps.net` works at no cost.                                                                                                                                                                                                                     |
 | Scan cap                     | 15 per day, 3 per IP per hour, both settings.                                                                                                                                                                                                                                          |
 | Retention                    | 30 days after the last change.                                                                                                                                                                                                                                                         |
+| API limits                   | \[PLACEHOLDER\] Defaults in `appsettings.json` until confirmed: 10 new bills per IP per hour, 60 writes per IP per minute, 256 KB request body, 50 people per bill, 200 lines per receipt, 100 units per line, 100 weight per claim, 100,000,000 minor units per line or adjustment. |
 | App name                     | \[APP NAME\] "Receipt Splitter" used here as a working name.                                                                                                                                                                                                                           |
 
 ## Build order

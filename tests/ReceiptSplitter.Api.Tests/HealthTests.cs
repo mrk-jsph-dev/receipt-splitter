@@ -1,9 +1,8 @@
 using System.Net;
-using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace ReceiptSplitter.Api.Tests;
 
-public class HealthTests(WebApplicationFactory<Program> factory) : IClassFixture<WebApplicationFactory<Program>>
+public class HealthTests(ApiFactory factory) : IClassFixture<ApiFactory>
 {
     [Fact]
     public async Task Healthz_returns_ok()
