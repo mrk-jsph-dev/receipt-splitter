@@ -1,0 +1,31 @@
+# .NET
+bin/
+obj/
+*.user
+TestResults/
+vuln.txt
+
+# Node
+node_modules/
+web/dist/
+
+# Local settings and secrets: never commit
+.env
+.env.*
+appsettings.*.local.json
+*.pfx
+__azurite_db_*
+__blobstorage__/
+
+# Receipt photos stay out of the repo (privacy)
+*.jpg
+*.jpeg
+*.heic
+receipts/
+
+# Editors and OS
+.vs/
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
