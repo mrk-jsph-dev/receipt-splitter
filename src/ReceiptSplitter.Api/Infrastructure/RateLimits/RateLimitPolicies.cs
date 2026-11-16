@@ -1,3 +1,4 @@
+using ReceiptSplitter.Api.Infrastructure.Scanning;
 using System.Threading.RateLimiting;
 using ReceiptSplitter.Api.Shared;
 
@@ -21,10 +22,12 @@ public static class RateLimitPolicies
     public const string Create = "create";
     public const string Write = "write";
     public const string Read = "read";
+    public const string Scan = "scan";
 
     public static IServiceCollection AddApiRateLimits(this IServiceCollection services, IConfiguration config)
     {
         var options = config.GetSection("RateLimits").Get<RateLimitOptions>() ?? new RateLimitOptions();
+        var scans = config.GetSection("Scans").Get<ScanOptions>() ?? new ScanOptions();
         services.Configure<RateLimitOptions>(config.GetSection("RateLimits"));
         services.AddSingleton<CreateCap>();
         return services.AddRateLimiter(limiter =>
@@ -36,6 +39,7 @@ public static class RateLimitPolicies
             limiter.AddPolicy(Create, http => PerClient(http, options.CreatePerHour, TimeSpan.FromHours(1)));
             limiter.AddPolicy(Write, http => PerClient(http, options.WritesPerMinute, TimeSpan.FromMinutes(1)));
             limiter.AddPolicy(Read, http => PerClient(http, options.ReadsPerMinute, TimeSpan.FromMinutes(1)));
+            limiter.AddPolicy(Scan, http => PerClient(http, scans.PerIpPerHour, TimeSpan.FromHours(1)));
         });
     }
 

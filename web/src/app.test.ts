@@ -35,6 +35,8 @@ const button = (wrapper: Awaited<ReturnType<typeof open>>['wrapper'], text: stri
 beforeEach(() => {
   localStorage.clear();
   welcomeSkipped.value = false;
+  // No server in tests: anything not stubbed below answers as if the API were unreachable.
+  vi.stubGlobal('fetch', vi.fn<typeof fetch>(async () => new Response('{"error":"unavailable"}', { status: 503 })));
 });
 
 afterEach(() => vi.unstubAllGlobals());
