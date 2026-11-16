@@ -6,7 +6,7 @@ using ReceiptSplitter.Api.Shared;
 
 namespace ReceiptSplitter.Api.Features.CreateBill;
 
-public enum BillSource { Sample, Manual }
+public enum BillSource { Sample, Manual, Scan }
 
 /// <param name="OrganizerName">The name saved in the organizer's browser. Becomes the first person on a manual bill.</param>
 /// <param name="Currency">Required for manual bills. The sample is always PHP.</param>
@@ -90,7 +90,7 @@ public static class CreateBill
         ReceiptDoc? receipt = null;
         if (request.Draft is not null)
         {
-            (receipt, _, var error) = ReceiptDrafts.ToDocument(request.Draft, ReceiptSource.Manual, limits, people);
+            (receipt, _, var error) = ReceiptDrafts.ToDocument(request.Draft, request.Source == BillSource.Scan ? ReceiptSource.Scan : ReceiptSource.Manual, limits, people);
             if (error is not null)
                 return (null, error);
             if (people.Count > 0 && request.Draft.Payers is null)

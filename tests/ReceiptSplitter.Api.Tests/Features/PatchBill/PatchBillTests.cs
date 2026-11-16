@@ -163,6 +163,28 @@ public class PatchBillTests(ApiFactory factory) : IClassFixture<ApiFactory>
     }
 
     [Fact]
+    public async Task I_have_not_paid_yet_takes_back_a_waiting_payment_but_never_a_confirmed_one()
+    {
+        var (client, id, bill) = await SampleAsync();
+        var ben = bill.PersonId("Ben");
+        var dan = bill.PersonId("Dan");
+        await client.PatchAsync(id, new { op = "markPaid", personId = ben, from = (string?)null });
+        await client.PatchAsync(id, new { op = "markPaid", personId = dan, from = (string?)null });
+        await Change(id, b => b.Payments.Single(p => p.PersonId == dan).Status = PaymentStatus.Confirmed);
+
+        var undo = await client.PatchAsync(id, new { op = "unmarkPaid", personId = ben, from = "waiting" });
+        var again = await client.PatchAsync(id, new { op = "unmarkPaid", personId = ben, from = "waiting" });
+        var confirmed = await client.PatchAsync(id, new { op = "unmarkPaid", personId = dan, from = "confirmed" });
+
+        Assert.Equal(HttpStatusCode.OK, undo.StatusCode);
+        var after = (await undo.ReadAsync<BillResponse>())!.Bill;
+        Assert.DoesNotContain(after.Payments, p => p.PersonId == ben);
+        Assert.Equal("Ben hasn't paid yet after all", after.Activity[^1].Text);
+        Assert.Equal(HttpStatusCode.Conflict, again.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, confirmed.StatusCode);
+    }
+
+    [Fact]
     public async Task A_locked_bill_takes_no_ops()
     {
         var (client, id, bill) = await SampleAsync();
@@ -231,5 +253,21 @@ public class PatchBillTests(ApiFactory factory) : IClassFixture<ApiFactory>
         var stored = (await factory.Store.GetAsync(id, default))!;
         change(stored.Bill);
         Assert.True(await factory.Store.ReplaceAsync(stored.Bill, stored.ETag, default));
+    }
+
+    [Fact]
+    public async Task A_card_holder_is_marked_once_and_a_stale_from_is_refused()
+    {
+        using var client = factory.NewClient();
+        var created = await client.CreateSampleAsync();
+        var lia = (await client.GetBillAsync(created.Id)).Bill.PersonId("Lia");
+
+        var set = await client.PatchAsync(created.Id, new { op = "setCard", personId = lia, card = "senior", from = "none" });
+        var stale = await client.PatchAsync(created.Id, new { op = "setCard", personId = lia, card = "pwd", from = "none" });
+
+        var bill = (await set.ReadAsync<BillResponse>())!.Bill;
+        Assert.Equal(Card.Senior, bill.People.Single(p => p.Id == lia).Card);
+        Assert.Equal("Lia has a senior card", bill.Activity[^1].Text);
+        Assert.Equal(HttpStatusCode.Conflict, stale.StatusCode);
     }
 }

@@ -50,6 +50,19 @@ npm test
 npm run dev                                       # http://localhost:5173
 ```
 
+Scanning without Azure: start the API with `Scans__UseSample=true` and every photo reads as the
+bundled Ramen Nagi receipt (with one price misread on purpose, so the total check has work to do).
+Without it, and with no `DocumentIntelligence__Endpoint`, scanning answers "not available" and the
+app offers typing the receipt in. Production refuses to start without the endpoint.
+
+### Screenshots at every size
+
+`npm run screens` (in `web/`) screenshots each screen at 360, 390, 768, 1024, 1280 and 1600 px,
+light and dark, into `web/screens/` (git-ignored), and fails if a page scrolls sideways. It needs
+no API: requests are answered from `web/scripts/fixtures/`, which `node scripts/make-fixtures.mjs`
+rebuilds from a locally running API. First time only: `npx playwright install chromium`.
+Local only; it is not part of CI.
+
 ## CI/CD
 
 One workflow, started by hand only: `.github/workflows/ci-cd.yml`.
@@ -68,7 +81,10 @@ First-time Azure setup, what each Bicep file does, and how to roll back:
 
 ## Privacy
 
-- Receipt photos are read once and never stored.
+- Receipt photos are read once and never stored. They are held in memory for one request, sent
+  to Azure AI Document Intelligence and dropped; tests check the bytes never reach storage or logs.
+- Document Intelligence's own handling of analyzed documents: \[VERIFY IN MICROSOFT DOCS\] before
+  launch, and state it here.
 - Only item names, prices, fees, the shop name, date and total are kept.
 - Bills, names and payment notes delete automatically 30 days after the last change.
 - Each bill is private to people with its link; there is no list or search of bills.

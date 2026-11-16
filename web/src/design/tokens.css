@@ -1,45 +1,36 @@
-/* Design tokens from docs/design/walkthrough.html: graphite and deep teal, light and dark.
-   Teal means yours, amber still unclaimed, red check this, green paid. */
+/* Design tokens from docs/SPEC.md "Responsive layout": graphite neutrals, one deep teal accent.
+   Teal means yours, amber still unclaimed, green paid, red check this. */
 :root {
-  --bg: #f2f4f5; --surface: #ffffff; --ink: #141a1d; --muted: #5f6b71; --line: #dce2e5;
-  --accent: #1d6f72; --accent-soft: #ddeeee; --on-accent: #ffffff;
-  --claim: #a86a12; --claim-soft: #fbefd9; --warn: #b4442b; --warn-soft: #f9e3dd; --ok: #22805f; --ok-soft: #dcf1e8;
-  --night: #12171a; --on-night: #eef3f4;
-  --glass: rgba(255, 255, 255, .72); --glass-line: rgba(255, 255, 255, .9);
-  --hero: linear-gradient(165deg, #173038 0%, #2a5e63 55%, #c9dcdb 100%);
-  --screen: linear-gradient(170deg, #e4eaec 0%, #f8fafa 42%, #eaeff0 100%);
-  --shadow: 0 24px 50px -28px rgba(20, 40, 50, .45);
-  --card-shadow: 0 10px 24px -18px rgba(20, 40, 50, .5);
-  --f-display: "Sora", "Segoe UI", system-ui, sans-serif;
-  --f-body: "Inter", "Segoe UI", system-ui, sans-serif;
+  --bg: #F6F7F7; --surface: #FFFFFF; --ink: #111618; --ink-2: #3B4548; --muted: #6B777B;
+  --line: #E3E7E8; --soft: #F0F2F2;
+  --accent: #0E6B6B; --accent-hover: #0B5757; --accent-soft: #E2F0EF; --on-accent: #FFFFFF;
+  --amber: #9A6210; --amber-soft: #FAF0DE; --ok: #1F7A55; --ok-soft: #E1F2EA; --warn: #B4442B; --warn-soft: #F9E5DF;
+  --scrim: rgba(17, 22, 24, .38);
+  --lift: 0 1px 2px rgba(17, 22, 24, .04), 0 12px 32px -20px rgba(17, 22, 24, .25);
+  --f-ui: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
   --f-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --radius: 14px;
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0f1315; --surface: #182024; --ink: #e9eff1; --muted: #9aa9af; --line: #2a3539;
-    --accent: #5fc4c2; --accent-soft: #163334; --on-accent: #0f1315;
-    --claim: #e8b356; --claim-soft: #3a2d15; --warn: #f08a70; --warn-soft: #3d2019; --ok: #5dd0a6; --ok-soft: #163528;
-    --night: #000000; --on-night: #eef3f4;
-    --glass: rgba(32, 42, 46, .78); --glass-line: rgba(255, 255, 255, .08);
-    --hero: linear-gradient(165deg, #10252b 0%, #22545a 55%, #1a2a2e 100%);
-    --screen: linear-gradient(170deg, #1a2226 0%, #12181b 45%, #182024 100%);
-    --shadow: 0 24px 50px -28px rgba(0, 0, 0, .8);
-    --card-shadow: 0 10px 24px -18px rgba(0, 0, 0, .8);
+    --bg: #0D1112; --surface: #151A1C; --ink: #E9EEEF; --ink-2: #C3CDD0; --muted: #8C989C;
+    --line: #252C2F; --soft: #1B2124;
+    --accent: #4DBDB5; --accent-hover: #6CCDC6; --accent-soft: #123230; --on-accent: #061312;
+    --amber: #E3B25A; --amber-soft: #33270F; --ok: #5CCB9B; --ok-soft: #12301F; --warn: #EE8B71; --warn-soft: #3A1E17;
+    --scrim: rgba(0, 0, 0, .6);
+    --lift: 0 1px 2px rgba(0, 0, 0, .4), 0 12px 32px -20px rgba(0, 0, 0, .9);
     color-scheme: dark;
   }
 }
 
 :root[data-theme="dark"] {
-  --bg: #0f1315; --surface: #182024; --ink: #e9eff1; --muted: #9aa9af; --line: #2a3539;
-  --accent: #5fc4c2; --accent-soft: #163334; --on-accent: #0f1315;
-  --claim: #e8b356; --claim-soft: #3a2d15; --warn: #f08a70; --warn-soft: #3d2019; --ok: #5dd0a6; --ok-soft: #163528;
-  --night: #000000; --on-night: #eef3f4;
-  --glass: rgba(32, 42, 46, .78); --glass-line: rgba(255, 255, 255, .08);
-  --hero: linear-gradient(165deg, #10252b 0%, #22545a 55%, #1a2a2e 100%);
-  --screen: linear-gradient(170deg, #1a2226 0%, #12181b 45%, #182024 100%);
-  --shadow: 0 24px 50px -28px rgba(0, 0, 0, .8);
-  --card-shadow: 0 10px 24px -18px rgba(0, 0, 0, .8);
+  --bg: #0D1112; --surface: #151A1C; --ink: #E9EEEF; --ink-2: #C3CDD0; --muted: #8C989C;
+  --line: #252C2F; --soft: #1B2124;
+  --accent: #4DBDB5; --accent-hover: #6CCDC6; --accent-soft: #123230; --on-accent: #061312;
+  --amber: #E3B25A; --amber-soft: #33270F; --ok: #5CCB9B; --ok-soft: #12301F; --warn: #EE8B71; --warn-soft: #3A1E17;
+  --scrim: rgba(0, 0, 0, .6);
+  --lift: 0 1px 2px rgba(0, 0, 0, .4), 0 12px 32px -20px rgba(0, 0, 0, .9);
   color-scheme: dark;
 }
