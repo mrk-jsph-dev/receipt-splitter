@@ -1,0 +1,262 @@
+{
+ "items": 762500,
+ "lineTotals": [
+  388000,
+  19000,
+  11500,
+  9500,
+  28500,
+  159000,
+  19500,
+  119000,
+  8500
+ ],
+ "adjustments": -236920,
+ "computedTotal": 525580,
+ "confirmedTotal": 525580,
+ "difference": 0,
+ "matches": true,
+ "suggested": [
+  null,
+  -305000
+ ],
+ "breakdown": {
+  "receiptId": "nvYo53l7",
+  "people": [
+   {
+    "personId": "Uf6DHmiF",
+    "subtotal": 58000,
+    "adjustments": {
+     "2j6krJSl": 5674,
+     "yAy1Ehij": -23200
+    },
+    "total": 40474
+   },
+   {
+    "personId": "znQ5JNbc",
+    "subtotal": 54834,
+    "adjustments": {
+     "2j6krJSl": 5674,
+     "yAy1Ehij": -21934
+    },
+    "total": 38574
+   },
+   {
+    "personId": "lD8YoAlE",
+    "subtotal": 79500,
+    "adjustments": {
+     "2j6krJSl": 5674,
+     "yAy1Ehij": -31800
+    },
+    "total": 53374
+   },
+   {
+    "personId": "fUauvoqp",
+    "subtotal": 71000,
+    "adjustments": {
+     "2j6krJSl": 5674,
+     "yAy1Ehij": -28400
+    },
+    "total": 48274
+   },
+   {
+    "personId": "YbtIfEyy",
+    "subtotal": 48500,
+    "adjustments": {
+     "2j6krJSl": 5673,
+     "yAy1Ehij": -19400
+    },
+    "total": 34773
+   },
+   {
+    "personId": "dsfm857u",
+    "subtotal": 54833,
+    "adjustments": {
+     "2j6krJSl": 5673,
+     "yAy1Ehij": -21933
+    },
+    "total": 38573
+   },
+   {
+    "personId": "ZSYTvznw",
+    "subtotal": 64333,
+    "adjustments": {
+     "2j6krJSl": 5673,
+     "yAy1Ehij": -25733
+    },
+    "total": 44273
+   },
+   {
+    "personId": "rvLvm16F",
+    "subtotal": 68000,
+    "adjustments": {
+     "2j6krJSl": 5673,
+     "yAy1Ehij": -27200
+    },
+    "total": 46473
+   },
+   {
+    "personId": "iFyBKKgE",
+    "subtotal": 79500,
+    "adjustments": {
+     "2j6krJSl": 5673,
+     "yAy1Ehij": -31800
+    },
+    "total": 53373
+   },
+   {
+    "personId": "SbldtsDQ",
+    "subtotal": 69000,
+    "adjustments": {
+     "2j6krJSl": 5673,
+     "yAy1Ehij": -27600
+    },
+    "total": 47073
+   },
+   {
+    "personId": "bHO0UXba",
+    "subtotal": 57000,
+    "adjustments": {
+     "2j6krJSl": 5673,
+     "yAy1Ehij": -22800
+    },
+    "total": 39873
+   },
+   {
+    "personId": "6smJHkzj",
+    "subtotal": 58000,
+    "adjustments": {
+     "2j6krJSl": 5673,
+     "yAy1Ehij": -23200
+    },
+    "total": 40473
+   }
+  ],
+  "unclaimed": {
+   "personId": null,
+   "subtotal": 0,
+   "adjustments": {
+    "2j6krJSl": 0,
+    "yAy1Ehij": 0
+   },
+   "total": 0
+  },
+  "computedTotal": 525580,
+  "confirmedTotal": 525580,
+  "warnings": [],
+  "items": [
+   {
+    "unitId": "IC1kY0NY-1",
+    "personId": "Uf6DHmiF",
+    "amount": 48500
+   },
+   {
+    "unitId": "IC1kY0NY-2",
+    "personId": "znQ5JNbc",
+    "amount": 48500
+   },
+   {
+    "unitId": "IC1kY0NY-3",
+    "personId": "YbtIfEyy",
+    "amount": 48500
+   },
+   {
+    "unitId": "IC1kY0NY-4",
+    "personId": "dsfm857u",
+    "amount": 48500
+   },
+   {
+    "unitId": "IC1kY0NY-5",
+    "personId": "ZSYTvznw",
+    "amount": 48500
+   },
+   {
+    "unitId": "IC1kY0NY-6",
+    "personId": "rvLvm16F",
+    "amount": 48500
+   },
+   {
+    "unitId": "IC1kY0NY-7",
+    "personId": "bHO0UXba",
+    "amount": 48500
+   },
+   {
+    "unitId": "IC1kY0NY-8",
+    "personId": "6smJHkzj",
+    "amount": 48500
+   },
+   {
+    "unitId": "ae4I8zZg-1",
+    "personId": "znQ5JNbc",
+    "amount": 6334
+   },
+   {
+    "unitId": "ae4I8zZg-1",
+    "personId": "dsfm857u",
+    "amount": 6333
+   },
+   {
+    "unitId": "ae4I8zZg-1",
+    "personId": "ZSYTvznw",
+    "amount": 6333
+   },
+   {
+    "unitId": "Mx9J3yr4-1",
+    "personId": "fUauvoqp",
+    "amount": 11500
+   },
+   {
+    "unitId": "GTXCttPp-1",
+    "personId": "SbldtsDQ",
+    "amount": 9500
+   },
+   {
+    "unitId": "2gMPgQ9R-1",
+    "personId": "Uf6DHmiF",
+    "amount": 9500
+   },
+   {
+    "unitId": "2gMPgQ9R-2",
+    "personId": "ZSYTvznw",
+    "amount": 9500
+   },
+   {
+    "unitId": "2gMPgQ9R-3",
+    "personId": "6smJHkzj",
+    "amount": 9500
+   },
+   {
+    "unitId": "Y1igTMZe-1",
+    "personId": "lD8YoAlE",
+    "amount": 79500
+   },
+   {
+    "unitId": "Y1igTMZe-2",
+    "personId": "iFyBKKgE",
+    "amount": 79500
+   },
+   {
+    "unitId": "1Dxa18QO-1",
+    "personId": "rvLvm16F",
+    "amount": 19500
+   },
+   {
+    "unitId": "AIfJPCYF-1",
+    "personId": "fUauvoqp",
+    "amount": 59500
+   },
+   {
+    "unitId": "AIfJPCYF-2",
+    "personId": "SbldtsDQ",
+    "amount": 59500
+   },
+   {
+    "unitId": "JwIiVdu5-1",
+    "personId": "bHO0UXba",
+    "amount": 8500
+   }
+  ],
+  "difference": 0,
+  "matches": true
+ }
+}

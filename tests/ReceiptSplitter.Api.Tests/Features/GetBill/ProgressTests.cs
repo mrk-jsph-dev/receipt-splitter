@@ -17,7 +17,8 @@ public class ProgressTests(ApiFactory factory) : IClassFixture<ApiFactory>
             await client.OrganizerAsync(HttpMethod.Post, $"/api/bills/{created.Id}/confirm", created.OrganizerKey, new { personId = bill.PersonId(name) });
         var progress = (await client.GetBillAsync(created.Id)).Breakdown!.Progress;
 
-        Assert.Equal(new BillProgress(525580, 11, 2, 18), progress);
+        // Ben 385.74 + Carla 533.74 collected; the 11 owe 4,851.06 in all (walkthrough step 20).
+        Assert.Equal(new BillProgress(525580, 11, 2, 18, 91948, 485106 - 91948), progress);
     }
 
     [Fact]

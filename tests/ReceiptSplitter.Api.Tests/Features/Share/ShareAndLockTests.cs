@@ -33,11 +33,21 @@ public class ShareAndLockTests(ApiFactory factory) : IClassFixture<ApiFactory>
             draft = new { label = "Lunch", confirmedTotal = 100000, lines = new[] { new { name = "Rice", quantity = 1, unitPrice = 90000 } } },
         })).ReadAsync<Created>())!;
 
+        var blank = (await (await client.PostAsJsonAsync("/api/bills", new
+        {
+            source = "manual",
+            organizerName = "Ana",
+            currency = new { code = "PHP", digits = 2 },
+            draft = new { label = "Receipt 1", confirmedTotal = 0, lines = Array.Empty<object>() },
+        })).ReadAsync<Created>())!;
+
         var noReceipts = await client.OrganizerAsync(HttpMethod.Post, $"/api/bills/{empty.Id}/share", empty.OrganizerKey);
+        var noLines = await client.OrganizerAsync(HttpMethod.Post, $"/api/bills/{blank.Id}/share", blank.OrganizerKey);
         var offBy = await client.OrganizerAsync(HttpMethod.Post, $"/api/bills/{mismatch.Id}/share", mismatch.OrganizerKey);
 
         Assert.Equal(HttpStatusCode.UnprocessableEntity, noReceipts.StatusCode);
         Assert.Equal("no-receipts", (await noReceipts.ReadAsync<ConflictBody>())!.Reason);
+        Assert.Equal("empty-receipt", (await noLines.ReadAsync<ConflictBody>())!.Reason);
         Assert.Equal(HttpStatusCode.UnprocessableEntity, offBy.StatusCode);
         var body = (await offBy.ReadAsync<ConflictBody>())!;
         Assert.Equal("total-mismatch", body.Reason);

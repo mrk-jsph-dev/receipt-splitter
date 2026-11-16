@@ -22,4 +22,10 @@ describe('scan card', () => {
     await wrapper.findAll('input[type="file"]')[1].trigger('change');
     expect(wrapper.emitted('picked')![0][0]).toHaveLength(2);
   });
+
+  it("turns scanning off when today's scans are used up", () => {
+    const wrapper = mount(ScanCard, { props: { remaining: 0 } });
+    expect(wrapper.text()).toContain("Today's scans are used up");
+    for (const button of wrapper.findAll('button')) expect(button.attributes('disabled')).toBeDefined();
+  });
 });
