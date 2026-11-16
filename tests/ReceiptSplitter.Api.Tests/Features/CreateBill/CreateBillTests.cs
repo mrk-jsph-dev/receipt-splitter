@@ -165,4 +165,32 @@ public class CreateBillTests(ApiFactory factory) : IClassFixture<ApiFactory>
         Assert.Contains("\"rate\"", await third.Content.ReadAsStringAsync());
         Assert.Equal(HttpStatusCode.Created, (await other.PostAsJsonAsync("/api/bills", new { source = "sample" })).StatusCode);
     }
+
+    [Fact]
+    public async Task Past_the_daily_cap_no_one_can_create_a_bill_until_the_next_day()
+    {
+        using var capped = new ApiFactory().With("RateLimits:CreatePerDay", "2");
+        using var ana = capped.NewClient();
+        using var ben = capped.NewClient();
+
+        await ana.CreateSampleAsync();
+        await ben.CreateSampleAsync();
+        var refused = await capped.NewClient().PostAsJsonAsync("/api/bills", new { source = "sample" });
+
+        Assert.Equal(HttpStatusCode.TooManyRequests, refused.StatusCode);
+        Assert.Contains("\"daily-cap\"", await refused.Content.ReadAsStringAsync());
+
+        capped.Clock.Advance(TimeSpan.FromDays(1));
+        Assert.Equal(HttpStatusCode.Created, (await ana.PostAsJsonAsync("/api/bills", new { source = "sample" })).StatusCode);
+    }
+
+    [Fact]
+    public async Task A_refused_create_does_not_use_up_the_daily_cap()
+    {
+        using var capped = new ApiFactory().With("RateLimits:CreatePerDay", "1");
+        using var client = capped.NewClient();
+
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/api/bills", new { source = "manual" })).StatusCode);
+        Assert.Equal(HttpStatusCode.Created, (await client.PostAsJsonAsync("/api/bills", new { source = "sample" })).StatusCode);
+    }
 }

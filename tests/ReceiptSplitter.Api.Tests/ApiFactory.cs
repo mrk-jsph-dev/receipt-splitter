@@ -19,6 +19,8 @@ public class ApiFactory : WebApplicationFactory<Program>
     {
         ["RateLimits:CreatePerHour"] = "100000",
         ["RateLimits:WritesPerMinute"] = "100000",
+        ["RateLimits:ReadsPerMinute"] = "100000",
+        ["RateLimits:CreatePerDay"] = "100000",
     };
 
     public TestClock Clock { get; } = new();
