@@ -1,0 +1,9 @@
+# The API image only needs src/, samples/ and the root build files.
+**/bin
+**/obj
+.git
+.github
+docs
+infra
+tests
+web

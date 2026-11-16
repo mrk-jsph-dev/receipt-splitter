@@ -124,9 +124,10 @@ compile. If anything fails, fix it as the first commit of module 1.
 **You do (once)**
 1. `az login`, then run `infra/setup-oidc.sh <subscription-id> <resource-group> <region>`.
 2. Add the printed values as GitHub **variables** (not secrets): `AZURE_CLIENT_ID`,
-   `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_RESOURCE_GROUP`.
+   `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_RESOURCE_GROUP`, plus
+   `BUDGET_ALERT_EMAIL` for the budget alerts.
 3. Create a GitHub environment named `production` with yourself as required reviewer.
-4. Make the GHCR package public after the first API push.
+4. Make the GHCR package public after the first API push (the api job stops with the link).
 
 **Done when**
 - `az bicep build -f infra/main.bicep` has no warnings.
