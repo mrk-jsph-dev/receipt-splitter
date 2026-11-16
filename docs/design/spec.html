@@ -1,0 +1,917 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>[hidden]{display:none!important}</style>
+<title>Receipt Splitter Spec</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column for the spec; mockups break out into a wide, horizontally scrolling rail of cool graphite phone frames. Big rounded pills, gradient hero bands, one black contrast card per screen. */
+:root{
+  --bg:#F2F4F5; --surface:#FFFFFF; --ink:#141A1D; --muted:#5F6B71; --line:#DCE2E5;
+  --accent:#1D6F72; --accent-soft:#DDEEEE; --on-accent:#FFFFFF;
+  --claim:#A86A12; --claim-soft:#FBEFD9; --warn:#B4442B; --warn-soft:#F9E3DD; --ok:#22805F; --ok-soft:#DCF1E8;
+  --night:#12171A; --on-night:#EEF3F4;
+  --glass:rgba(255,255,255,.72); --glass-line:rgba(255,255,255,.9);
+  --hero:linear-gradient(165deg,#173038 0%,#2A5E63 55%,#C9DCDB 100%);
+  --screen:linear-gradient(170deg,#E4EAEC 0%,#F8FAFA 42%,#EAEFF0 100%);
+  --frame:#DDE3E6; --shadow:0 24px 50px -28px rgba(20,40,50,.45);
+  --f-display:"Sora", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Inter", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F1315; --surface:#182024; --ink:#E9EFF1; --muted:#9AA9AF; --line:#2A3539;
+  --accent:#5FC4C2; --accent-soft:#163334; --on-accent:#0F1315;
+  --claim:#E8B356; --claim-soft:#3A2D15; --warn:#F08A70; --warn-soft:#3D2019; --ok:#5DD0A6; --ok-soft:#163528;
+  --night:#000000; --on-night:#EEF3F4;
+  --glass:rgba(32,42,46,.78); --glass-line:rgba(255,255,255,.08);
+  --hero:linear-gradient(165deg,#10252B 0%,#22545A 55%,#1A2A2E 100%);
+  --screen:linear-gradient(170deg,#1A2226 0%,#12181B 45%,#182024 100%);
+  --frame:#232D31; --shadow:0 24px 50px -28px rgba(0,0,0,.8); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1315; --surface:#182024; --ink:#E9EFF1; --muted:#9AA9AF; --line:#2A3539;
+  --accent:#5FC4C2; --accent-soft:#163334; --on-accent:#0F1315;
+  --claim:#E8B356; --claim-soft:#3A2D15; --warn:#F08A70; --warn-soft:#3D2019; --ok:#5DD0A6; --ok-soft:#163528;
+  --night:#000000; --on-night:#EEF3F4;
+  --glass:rgba(32,42,46,.78); --glass-line:rgba(255,255,255,.08);
+  --hero:linear-gradient(165deg,#10252B 0%,#22545A 55%,#1A2A2E 100%);
+  --screen:linear-gradient(170deg,#1A2226 0%,#12181B 45%,#182024 100%);
+  --frame:#232D31; --shadow:0 24px 50px -28px rgba(0,0,0,.8); color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.6 var(--f-body);margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px 80px}
+.wrap{max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:56px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:clamp(34px,6vw,52px);font-weight:700;letter-spacing:-.02em}
+h2{font-size:28px;font-weight:700;letter-spacing:-.01em}
+h3{font-size:18px;font-weight:600;margin-top:8px}
+p{margin:0;max-width:68ch}
+section{display:flex;flex-direction:column;gap:16px}
+.eyebrow{font:500 12px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.lede{font-size:18px;color:var(--muted)}
+.meta{display:flex;flex-wrap:wrap;gap:8px}
+.pill{font:500 12px/1 var(--f-mono);padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--muted)}
+.pill.ok{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.pill.todo{background:var(--claim-soft);color:var(--claim);border-color:transparent}
+.pill.later{background:transparent}
+nav ol{margin:0;padding-left:20px;columns:2;column-gap:32px}
+nav a{color:var(--ink)}
+a{color:var(--accent)}
+code,.mono{font-family:var(--f-mono);font-size:.88em}
+code{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+pre{font:13px/1.55 var(--f-mono);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;overflow-x:auto;margin:0}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:500 12px/1.3 var(--f-mono);letter-spacing:.05em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+tr:last-child td{border-bottom:0}
+td.num{font-family:var(--f-mono);text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+ul.tight{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.note{border-left:3px solid var(--claim);background:var(--claim-soft);padding:12px 16px;border-radius:0 8px 8px 0}
+.ph{font-family:var(--f-mono);font-size:.85em;background:var(--warn-soft);color:var(--warn);padding:1px 6px;border-radius:4px;white-space:nowrap}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+
+/* ---------- Mockups ---------- */
+.rail{display:flex;gap:28px;overflow-x:auto;padding:8px 4px 24px;scroll-snap-type:x mandatory}
+.shot{flex:0 0 auto;display:flex;flex-direction:column;gap:12px;scroll-snap-align:start;width:300px;max-width:100%}
+.shot figcaption{font-size:13px;color:var(--muted)}
+.shot figcaption b{color:var(--ink);font-weight:600}
+figure{margin:0}
+.phone{width:300px;max-width:100%;height:630px;background:var(--frame);border-radius:44px;padding:8px;box-shadow:var(--shadow)}
+.scr{height:100%;border-radius:37px;background:var(--screen);overflow:hidden;display:flex;flex-direction:column;position:relative;font-size:13px}
+.sbar{display:flex;justify-content:space-between;padding:12px 24px 4px;font:600 11px var(--f-body);color:var(--ink);position:relative;z-index:1}
+.hero .sbar{color:var(--on-accent)}
+.hero .sbar{color:#fff}
+.hero{background:var(--hero);border-radius:0 0 34px 34px;padding-bottom:18px;color:#fff;display:flex;flex-direction:column;gap:8px;align-items:center;text-align:center}
+.hero .ttl{font:500 14px var(--f-display);opacity:.92;margin-top:4px}
+.hero .big{font:700 30px/1.1 var(--f-display);letter-spacing:-.02em}
+.hero .sub{font-size:11px;opacity:.85}
+.top{display:flex;justify-content:space-between;align-items:center;width:100%;padding:4px 16px 0}
+.ib{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--glass);border:1px solid var(--glass-line);color:var(--ink)}
+.ib svg{width:16px;height:16px}
+.ibs{display:flex;gap:0;background:var(--glass);border:1px solid var(--glass-line);border-radius:999px;padding:2px}
+.ibs .ib{border:0;background:transparent}
+.body{flex:1;overflow:hidden;padding:12px 14px 0;display:flex;flex-direction:column;gap:10px}
+.h{font:700 15px var(--f-display);letter-spacing:-.01em;display:flex;justify-content:space-between;align-items:baseline}
+.h small{font:500 11px var(--f-body);color:var(--muted)}
+.pillcard{background:var(--glass);border:1px solid var(--glass-line);border-radius:26px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;box-shadow:0 10px 24px -18px rgba(20,40,50,.5)}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.amt{font:600 13px var(--f-display);font-variant-numeric:tabular-nums;white-space:nowrap}
+.mono{font-family:var(--f-mono)}
+.small{font-size:11px;color:var(--muted)}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;border-radius:999px;padding:11px 14px;font:600 12px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.sm{padding:6px 12px;font-size:11px}
+.btn.ghost{background:var(--glass);border-color:var(--glass-line)}
+.chip{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:4px 9px;font-size:11px;font-weight:500;background:var(--glass);border:1px solid var(--line);color:var(--ink)}
+.chip.me{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.chip.open{background:var(--claim-soft);color:var(--claim);border-color:transparent}
+.chip.flag{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.chip.ok{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.av{width:30px;height:30px;border-radius:50%;display:inline-grid;place-items:center;font:700 11px var(--f-display);color:#fff;flex:0 0 auto;border:2px solid var(--surface);background:linear-gradient(135deg,#4A6A7A,#8FA9B5)}
+.av.lg{width:40px;height:40px;font-size:14px}
+.av.c1{background:linear-gradient(135deg,#2A5E63,#6FA5A3)}.av.c2{background:linear-gradient(135deg,#D27D6B,#EDB58F)}
+.av.c3{background:linear-gradient(135deg,#3F8C88,#86C7B3)}.av.c4{background:linear-gradient(135deg,#4F6FB8,#93AEE6)}
+.av.c5{background:linear-gradient(135deg,#9A5A3C,#D39A72)}.av.c6{background:linear-gradient(135deg,#8A7A3C,#CFBE78)}
+.av.c7{background:linear-gradient(135deg,#5E5A76,#A29DBE)}
+.av.add{background:transparent;border:1.5px dashed var(--muted);color:var(--muted)}
+.avs{display:flex}.avs .av{margin-left:-9px}.avs .av:first-child{margin-left:0}
+.hero .avs .av{border-color:rgba(255,255,255,.85)}
+.night{background:var(--night);color:var(--on-night);border-radius:26px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.night .small{color:var(--on-night);opacity:.7}
+.duo{display:grid;grid-template-columns:1.25fr 1fr;gap:8px}
+.grad{background:var(--hero);color:#fff;border-radius:26px;padding:14px;display:flex;flex-direction:column;gap:6px}
+.grad .btn{background:rgba(255,255,255,.92);border:0;color:#173038;align-self:flex-start;padding:6px 12px;font-size:11px}
+.round{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#3E8E8E,#1D5F63);color:#fff;box-shadow:0 8px 18px -8px rgba(15,60,62,.6);flex:0 0 auto}
+.round svg{width:20px;height:20px}
+.acts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.act{display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--glass);border:1px solid var(--glass-line);border-radius:22px;padding:12px 6px;font-size:11px;font-weight:600}
+.act .round{width:36px;height:36px}.act .round svg{width:16px;height:16px}
+.line{display:grid;grid-template-columns:1fr auto;gap:2px 8px;padding:7px 0;border-bottom:1px dashed var(--line)}
+.line:last-child{border-bottom:0}
+.line .n{font-family:var(--f-mono);font-size:11.5px;text-transform:uppercase}
+.line.flagged{background:var(--warn-soft);margin:0 -14px;padding:7px 14px}
+.bar{height:6px;border-radius:999px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:inherit}
+.slide{margin:auto 12px 14px;display:flex;align-items:center;gap:10px;background:var(--glass);border:1px solid var(--glass-line);border-radius:999px;padding:6px 16px 6px 6px;box-shadow:0 12px 24px -16px rgba(20,40,50,.55)}
+.slide b{flex:1;text-align:center;font:600 14px var(--f-display)}
+.slide .chev{color:var(--muted);letter-spacing:-2px;font-weight:700}
+.dock{position:absolute;left:10px;right:10px;bottom:10px;background:var(--night);color:var(--on-night);border-radius:999px;padding:8px 8px 8px 18px;display:flex;justify-content:space-between;align-items:center}
+.dock .amt{font-size:17px}
+.dock .small{color:var(--on-night);opacity:.7}
+.qr{width:64px;height:64px;border-radius:12px;flex:0 0 auto;background:
+  repeating-linear-gradient(90deg,var(--night) 0 5px,transparent 5px 9px),
+  repeating-linear-gradient(0deg,var(--night) 0 4px,transparent 4px 10px);border:5px solid #fff;background-color:#fff}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-radius:30px 30px 0 0;padding:14px 18px 18px;display:flex;flex-direction:column;gap:8px;box-shadow:0 -10px 30px -12px rgba(10,20,25,.35)}
+.grab{width:36px;height:4px;border-radius:4px;background:var(--line);margin:0 auto 4px}
+.scrim{position:absolute;inset:0;background:rgba(10,20,25,.4)}
+.tot{border-top:1px solid var(--ink);padding-top:8px}
+.toggle{width:34px;height:20px;border-radius:999px;background:var(--line);position:relative;flex:0 0 auto}
+.toggle::after{content:"";position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:var(--surface)}
+.toggle.on{background:var(--ok)}.toggle.on::after{left:17px}
+.input{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px 5px 5px 16px;color:var(--muted)}
+.input>span:first-child{flex:1}
+.people{display:grid;grid-template-columns:repeat(6,1fr);gap:8px 2px;justify-items:center}
+.people .p{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10.5px;font-weight:500}
+.seg{display:grid;grid-template-columns:repeat(2,1fr);background:var(--glass);border:1px solid var(--glass-line);border-radius:999px;padding:3px;font-size:11px;font-weight:600;text-align:center}
+.seg span{padding:7px;border-radius:999px;color:var(--muted)}.seg .on{background:var(--night);color:var(--on-night)}
+.sliders{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;justify-items:center;padding-top:4px}
+.sl{display:flex;flex-direction:column;align-items:center;gap:8px;font-size:11px;font-weight:600}
+.track{width:6px;height:140px;border-radius:999px;background:var(--line);position:relative}
+.track i{position:absolute;left:0;right:0;bottom:0;border-radius:inherit;background:var(--accent)}
+.track b{position:absolute;left:50%;width:18px;height:18px;margin-left:-9px;border-radius:50%;background:var(--surface);border:3px solid var(--accent)}
+.desk{border:1px solid var(--line);border-radius:28px;background:var(--screen);overflow:hidden;min-width:900px;box-shadow:var(--shadow)}
+.desk .chrome{display:flex;gap:6px;padding:12px 18px;border-bottom:1px solid var(--line)}
+.desk .chrome i{width:10px;height:10px;border-radius:50%;background:var(--line)}
+.desk .cols{display:grid;grid-template-columns:270px 1fr 250px;font-size:13px}
+.desk .col{padding:18px;display:flex;flex-direction:column;gap:10px}
+.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.drop{outline:2px dashed var(--accent);outline-offset:-2px;background:var(--accent-soft)}
+.drag{transform:rotate(-2deg);box-shadow:0 14px 28px -12px rgba(20,40,50,.6)}
+@media (prefers-reduced-motion:no-preference){a,.btn{transition:opacity .15s}}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (max-width:560px){nav ol{columns:1}}
+</style>
+
+<div class="wrap">
+
+<header style="display:flex;flex-direction:column;gap:16px">
+  <span class="eyebrow">Spec v0.1 · draft · 16 Nov 2026</span>
+  <h1>Receipt Splitter</h1>
+  <p class="lede">Turning the single-purpose Ramen Nagi splitter into a reusable bill splitter: snap or type a receipt, check what was read, share a link, friends claim their items, and everyone sees who owes whom.</p>
+  <div class="meta">
+    <span class="pill">Source: mrk-jsph-dev/ramen-nagi-bill @ 0797ae0</span>
+    <span class="pill">Target: near-$0/month on Azure</span>
+    <span class="pill">No accounts</span>
+  </div>
+</header>
+
+<nav aria-label="Contents" class="box">
+  <span class="eyebrow">Contents</span>
+  <ol>
+    <li><a href="#today">What is hardcoded today</a></li>
+    <li><a href="#features">Feature list</a></li>
+    <li><a href="#design">UI design</a></li>
+    <li><a href="#flows">User flows</a></li>
+    <li><a href="#model">Data model</a></li>
+    <li><a href="#maths">Splitting maths rules</a></li>
+    <li><a href="#api">API</a></li>
+    <li><a href="#infra">Architecture, deployment, cost and privacy</a></li>
+    <li><a href="#security">Many bills, kept separate</a></li>
+    <li><a href="#decisions">Open decisions and placeholders</a></li>
+    <li><a href="#build">Build order</a></li>
+  </ol>
+</nav>
+
+<!-- 1 -->
+<section id="today">
+  <span class="eyebrow">1 · Audit</span>
+  <h2>What is hardcoded today</h2>
+  <p>The current app is well built for its one job. The maths engine, the op-based updates with conflict checks, ETag retries, polling and the tap-to-assign dialog are worth keeping. What ties it to one dinner is that the receipt, the people and the fees live in source code.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Where</th><th>What is fixed</th><th>Change</th></tr></thead>
+    <tbody>
+      <tr><td><code>shared/bill.ts</code></td><td>12 named people, 9 receipt lines, 40% discount, ₱680.80 service charge, ₱5,255.80 total, one <code>BILL_ID</code></td><td>Move all of it into bill data created at runtime</td></tr>
+      <tr><td><code>shared/bill.ts</code></td><td>Discount always proportional, service charge always equal, no tax or tip</td><td>Generic adjustments list with a chosen allocation rule each</td></tr>
+      <tr><td><code>formatPeso</code></td><td>₱ and 2 decimals only</td><td>Per-bill ISO 4217 currency with its own minor-unit digits</td></tr>
+      <tr><td><code>PaymentQr.tsx</code>, <code>my_qr.png</code></td><td>One person's InstaPay QR, full name and bank</td><td>Per-bill "how to pay me" note, set by the organizer</td></tr>
+      <tr><td><code>ReceiptItemsPanel.tsx</code>, <code>BillPage.tsx</code></td><td>"Ramen Nagi", "SM Megamall", date, receipt image import</td><td>Merchant, date and items come from the bill</td></tr>
+      <tr><td><code>api/src/core.ts</code></td><td>Single bill, auto-created on first GET</td><td>Create bills explicitly, each with an unguessable id</td></tr>
+      <tr><td><code>api/src/functions/bills.ts</code></td><td>Storage reached with a connection string</td><td>Managed identity, no stored secret</td></tr>
+      <tr><td>Repo root</td><td>Real receipt photo (cashier and server names, invoice number), personal QR, coworkers' full names</td><td>Remove before the repo goes public, including from history</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- 2 -->
+<section id="features">
+  <span class="eyebrow">2 · Scope</span>
+  <h2>Feature list</h2>
+  <p><span class="pill ok">MVP</span> ships first. <span class="pill todo">Next</span> follows once the MVP is live. <span class="pill later">Later</span> is out of scope until someone asks for it.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Feature</th><th>What it does</th><th>Today</th><th>Phase</th></tr></thead>
+    <tbody>
+      <tr><td><b>Many separate bills</b></td><td>Anyone can start any number of bills. Each has its own unguessable link and storage, and nothing from one bill shows in another (section 9).</td><td>One bill</td><td><span class="pill ok">MVP</span></td></tr>
+      <tr><td><b>Activity and payment confirmation</b></td><td>See who claimed what. "I've paid" waits for the receiver to confirm.</td><td>Missing</td><td><span class="pill ok">MVP</span></td></tr>
+      <tr><td><b>Sample receipt</b></td><td>"Try the sample" builds a bill from a bundled JSON receipt. No AI call, no upload.</td><td>Missing</td><td><span class="pill ok">MVP</span></td></tr>
+      <tr><td><b>Manual entry</b></td><td>Type items, quantities and prices. Works when scanning is capped or unavailable.</td><td>Missing</td><td><span class="pill ok">MVP</span></td></tr>
+      <tr><td><b>Receipt scan</b></td><td>Photo to draft items with Azure AI Document Intelligence. Daily cap and per-device rate limit.</td><td>Missing</td><td><span class="pill ok">MVP</span></td></tr>
+      <tr><td><b>Several receipts in one bill</b></td><td>Dinner, then drinks, then dessert in one link. Each receipt keeps its own fees, its own payer and its own list of who was there. One settle-up nets across all of them. Long receipts can be scanned as two photos.</td><td>Missing</td><td><span class="pill ok">MVP</span></td></tr>
+      <tr><td><b>Review before share</b></td><td>Every read line is editable. Low-confidence lines are flagged. Sharing stays locked until the computed total matches the receipt total the organizer confirms.</td><td>Missing</td><td><span class="pill ok">MVP</span></td></tr>
+      <tr><td><b>Add people</b></td><td>The organizer types names, taps friends from earlier bills on this phone, or shows a QR so each person joins and adds themselves. Anyone can add a friend who has no phone. A printed headcount (Ramen Nagi prints "HeadCount 12") is shown as a hint. Rename at any time; remove only people with no claims.</td><td>12 fixed names</td><td><span class="pill ok">MVP</span></td></tr>
+      <tr><td><b>Per-unit items</b></td><td>A line of 8 × Butao King becomes 8 claimable units.</td><td>Yes</td><td><span class="pill ok">MVP</span></td></tr>
+      <tr><td><b>Shared items</b></td><td>Several people claim one unit (a platter, a pitcher). Split equally by default.</td><td>Missing</td><td><span class="pill ok">MVP</span></td></tr>
+      <tr><td><b>Senior and PWD discounts</b></td><td>Mark who holds a Senior Citizen or PWD card. The printed SC/PWD discount and VAT exemption go to that person only, in every split mode, and are never spread over the group.</td><td>Missing</td><td><span class="pill ok">MVP</span></td></tr>
+      <tr><td><b>Split modes</b></td><td>Per receipt: by item (claim what you had), equally, or by shares. Custom amounts next. Milk tea for four can be "equally" while dinner is "by item".</td><td>By item only</td><td><span class="pill ok">MVP</span> · <span class="pill todo">Next</span> amounts</td></tr>
+      <tr><td><b>Uneven shares</b></td><td>Weights on a shared item, e.g. 2 : 1 : 1.</td><td>Missing</td><td><span class="pill todo">Next</span></td></tr>
+      <tr><td><b>Tax</b></td><td>Added tax (US sales tax) or tax already in prices (PH VAT). Proportional by default.</td><td>Missing</td><td><span class="pill ok">MVP</span></td></tr>
+      <tr><td><b>Service charge</b></td><td>Read from the receipt or typed in. Split by what each ordered (default) or equally.</td><td>Equal only</td><td><span class="pill ok">MVP</span></td></tr>
+      <tr><td><b>Tip</b></td><td>Percent helper or fixed amount, equal or proportional.</td><td>Missing</td><td><span class="pill ok">MVP</span></td></tr>
+      <tr><td><b>Discounts</b></td><td>Percent or fixed amount, any label (card promo, voucher, senior/PWD). Applies to the whole receipt, chosen items, or chosen people. Split by what each ordered or equally.</td><td>One fixed 40%</td><td><span class="pill ok">MVP</span> bill-wide · <span class="pill todo">Next</span> item-scoped</td></tr>
+      <tr><td><b>Exact rounding</b></td><td>Largest-remainder allocation so totals always match to the smallest coin.</td><td>Yes, service charge only</td><td><span class="pill ok">MVP</span></td></tr>
+      <tr><td><b>Currency per bill</b></td><td>ISO 4217 code with its own decimals (PHP 2, JPY 0, KWD 3) and locale formatting.</td><td>₱ only</td><td><span class="pill ok">MVP</span></td></tr>
+      <tr><td><b>Who paid the restaurant</b></td><td>One or more payers with the amount each put down.</td><td>Implied</td><td><span class="pill ok">MVP</span> one payer · <span class="pill todo">Next</span> several</td></tr>
+      <tr><td><b>Settle-up</b></td><td>Fewest transfers from net balances, each with a "paid" toggle.</td><td>Paid toggle only</td><td><span class="pill ok">MVP</span></td></tr>
+      <tr><td><b>Share link and QR</b></td><td>Unguessable link, QR on screen for the table, copy button.</td><td>One fixed URL</td><td><span class="pill ok">MVP</span></td></tr>
+      <tr><td><b>Payment note</b></td><td>Free text such as "GCash 09xx… / BPI …" shown on every card.</td><td>One personal QR</td><td><span class="pill ok">MVP</span></td></tr>
+      <tr><td><b>Copy summary</b></td><td>Plain-text "who owes what" to paste in a group chat.</td><td>Missing</td><td><span class="pill todo">Next</span></td></tr>
+      <tr><td><b>Recent bills and friends</b></td><td>Bills you opened and names you used, kept in this browser only and suggested when adding people.</td><td>Missing</td><td><span class="pill todo">Next</span></td></tr>
+      <tr><td><b>Auto-delete</b></td><td>Bills delete 30 days after the last change; organizer can delete now.</td><td>Kept forever</td><td><span class="pill ok">MVP</span></td></tr>
+      <tr><td><b>Lock bill and undo</b></td><td>Organizer undoes any claim, or freezes the bill once settled.</td><td>Missing</td><td><span class="pill ok">MVP</span></td></tr>
+      <tr><td>Currency conversion</td><td>Pay in a different currency from the receipt. Needs a rates source.</td><td>—</td><td><span class="pill later">Later</span></td></tr>
+      <tr><td>Groups and running balances</td><td>Debts carried across many bills. Needs identity, which we avoid.</td><td>—</td><td><span class="pill later">Later</span></td></tr>
+      <tr><td>Payment integrations</td><td>Pay links into GCash, PayPal and so on.</td><td>—</td><td><span class="pill later">Later</span></td></tr>
+      <tr><td>Accounts, push, real time</td><td>Kept out on purpose for cost and simplicity.</td><td>—</td><td><span class="pill later">Later</span></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- 3 -->
+<section id="design">
+  <span class="eyebrow">3 · Mockup</span>
+  <h2>UI design</h2>
+  <p><a href="https://claude.ai/artifact/4SR3rM6twuBoUXJUywnKTZ">Open the clickable end-to-end walkthrough</a> for all 28 screens in order, including an ending with a second receipt, from scan to settled.</p>
+  <p>Mobile first, because people claim at the table. Cool graphite and deep teal, soft glass cards, big rounded pills, a gradient band at the top of each screen and one black card for the key action. Teal means yours, amber means still unclaimed, red means check this, green means paid. Receipt lines keep a mono face like the printed slip. Numbers use the bundled sample receipt and made-up names (Ana, Ben, Carla, Dan), and are worked out with the rules in section 6.</p>
+</section>
+</div>
+
+<div class="rail" role="region" aria-label="Phone mockups" tabindex="0" style="max-width:1240px;margin:16px auto 0">
+
+  <!-- 1 Home -->
+  <figure class="shot">
+    <div class="phone"><div class="scr">
+      <div class="sbar"><span>6:12</span><span>●●● ◔</span></div>
+      <div class="body" style="padding-top:8px">
+        <div class="row">
+          <div class="row" style="justify-content:flex-start"><span class="av lg c1">A</span><div><div style="font:700 17px var(--f-display)">Hi Ana</div><div class="small">Fair splits, to the centavo</div></div></div>
+          <div class="ibs"><span class="ib"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21h4"/></svg></span></div>
+        </div>
+        <div class="pillcard" style="flex-direction:row;align-items:center;justify-content:space-between;border-radius:999px;padding:8px 8px 8px 20px">
+          <div><div class="small">You're owed</div><div style="font:700 22px var(--f-display);letter-spacing:-.02em">₱1,748.65</div></div>
+          <span class="round" style="width:54px;height:54px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
+        </div>
+        <div class="h">Open bills <small>View all</small></div>
+        <div class="duo">
+          <div class="grad"><span style="font:500 12px var(--f-display);opacity:.9">Ramen dinner</span><span style="font:700 20px var(--f-display)">₱5,255.80</span><span class="btn">Split now</span></div>
+          <div class="night"><span class="small">Split with</span><div class="avs"><span class="av c2">B</span><span class="av c3">C</span><span class="av c4">D</span><span class="av c5">+9</span></div><span class="small">14 of 20 items claimed</span></div>
+        </div>
+        <div class="h">Start a new split</div>
+        <div class="acts">
+          <div class="act"><span class="round"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></span>Scan</div>
+          <div class="act"><span class="round"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6"/></svg></span>Sample</div>
+          <div class="act"><span class="round"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></span>Type in</div>
+        </div>
+        <div class="small" style="text-align:center">9 of 15 scans left today · the sample is always free</div>
+        <div class="pillcard" style="flex-direction:row;align-items:center;border-radius:999px;padding:8px 16px 8px 8px">
+          <span class="av c6">☕</span><div style="flex:1"><b>Coffee run</b><div class="small">14 Nov · 4 people</div></div><span class="amt">₱860.00</span>
+        </div>
+      </div>
+    </div></div>
+    <figcaption><b>Home.</b> What you're owed up top, open bills as cards, and three ways to start. Recent bills and friends are kept on this phone only.</figcaption>
+  </figure>
+
+  <!-- 2 Review -->
+  <figure class="shot">
+    <div class="phone"><div class="scr">
+      <div class="hero">
+        <div class="sbar" style="width:100%"><span>6:13</span><span>●●● ◔</span></div>
+        <div class="top"><span class="ib"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m15 18-6-6 6-6"/></svg></span><span class="chip ok" style="background:rgba(255,255,255,.9);color:#22805F">✓ Matches receipt</span></div>
+        <div class="ttl">Check what we read</div>
+        <div class="big">₱5,255.80</div>
+        <div class="sub">Ramen Nagi · 25 Sep 2026 · PHP</div>
+      </div>
+      <div class="body">
+        <div class="pillcard" style="gap:0;padding-block:4px">
+          <div class="line"><span class="n">Butao King</span><span class="amt">3,880.00</span><span class="small">8 × 485.00</span></div>
+          <div class="line flagged"><span class="n">Kakuni Belly</span><span class="amt">195.00</span><span class="small" style="color:var(--warn)">Not sure about this price · tap to check</span></div>
+          <div class="line"><span class="small">+ 7 more lines · Items 7,625.00</span><span></span></div>
+        </div>
+        <div class="pillcard" style="gap:6px">
+          <div class="row"><span>Service charge <span class="chip">split equally</span></span><span class="amt">680.80</span></div>
+          <div class="row"><span>40% BDO off <span class="chip">by what you ordered</span></span><span class="amt">−3,050.00</span></div>
+          <div class="row"><span class="small">+ Add tax, tip or fee</span><span></span></div>
+        </div>
+      </div>
+      <div class="slide"><span class="round"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span><b>Looks right</b><span class="chev">›››</span></div>
+    </div></div>
+    <figcaption><b>Review.</b> Every line is editable and unsure ones are flagged. The button stays disabled until the total matches the printed one. Slide or tap.</figcaption>
+  </figure>
+
+  <!-- 3 Add people -->
+  <figure class="shot">
+    <div class="phone"><div class="scr">
+      <div class="hero">
+        <div class="sbar" style="width:100%"><span>6:14</span><span>●●● ◔</span></div>
+        <div class="top"><span class="ib"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m15 18-6-6 6-6"/></svg></span><span></span></div>
+        <div class="ttl">Who's splitting?</div>
+        <div class="big">5 of 12</div>
+        <div class="sub">The receipt says HeadCount 12</div>
+      </div>
+      <div class="body">
+        <div class="people">
+          <div class="p"><span class="av lg c1">A</span>Ana</div>
+          <div class="p"><span class="av lg c2">B</span>Ben</div>
+          <div class="p"><span class="av lg c3">C</span>Carla</div>
+          <div class="p"><span class="av lg c4">D</span>Dan</div>
+          <div class="p"><span class="av lg c5">E</span>Eli</div>
+          <div class="p"><span class="av lg add">+</span>Add</div>
+        </div>
+        <div class="input"><span>Type a name</span><span class="round" style="width:30px;height:30px;font-weight:700">+</span></div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px"><span class="small" style="width:100%">Friends from earlier bills</span><span class="chip">+ Fay</span><span class="chip">+ Gio</span><span class="chip">+ Hana</span><span class="chip">+ Ivan</span></div>
+        <div class="night" style="flex-direction:row;align-items:center;gap:12px">
+          <span class="qr" aria-label="QR code placeholder"></span>
+          <div style="min-width:0"><b style="font-size:12px">Or let them add themselves</b><div class="small mono" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">[DOMAIN]/b/k3V9q…</div><span class="btn sm" style="margin-top:6px;background:var(--on-night);color:var(--night);border:0;width:max-content">Copy link</span></div>
+        </div>
+      </div>
+      <div class="slide" style="margin-top:10px"><span class="round"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span><b>Share the bill</b><span class="chev">›››</span></div>
+    </div></div>
+    <figcaption><b>Add people.</b> Type names, tap friends from earlier bills, or show the QR so each person joins and adds themselves. You can add more at any time.</figcaption>
+  </figure>
+
+  <!-- 4 Claim -->
+  <figure class="shot">
+    <div class="phone"><div class="scr">
+      <div class="hero" style="padding-bottom:14px">
+        <div class="sbar" style="width:100%"><span>6:20</span><span>●●● ◔</span></div>
+        <div class="ttl">Ramen dinner · you're Ben</div>
+        <div class="avs"><span class="av c1">A</span><span class="av c2">B</span><span class="av c3">C</span><span class="av c4">D</span><span class="av c5">E</span><span class="av c7">+7</span></div>
+        <div style="width:70%"><div class="bar" style="background:rgba(255,255,255,.4)"><i style="width:70%;background:#fff"></i></div></div>
+        <div class="sub">14 of 20 items claimed</div>
+      </div>
+      <div class="body">
+        <div class="pillcard">
+          <div class="row"><b>Butao King</b><span class="amt">485.00</span></div>
+          <div class="row"><div class="avs"><span class="av c1">A</span><span class="av c2">B</span><span class="av c5">E</span><span class="av c6">F</span><span class="av c7">G</span></div><span class="chip me">✓ 1 is yours</span></div>
+          <div class="row"><span class="small">5 of 8 claimed</span><span class="btn sm ghost">+ Claim another</span></div>
+        </div>
+        <div class="pillcard">
+          <div class="row"><b>Classic Gyoza 3pcs</b><span class="amt">190.00</span></div>
+          <div class="row"><div class="avs"><span class="av c2">B</span><span class="av c6">F</span><span class="av c7">G</span></div><span class="chip me">Yours 63.34</span></div>
+        </div>
+        <div class="pillcard">
+          <div class="row"><b>Kakuni Belly</b><span class="amt">195.00</span></div>
+          <div class="row"><span class="chip open">Unclaimed</span><span style="display:flex;gap:6px"><span class="btn sm pri">Mine</span><span class="btn sm">Share</span></span></div>
+        </div>
+      </div>
+      <div class="dock"><div><div class="small">Your share</div><div class="amt">₱385.74</div></div><span class="round" style="width:42px;height:42px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17 17 7M9 7h8v8"/></svg></span></div>
+    </div></div>
+    <figcaption><b>Claim.</b> Tap "Mine" or "Share". No dragging on phones. Your running total sits in the dock.</figcaption>
+  </figure>
+
+  <!-- 5 Uneven split -->
+  <figure class="shot">
+    <div class="phone"><div class="scr">
+      <div class="hero">
+        <div class="sbar" style="width:100%"><span>6:21</span><span>●●● ◔</span></div>
+        <div class="top"><span class="ib"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m15 18-6-6 6-6"/></svg></span><span></span></div>
+        <div class="ttl">Split Classic Gyoza</div>
+        <div class="big">₱190.00</div>
+        <div class="avs"><span class="av c2">B</span><span class="av c6">F</span><span class="av c7">G</span><span class="av add" style="background:rgba(255,255,255,.25);color:#fff;border-color:#fff">+</span></div>
+      </div>
+      <div class="body" style="gap:14px">
+        <div class="seg"><span>Equally</span><span class="on">By shares</span></div>
+        <div class="sliders">
+          <div class="sl">Ben<span class="small">2 pcs</span><div class="track"><i style="height:66%"></i><b style="bottom:calc(66% - 9px)"></b></div><span class="amt">95.00</span></div>
+          <div class="sl">Fay<span class="small">1 pc</span><div class="track"><i style="height:33%"></i><b style="bottom:calc(33% - 9px)"></b></div><span class="amt">47.50</span></div>
+          <div class="sl">Gio<span class="small">1 pc</span><div class="track"><i style="height:33%"></i><b style="bottom:calc(33% - 9px)"></b></div><span class="amt">47.50</span></div>
+        </div>
+        <div class="row small" style="justify-content:center"><span class="chip ok">✓ Adds up to 190.00</span></div>
+      </div>
+      <div class="slide"><span class="round"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span><b>Save split</b><span class="chev">›››</span></div>
+    </div></div>
+    <figcaption><b>Uneven split</b> (Next phase). Drag each slider to set shares. Amounts always add up exactly, with any leftover centavo assigned by the rounding rule.</figcaption>
+  </figure>
+
+  <!-- 6 Breakdown -->
+  <figure class="shot">
+    <div class="phone"><div class="scr">
+      <div class="hero" style="padding-bottom:60px">
+        <div class="sbar" style="width:100%"><span>6:22</span><span>●●● ◔</span></div>
+        <div class="ttl">Ramen dinner</div>
+      </div>
+      <div class="scrim"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <div class="row"><b style="font:700 17px var(--f-display)">Ben's share</b><span class="av c2">B</span></div>
+        <div class="row"><span>Butao King #2</span><span class="amt">485.00</span></div>
+        <div class="row"><span>Classic Gyoza, ⅓ of 190.00</span><span class="amt">63.34</span></div>
+        <div class="row" style="border-top:1px dashed var(--line);padding-top:6px"><span>Food</span><span class="amt">548.34</span></div>
+        <div class="row"><span>40% BDO off <span class="small">by what you ordered</span></span><span class="amt">−219.34</span></div>
+        <div class="row"><span>Service charge <span class="small">680.80 ÷ 12</span></span><span class="amt">56.74</span></div>
+        <div class="row tot"><span style="font-weight:600">You owe Ana</span><span style="font:700 20px var(--f-display)">₱385.74</span></div>
+        <p class="small">680.80 doesn't split into 12 equal centavos, so 4 people pay 56.74 and 8 pay 56.73. Together that is exactly 680.80.</p>
+        <div class="night" style="flex-direction:row;align-items:center;justify-content:space-between;border-radius:999px;padding:8px 8px 8px 16px"><div><div class="small">Pay Ana by</div><b style="font-size:12px">GCash [NUMBER]</b></div><span class="btn sm" style="background:var(--on-night);color:var(--night);border:0">I've paid</span></div>
+      </div>
+    </div></div>
+    <figcaption><b>Breakdown.</b> Every peso explained, including who gets the leftover centavo, with the organizer's payment note beside the "I've paid" button.</figcaption>
+  </figure>
+
+  <!-- 7 Settle -->
+  <figure class="shot">
+    <div class="phone"><div class="scr">
+      <div class="hero">
+        <div class="sbar" style="width:100%"><span>8:30</span><span>●●● ◔</span></div>
+        <div class="ttl">Settle up · Ana paid ₱5,255.80</div>
+        <div class="big">₱1,748.65</div>
+        <div class="sub">still to collect · 6 of 11 paid</div>
+        <div style="width:70%"><div class="bar" style="background:rgba(255,255,255,.4)"><i style="width:64%;background:#fff"></i></div></div>
+      </div>
+      <div class="body">
+        <div class="pillcard" style="gap:12px">
+          <div class="row"><span class="row" style="justify-content:flex-start"><span class="av c2">B</span>Ben → Ana</span><span class="row"><span class="amt">385.74</span><span class="toggle on" aria-label="paid"></span></span></div>
+          <div class="row"><span class="row" style="justify-content:flex-start"><span class="av c3">C</span>Carla → Ana</span><span class="row"><span class="amt">533.74</span><span class="toggle on" aria-label="paid"></span></span></div>
+          <div class="row"><span class="row" style="justify-content:flex-start"><span class="av c4">D</span>Dan → Ana</span><span class="row"><span class="amt">482.74</span><span class="toggle" aria-label="not paid"></span></span></div>
+          <div class="row"><span class="row" style="justify-content:flex-start"><span class="av c5">E</span>Eli → Ana</span><span class="row"><span class="amt">347.73</span><span class="toggle" aria-label="not paid"></span></span></div>
+          <div class="small">+ 7 more</div>
+        </div>
+        <div class="btn ghost">Copy summary for the group chat</div>
+      </div>
+    </div></div>
+    <figcaption><b>Settle up.</b> Fewest transfers from net balances. With one payer it is simply everyone to Ana.</figcaption>
+  </figure>
+</div>
+
+<div style="max-width:1240px;margin:28px auto 0;overflow-x:auto;padding:0 4px 24px" role="region" aria-label="Desktop mockup" tabindex="0">
+  <div class="desk">
+    <div class="chrome"><i></i><i></i><i></i></div>
+    <div class="cols">
+      <div class="col">
+        <div class="h">Unclaimed <span class="chip open">6 · ₱1,098.00</span></div>
+        <div class="pillcard drag"><div class="row"><b>Kakuni Belly</b><span class="amt">195.00</span></div><span class="small">Dragging to Carla…</span></div>
+        <div class="pillcard"><div class="row"><span>Extra Noodles Thin #2</span><span class="amt">95.00</span></div></div>
+        <div class="pillcard"><div class="row"><span>Tamago</span><span class="amt">85.00</span></div></div>
+        <span class="small">Drag an item onto a person, or click it to pick someone.</span>
+      </div>
+      <div class="col">
+        <div class="h">People <small>Drop to assign · drop on Unclaimed to remove</small></div>
+        <div class="pgrid">
+          <div class="pillcard"><div class="row"><span class="av c1">A</span><span class="chip ok">paid</span></div><b>Ana</b><span class="amt" style="font-size:16px">₱404.74</span><span class="small">Butao King, Noodles Thin</span></div>
+          <div class="pillcard"><div class="row"><span class="av c2">B</span><span class="chip ok">paid</span></div><b>Ben</b><span class="amt" style="font-size:16px">₱385.74</span><span class="small">Butao King, ⅓ Gyoza</span></div>
+          <div class="pillcard drop"><div class="row"><span class="av c3">C</span><span class="chip ok">paid</span></div><b>Carla</b><span class="amt" style="font-size:16px">₱533.74</span><span class="small">Gyu King</span></div>
+          <div class="pillcard"><div class="row"><span class="av c4">D</span><span class="chip">unpaid</span></div><b>Dan</b><span class="amt" style="font-size:16px">₱482.74</span><span class="small">Red King, Coke Zero</span></div>
+          <div class="pillcard"><div class="row"><span class="av c5">E</span><span class="chip">unpaid</span></div><b>Eli</b><span class="amt" style="font-size:16px">₱347.73</span><span class="small">Butao King</span></div>
+          <div class="pillcard" style="border-style:dashed;align-items:center;justify-content:center"><span class="av add">+</span><b>Add person</b><span class="small">or share the link</span></div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="grad" style="gap:4px"><span style="font:500 12px var(--f-display);opacity:.9">Ramen dinner</span><span style="font:700 24px var(--f-display)">₱5,255.80</span></div>
+        <div class="row"><span>Items</span><span class="amt">7,625.00</span></div>
+        <div class="row"><span>Service</span><span class="amt">680.80</span></div>
+        <div class="row"><span>Discount</span><span class="amt">−3,050.00</span></div>
+        <div class="row small"><span>Claimed</span><span class="amt">4,157.80</span></div>
+        <div class="row small"><span>Unclaimed</span><span class="amt">1,098.00</span></div>
+        <div class="bar"><i style="width:79%"></i></div>
+        <span class="small">Saved · synced 4 s ago</span>
+      </div>
+    </div>
+  </div>
+</div>
+<p style="max-width:900px;margin:0 auto;font-size:13px;color:var(--muted);padding-inline:4px">Desktop keeps drag-and-drop from the current app, with click-to-assign as the fallback. Unclaimed here is 3 Butao King, Kakuni Belly, Noodles Thin #2 and Tamago: 1,830.00 of food less its 40% share of the discount.</p>
+<div class="wrap" style="margin-top:56px">
+
+<!-- 4 -->
+<section id="flows">
+  <span class="eyebrow">4 · Flows</span>
+  <h2>User flows</h2>
+  <div class="grid2">
+    <div class="box"><h3>Organizer</h3>
+      <ol class="tight">
+        <li>First visit only: welcome screen, then "What should we call you?". The name is saved in this browser, not an account, and becomes the organizer's name on new bills. Skippable.</li>
+        <li>Start: scan, sample, or type in.</li>
+        <li>Scan only: photo is sent once, read, and dropped. Draft lines come back.</li>
+        <li>Review: fix lines, set currency, add tax, tip, service and discounts as printed, pick how each is split, confirm the receipt total.</li>
+        <li>Optional: "Add another receipt" (scan, sample or type in) and repeat the review. For each receipt, set who paid it and who was there.</li>
+        <li>Share is enabled only when every receipt's computed total = its confirmed total.</li>
+        <li>Add people: type names, tap friends from earlier bills, or let them join by link or QR.</li>
+        <li>Name the bill (suggested from the first receipt, editable any time), add a payment note and share.</li>
+        <li>Watch claims fill in, nudge on unclaimed items, mark payments.</li>
+      </ol></div>
+    <div class="box"><h3>Friend</h3>
+      <ol class="tight">
+        <li>Open the link. Pick "I'm…" from the list or add a name. Choice is kept on this device.</li>
+        <li>Tap "Mine" for a unit, or "Share" to split it with others.</li>
+        <li>See your share update with a full breakdown.</li>
+        <li>Pay using the note, then tap "I've paid".</li>
+      </ol></div>
+    <div class="box"><h3>Two people, same item</h3>
+      <p>Each change carries what the person saw (<code>from</code>). If Carla claimed the unit first, Ben's request fails with a conflict, his screen reloads, and he sees "Carla claimed this a moment ago." Nothing is overwritten silently. This is the current app's approach, kept as is.</p></div>
+    <div class="box"><h3>Organizer edits after sharing</h3>
+      <p>Editing a line's price keeps its claims. Deleting a line removes its claims and shows a notice to the people affected. Changing the confirmed total re-locks sharing until it matches again.</p></div>
+  </div>
+</section>
+
+<!-- 5 -->
+<section id="model">
+  <span class="eyebrow">5 · Data</span>
+  <h2>Data model</h2>
+  <p>One JSON document per bill. Money is always an integer count of the currency's minor unit (centavos for PHP, yen for JPY). That is exact decimal arithmetic without floating point.</p>
+<pre>type Minor = number;            // integer minor units; never a float
+type Id = string;               // short random id, unique within the bill
+
+interface Bill {
+  id: string;                   // 128-bit random, base62 (22 chars)
+  schema: 1;
+  version: number;              // +1 on every write
+  createdAt: string; updatedAt: string;
+  title: string;                // organizer's choice, e.g. "Team lunch"; suggested from the first receipt's merchant, editable any time
+  currency: { code: string; digits: 0 | 2 | 3 };   // ISO 4217
+  status: "draft" | "shared" | "locked";
+  people: Person[];             // order = added order; used for tie-breaks
+  headcountHint?: number;       // printed headcount, shown when adding people
+  receipts: Receipt[];          // one or more; maths runs per receipt
+  paymentNote?: string;         // free text, max 280 chars
+  payments: { personId: Id; status: "waiting" | "confirmed" }[];
+  activity: { at: string; personId?: Id; text: string }[];   // last 100
+  lockedAt?: string;
+  organizerKeyHash: string;     // SHA-256 of the organizer key
+}
+
+interface Receipt {
+  id: Id;
+  label: string;                // "Dinner", "Milk tea"
+  merchant?: string; receiptDate?: string;
+  source: "sample" | "manual" | "scan";
+  photos: number;               // pages scanned for this receipt (long receipts)
+  confirmedTotal: Minor;        // organizer-confirmed printed total
+  lines: Line[];                // as printed
+  adjustments: Adjustment[];    // apply to THIS receipt only
+  splitMode: "items" | "equal" | "shares" | "amounts";
+  shares?: Record<Id, number>;  // splitMode "shares": e.g. a couple counts as 2
+  amounts?: Record<Id, Minor>;  // splitMode "amounts" (Next): must sum to confirmedTotal
+  participants: Id[];           // who was there; equal splits use this list
+  payers: { personId: Id; amount: Minor }[];   // who paid this receipt
+}
+
+interface Person {
+  id: Id; name: string /* max 40 */;
+  card?: "senior" | "pwd";      // set by the organizer; the restaurant checks the actual ID
+}
+
+interface Line {
+  id: Id; name: string; quantity: number; unitPrice: Minor;
+  lineTotal: Minor;             // as printed; must equal qty × unit unless edited
+  confidence?: number;          // 0–1 from scan; &lt; 0.8 is flagged
+  units: Unit[];                // one per physical unit
+}
+
+interface Unit {
+  id: Id;                       // "butao-3"
+  claims: { personId: Id; weight: number /* 1 = equal */ }[];
+}
+
+interface Adjustment {
+  id: Id;
+  kind: "tax" | "tip" | "service" | "discount" | "fee" | "senior" | "pwd" | "vatExempt";
+  label: string;                // as printed: "40% BDO OFF"
+  amount: Minor;                // signed; discounts are negative
+  rate?: number;                // percent helper, basis points (4000 = 40%); amount is the truth
+  includedInPrices: boolean;    // true for VAT already in item prices (info only)
+  split: "proportional" | "equal";   // by what each ordered, or same for everyone
+  scope?: { units?: Id[]; people?: Id[] };   // absent = whole receipt
+  source: "scan" | "manual";    // scan-detected ones are flagged until confirmed
+}</pre>
+  <p class="small" style="color:var(--muted)">Percent fields are UI helpers that fill <code>amount</code>. The stored amount is what the receipt printed, so the base a restaurant used (Ramen Nagi charged service on the VAT-exclusive price) never has to be guessed.</p>
+</section>
+
+<!-- 6 -->
+<section id="maths">
+  <span class="eyebrow">6 · Maths</span>
+  <h2>Splitting maths rules</h2>
+  <div class="box">
+    <h3>Allocation primitive: largest remainder</h3>
+    <p><code>allocate(total, weights[]) → Minor[]</code>. Each share is <code>floor(total × wᵢ / Σw)</code>. The leftover minor units go one each to the largest fractional parts; ties go to the earlier person in <code>people</code> order. The result always sums to <code>total</code>. Negative totals (discounts) are allocated as a positive amount and negated. Integer maths only; use 64-bit integers (<code>long</code>, with <code>checked</code> arithmetic) for the products.</p>
+  </div>
+  <ol class="tight">
+    <li><b>Split mode, per receipt.</b>
+      <ul class="tight" style="margin-top:6px">
+        <li><b>By item</b> (default): people claim what they had, then steps 2 to 8 below.</li>
+        <li><b>Equally</b>: no claiming. <code>allocate(confirmedTotal, [1 per participant])</code>. Fees and discounts are already inside the total, so nothing else is allocated.</li>
+        <li><b>By shares</b>: <code>allocate(confirmedTotal, shares)</code>, e.g. a couple counts as 2, a kid as 0.5.</li>
+        <li><b>Custom amounts</b> (Next): the organizer types each amount; saving is blocked until they add up to the total.</li>
+        <li><b>Person-scoped discounts in Equally and By shares</b> (senior, PWD, or any discount limited to chosen people): take them out first, split the rest, then give each one back only to its people. <code>base = confirmedTotal − Σ person-scoped</code>, <code>allocate(base, weights)</code>, then add each person-scoped amount to its people.</li>
+      </ul></li>
+    <li><b>Per receipt.</b> Steps 2 to 7 run separately for each receipt, using only that receipt's lines, adjustments and participants. Receipt 1's service charge never touches receipt 2's items. A person's bill total is the sum of their totals across receipts.</li>
+    <li><b>Units.</b> A line's <code>lineTotal</code> is spread over its units with <code>allocate(lineTotal, [1,1,…])</code>, so a printed 3 for 100.00 becomes 33.34, 33.33, 33.33.</li>
+    <li><b>Shared units.</b> A unit's price is spread over its claimants with <code>allocate(price, weights)</code>.</li>
+    <li><b>Food subtotal.</b> Each person's sum of unit shares. Unclaimed units go to a virtual <b>Unclaimed</b> bucket that sits last in the order.</li>
+    <li><b>Proportional adjustments</b> (the default for every kind): <code>allocate(amount, subtotals in scope)</code> across people plus Unclaimed.</li>
+    <li><b>Equal adjustments</b> (chosen per fee, e.g. the Ramen Nagi group split service equally): <code>allocate(amount, [1 per participant])</code>, where participants are the people ticked as "was there" for that receipt (everyone by default). Participants with no items still pay their share, as in the current app.</li>
+    <li><b>Tax included in prices</b> adds nothing; it is shown as information only.</li>
+    <li><b>Person total</b> = food subtotal + Σ adjustment shares.</li>
+    <li><b>Invariant</b>, checked per receipt in code and tests: Σ person totals + Unclaimed = Σ lineTotal + Σ adjustments = that receipt's <code>confirmedTotal</code>. Sharing stays off until every receipt holds it.</li>
+    <li><b>Settle-up across receipts.</b> Net = Σ paid on all receipts − Σ owed on all receipts. Netting happens once for the whole bill, so if Ana paid dinner and Ben paid milk tea, nobody sends money both ways. Repeatedly match the largest debtor with the largest creditor, transfer the smaller of the two, ties by people order. This gives at most n−1 transfers. A true minimum is an NP-hard problem and not worth it at table size.</li>
+  </ol>
+  <h3>Fees and discounts: what the organizer can set</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Setting</th><th>Options</th><th>Example</th></tr></thead>
+    <tbody>
+      <tr><td>Kind</td><td>Discount, service charge, tax, tip, other fee</td><td>"40% BDO OFF" is a discount</td></tr>
+      <tr><td>Amount</td><td>Percent of the items it applies to, or a fixed amount. The printed amount wins if they differ by more than one centavo, and the app shows both.</td><td>40% of 7,625.00 = 3,050.00</td></tr>
+      <tr><td>Applies to</td><td>Whole receipt, chosen items, or chosen people's items</td><td>Senior discount on Lola's items only</td></tr>
+      <tr><td>Split</td><td>By what each ordered, or equally among who was there</td><td>Ramen Nagi: discount by order, service equally</td></tr>
+      <tr><td>Tax in prices</td><td>Added on top, or already included (shown only)</td><td>PH VAT is already in menu prices</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Senior citizen and PWD discounts (Philippines)</h3>
+  <p>Restaurants apply these to the card holder's own share. On a VAT-inclusive bill the usual computation removes the 12% VAT from the holder's share and then takes 20% off. For a shared group meal, the holder's share is the total divided by the number of diners. <span class="ph">[VERIFY AGAINST CURRENT RA 9994 / RA 10754 RULES AND BIR GUIDANCE]</span> The app does not recompute any of this. It uses the amounts the restaurant printed and only decides who gets them.</p>
+  <ul class="tight">
+    <li>The scan looks for lines such as <code>SC DISC</code>, <code>SENIOR</code>, <code>PWD DISC</code>, <code>VAT EXEMPT</code>, <code>LESS VAT</code>. They become <code>senior</code>, <code>pwd</code> and <code>vatExempt</code> adjustments, flagged for review.</li>
+    <li>The organizer picks who they belong to (people with a card). Those adjustments get <code>scope.people</code> = the card holders and are never split across others.</li>
+    <li>By item: the holder's discount sits against their own claims. If the discount is larger than what they claimed, the app warns, since the restaurant may have assumed a group meal.</li>
+    <li>Two card holders: each line is assigned to its holder; one line covering both is split between them by their shares of the base.</li>
+  </ul>
+  <h3>Worked example: group meal with one senior</h3>
+  <p>Four people share ₱2,240.00 of food (VAT included), split equally. Lola has a senior card. The receipt prints the share and discounts as the restaurant computed them.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Receipt line</th><th class="num">Amount</th><th>How the app treats it</th></tr></thead>
+    <tbody>
+      <tr><td>Food subtotal</td><td class="num">2,240.00</td><td>Split equally among 4</td></tr>
+      <tr><td>Less VAT, senior share (560.00 ÷ 1.12 = 500.00)</td><td class="num">−60.00</td><td>Lola only</td></tr>
+      <tr><td>SC DISC 20% of 500.00</td><td class="num">−100.00</td><td>Lola only</td></tr>
+      <tr><td><b>Total due</b></td><td class="num"><b>2,080.00</b></td><td></td></tr>
+    </tbody>
+  </table></div>
+  <p>Base = 2,080.00 − (−160.00) = 2,240.00, so each person's equal share is 560.00. Lola pays 560.00 − 160.00 = <b>400.00</b>. The other three pay <b>560.00</b> each. 400.00 + 3 × 560.00 = 2,080.00. Spreading the discount over everyone would have made it 520.00 each, which takes Lola's benefit away from her.</p>
+  <h3>How a scan finds fees and discounts</h3>
+  <ul class="tight">
+    <li>Document Intelligence's receipt model returns items, subtotal, tax, tip and total as fields <span class="ph">[VERIFY CURRENT FIELD LIST]</span>. Service charges and discounts are not standard fields, so they come back as ordinary lines or not at all.</li>
+    <li>Our parser moves lines into fees and discounts by their words and sign: <code>service charge</code>, <code>svc</code>, <code>s/c</code> → service; <code>discount</code>, <code>% off</code>, <code>less</code>, <code>promo</code>, negative or bracketed amounts → discount; <code>vat</code>, <code>tax</code> → tax. A percent in the label fills the rate.</li>
+    <li>Every detected fee shows up flagged: "We read this as a service charge. Right?" The organizer can change its kind, amount and split, or turn it back into an item.</li>
+    <li>Anything missed is added by hand. The total check catches it, because the receipt will not match until it is in.</li>
+  </ul>
+  <h3>Worked example: the sample receipt</h3>
+  <p>The bundled sample is the Ramen Nagi receipt with made-up names. With 12 people, a 40% discount split by item share and the service charge split equally:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Person (order)</th><th>Items</th><th class="num">Food</th><th class="num">Discount</th><th class="num">Service</th><th class="num">Owes</th></tr></thead>
+    <tbody>
+      <tr><td>Ben (2)</td><td>Butao King, ⅓ Gyoza (shared with Fay and Gio; Ben gets the extra centavo)</td><td class="num">548.34</td><td class="num">−219.34</td><td class="num">56.74</td><td class="num">385.74</td></tr>
+      <tr><td>Carla (3)</td><td>Gyu King</td><td class="num">795.00</td><td class="num">−318.00</td><td class="num">56.74</td><td class="num">533.74</td></tr>
+      <tr><td>Dan (4)</td><td>Red King, Coke Zero</td><td class="num">710.00</td><td class="num">−284.00</td><td class="num">56.74</td><td class="num">482.74</td></tr>
+      <tr><td>Eli (5)</td><td>Butao King</td><td class="num">485.00</td><td class="num">−194.00</td><td class="num">56.73</td><td class="num">347.73</td></tr>
+      <tr><td colspan="2"><b>Whole bill</b></td><td class="num">7,625.00</td><td class="num">−3,050.00</td><td class="num">680.80</td><td class="num"><b>5,255.80</b></td></tr>
+    </tbody>
+  </table></div>
+  <p class="small" style="color:var(--muted)">Ben's discount is 3,050.00 × 548.34 ⁄ 7,625.00 = 219.336, shown rounded. The exact centavo depends on the largest-remainder pass across all 12 people, which tests pin down.</p>
+  <h3>Worked example: two receipts</h3>
+  <p>After dinner, Ana, Ben, Carla and Dan get milk tea: 4 × 150.00 = ₱600.00, no fees, paid by Ben. Only those four are ticked as "was there".</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Person</th><th class="num">Dinner owed</th><th class="num">Milk tea owed</th><th class="num">Paid</th><th class="num">Net</th></tr></thead>
+    <tbody>
+      <tr><td>Ana</td><td class="num">404.74</td><td class="num">150.00</td><td class="num">5,255.80</td><td class="num">+4,701.06</td></tr>
+      <tr><td>Ben</td><td class="num">385.74</td><td class="num">150.00</td><td class="num">600.00</td><td class="num">+64.26</td></tr>
+      <tr><td>Carla</td><td class="num">533.74</td><td class="num">150.00</td><td class="num">0.00</td><td class="num">−683.74</td></tr>
+      <tr><td>Dan</td><td class="num">482.74</td><td class="num">150.00</td><td class="num">0.00</td><td class="num">−632.74</td></tr>
+      <tr><td>8 others</td><td class="num">3,448.84</td><td class="num">—</td><td class="num">0.00</td><td class="num">−3,448.84</td></tr>
+      <tr><td><b>Total</b></td><td class="num">5,255.80</td><td class="num">600.00</td><td class="num">5,855.80</td><td class="num">0.00</td></tr>
+    </tbody>
+  </table></div>
+  <p>Ben paid more than he owes overall, so he sends nothing and gets 64.26 back from one person. Without netting, he would send 385.74 to Ana while Ana, Carla and Dan each send him 150.00.</p>
+  <h3>Tests the engine must have</h3>
+  <ul class="tight">
+    <li>The current Ramen Nagi suite, re-expressed as data: 20 units, ₱5,255.80, 56.74 × 4 + 56.73 × 8.</li>
+    <li>Allocation sums exactly for random totals and weights (property test, 10,000 cases).</li>
+    <li>JPY (0 digits) and KWD (3 digits) bills.</li>
+    <li>Shared unit with weights 2 : 1 : 1, and a 3-for-100.00 line.</li>
+    <li>Added tax plus tip plus negative discount reconcile with unclaimed items present.</li>
+    <li>Settle-up with two payers: transfers ≤ n−1, everyone's net reaches 0.</li>
+    <li>Split modes: equal and shares modes sum exactly to the receipt total for 1 to 50 people; switching modes keeps claims but ignores them.</li>
+    <li>Senior/PWD: the worked example above gives 400.00 and 3 × 560.00; the discount never lowers anyone else's amount, in every split mode.</li>
+    <li>Two receipts: receipt 1's service charge and discount never change receipt 2 amounts, and equal splits use only that receipt's participants.</li>
+    <li>Determinism: same bill in, same numbers out, regardless of claim order.</li>
+  </ul>
+</section>
+
+<!-- 7 -->
+<section id="api">
+  <span class="eyebrow">7 · API</span>
+  <h2>API</h2>
+  <p>JSON over HTTPS. No accounts. The bill id in the link grants claim access. The organizer key (returned once on create, kept in the organizer's browser, stored only as a hash) grants editing.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Method and path</th><th>Who</th><th>Does</th></tr></thead>
+    <tbody>
+      <tr><td><code>POST /api/bills</code></td><td>anyone</td><td>Body <code>{ source: "sample" | "manual", draft? }</code>. Returns <code>{ id, organizerKey }</code> once. Rate limited per IP. There is no route that lists bills.</td></tr>
+      <tr><td><code>POST /api/scans</code></td><td>anyone</td><td>Image (JPEG/PNG/HEIC, ≤ 4 MB). Checks daily cap and per-IP limit, reads with Document Intelligence, returns draft lines, adjustments, total and confidences. Optional <code>append: true</code> joins a second photo of the same long receipt to the previous draft. Each photo counts once toward the cap. The image is never stored. <code>429</code> with <code>{ reason: "daily-cap" | "rate" }</code> when limited.</td></tr>
+      <tr><td><code>GET /api/scans/quota</code></td><td>anyone</td><td><code>{ remainingToday }</code> for the start screen.</td></tr>
+      <tr><td><code>GET /api/bills/{id}</code></td><td>link</td><td>Returns the bill with an <code>ETag</code>. Honors <code>If-None-Match</code> and answers <code>304</code> when nothing changed, which keeps polling cheap.</td></tr>
+      <tr><td><code>PATCH /api/bills/{id}</code></td><td>link</td><td>One op: <code>addPerson</code>, <code>join</code> (add yourself and remember it on this device), <code>rename</code>, <code>removePerson</code> (no claims only), <code>claim</code>, <code>unclaim</code>, <code>setWeight</code>, <code>markPaid</code> (sets waiting). Each carries <code>from</code>; mismatch returns <code>409</code> with the latest bill.</td></tr>
+      <tr><td><code>POST /api/bills/{id}/receipts</code></td><td>organizer</td><td>Add a receipt from a scan draft, the sample or manual entry. Max 10 receipts per bill.</td></tr>
+      <tr><td><code>PUT /api/bills/{id}/receipts/{rid}</code> · <code>DELETE</code></td><td>organizer</td><td>Replace a receipt's lines, adjustments, participants, payers and confirmed total, or remove it (its claims go with it). Header <code>X-Organizer-Key</code> and <code>If-Match</code>.</td></tr>
+      <tr><td><code>PUT /api/bills/{id}/settings</code></td><td>organizer</td><td>Title, currency and payment note for the whole bill.</td></tr>
+      <tr><td><code>POST /api/bills/{id}/share</code> · <code>/lock</code></td><td>organizer</td><td>Move status. Share fails with <code>422</code> unless the invariant holds.</td></tr>
+      <tr><td><code>POST /api/bills/{id}/confirm</code> · <code>/undo</code></td><td>organizer</td><td>Confirm a payment, or undo a claim by activity entry.</td></tr>
+      <tr><td><code>DELETE /api/bills/{id}</code></td><td>organizer</td><td>Delete now.</td></tr>
+    </tbody>
+  </table></div>
+  <p>Polling: every 10 s while the tab is visible, stopped when hidden, slowed to 30 s after 5 minutes without local changes. Writes retry on ETag mismatch with jittered backoff, as today.</p>
+</section>
+
+<!-- 8 -->
+<section id="infra">
+  <span class="eyebrow">8 · Platform</span>
+  <h2>Architecture, deployment, cost and privacy</h2>
+<pre>Browser (React + TypeScript + Vite)  — display only, no money maths
+  │  static files
+  ├─▶ Azure Static Web Apps — Free plan
+  │  https://api.[DOMAIN]/…  (CORS: the SWA origin only)
+  └─▶ Azure Container Apps — Consumption, scale 0 → 1
+        .NET 10 minimal API (ASP.NET Core), one container, system-assigned managed identity
+        ├─▶ Blob Storage (LRS)   bills/{id}.json        If-Match ETags, 30-day lifecycle delete
+        ├─▶ Blob Storage (same)  limits/{date}/{ipHash}.json   2-day lifecycle delete
+        └─▶ Azure AI Document Intelligence — F0, prebuilt receipt model
+      RBAC only: Storage Blob Data Contributor, Cognitive Services User.
+      No keys or connection strings anywhere. Image pulled from GitHub Container Registry (public).</pre>
+  <div class="grid2">
+    <div class="box"><h3>Why Container Apps for a minimal API</h3>
+      <p>A minimal API is an ordinary ASP.NET Core app, so it needs a host that runs a web server. Container Apps on the Consumption plan scales to zero when nobody is using it, supports managed identity, and has a monthly free grant <span class="ph">[VERIFY CURRENT GRANT]</span>. Functions would force the Functions programming model instead of a minimal API, and App Service Free has a daily CPU quota and no scale to zero.</p></div>
+    <div class="box"><h3>Why the server owns the maths</h3>
+      <p>With a .NET API there is one maths engine, in C#, using <code>long</code> minor units and <code>decimal</code> only for parsing and display. Every <code>GET</code> and <code>PATCH</code> returns the computed breakdown, so all phones show the same numbers. The browser shows a claim instantly and the totals arrive in the same response, typically well under a second.</p></div>
+    <div class="box"><h3>Cold starts</h3>
+      <p>After about 5 idle minutes the API scales to zero. The first request after that waits a few seconds while the container starts; the page shows "Waking up…". While anyone has a bill open, 10-second polling keeps it warm.</p></div>
+    <div class="box"><h3>Project layout</h3>
+      <p><code>src/ReceiptSplitter.Core</code> (money maths, models, no I/O), <code>src/ReceiptSplitter.Api</code> (.NET 10 minimal API, <code>Program.cs</code> + endpoint groups), <code>tests/ReceiptSplitter.Core.Tests</code> and <code>tests/ReceiptSplitter.Api.Tests</code> (xUnit: maths, isolation, security), <code>web/</code> (React), <code>infra/</code> (Bicep), <code>samples/</code>, <code>.github/workflows/ci-cd.yml</code>.</p></div>
+    <div class="box"><h3>Why Blob for bills</h3>
+      <p>Bills grow with items and people, and a Table property caps at 64 KB. A blob per bill has the same ETag concurrency, no size worry, and a lifecycle rule ("delete 30 days after last modified") does retention with no timer code.</p></div>
+  </div>
+  <h3>Cost guards</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Item</th><th>Guard</th><th>Possible charge</th></tr></thead>
+    <tbody>
+      <tr><td>Static Web Apps</td><td>Free plan</td><td>None on Free; bandwidth limits apply</td></tr>
+      <tr><td>Container Apps (Consumption)</td><td>Min replicas 0, max 1, 0.25 vCPU / 0.5 GiB, no Log Analytics workspace (console logs off; App Insights with sampling instead)</td><td>Above the monthly free grant <span class="ph">[VERIFY CURRENT GRANT]</span>. A 2-hour dinner with polling keeps one small replica awake about 2 hours.</td></tr>
+      <tr><td>Container registry</td><td>GitHub Container Registry, public image</td><td>None. Azure Container Registry Basic would be a fixed monthly charge, so it is not used.</td></tr>
+      <tr><td>Document Intelligence</td><td>F0 tier, daily cap <code>SCAN_DAILY_CAP</code> = 15, 3 scans per IP per hour</td><td>None on F0; F0 refuses beyond its monthly page limit <span class="ph">[VERIFY F0 LIMIT]</span>. 15/day keeps a 31-day month at 465.</td></tr>
+      <tr><td>Storage (LRS)</td><td>Small JSON, 304 polling, 30-day delete</td><td>Cents per month at most</td></tr>
+      <tr><td>Application Insights</td><td>Sampling on, daily ingestion cap</td><td>Ingestion beyond free allowance</td></tr>
+      <tr><td>Budget alert</td><td>Azure Cost Management budget <span class="ph">[AMOUNT, e.g. $1]</span> with email alert</td><td>Catches surprises</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Deployment plan</h3>
+  <p>Everything is created by Bicep files kept in the repo under <code>infra/</code>: <code>main.bicep</code> (entry point), <code>modules/</code> (storage, docintel, containerapp, staticwebapp, roles, budget) and <code>main.bicepparam</code> (region, names, budget amount; no secrets). GitHub signs in to Azure with OpenID Connect (a federated credential), so no Azure password or key is stored in GitHub.</p>
+  <p><b>One manual pipeline:</b> <code>.github/workflows/ci-cd.yml</code>, triggered only by <code>workflow_dispatch</code>. Nothing runs on push or pull request. It has one input, <code>target</code>: <code>test</code>, <code>infra</code>, <code>api</code>, <code>web</code> or <code>all</code>. The <code>test</code> job always runs first, and every deploy job <code>needs: test</code>, so nothing ships with failing tests. Dependency caching, a 15-minute timeout and cancel-in-progress keep runs short. Start it from the Actions tab or with <code>gh workflow run ci-cd.yml -f target=api</code>.</p>
+  <pre>ci-cd.yml   (on: workflow_dispatch, input target)
+  test     always       dotnet test · web build + tests · dotnet list package --vulnerable · npm audit
+  infra    target ∈ {infra, all}   needs test   az deployment group create (Bicep)
+  api      target ∈ {api, all}     needs test   build + push GHCR image, update Container App, wait for /healthz
+  web      target ∈ {web, all}     needs test   build web, deploy to SWA
+  smoke    after any deploy        sample bill: create, claim, check totals, delete</pre>
+  <div class="tbl"><table>
+    <thead><tr><th>Step</th><th>What happens</th><th>Who</th></tr></thead>
+    <tbody>
+      <tr><td>1. One-time setup</td><td>Create a resource group in <span class="ph">[REGION, e.g. Southeast Asia]</span>. Create an Entra app registration with a federated credential for the repo's <code>main</code> branch and the <code>production</code> environment, and give it Contributor on the resource group plus User Access Administrator limited to assigning the two data roles.</td><td>Mark, once, with a script from the README</td></tr>
+      <tr><td>2. Infrastructure</td><td><code>az deployment group create</code> with <code>infra/main.bicep</code>: storage account (LRS, no shared-key access, lifecycle rules), Document Intelligence F0, Container Apps environment and app (managed identity, min 0 / max 1), Static Web App Free, role assignments, budget alert.</td><td><code>target=infra</code></td></tr>
+      <tr><td>3. Tests</td><td><code>dotnet test</code> (maths, isolation, security), web build and tests, plus the free vulnerability checks built into <code>dotnet</code> and <code>npm</code>. No CodeQL. Run with <code>target=test</code> on any branch when you want a check without deploying.</td><td>Always the first job</td></tr>
+      <tr><td>4. API release</td><td>From <code>main</code>: build the container, push <code>ghcr.io/[OWNER]/receipt-splitter-api:&lt;commit&gt;</code>, then <code>az containerapp update</code> to that tag. The new revision must pass <code>/healthz</code> before it takes traffic.</td><td><code>target=api</code></td></tr>
+      <tr><td>5. Web release</td><td>Build <code>web/</code> and deploy to SWA. The deploy token is fetched at run time after the OIDC sign-in, so it is never stored as a secret.</td><td><code>target=web</code></td></tr>
+      <tr><td>6. Smoke test</td><td>Create a sample bill, claim one item, check the totals, delete the bill.</td><td>After any deploy</td></tr>
+      <tr><td>Rollback</td><td>Point traffic back to the previous Container Apps revision (one command, kept in the README). For the web app, re-run the previous commit's deploy.</td><td>Mark or Claude</td></tr>
+    </tbody>
+  </table></div>
+  <p>Production only, no separate staging and no automatic PR previews. The API is checked by the manual test run plus the health-gated revision. Production deploys need an approval on the GitHub <code>production</code> environment. Custom domain: <span class="ph">[DOMAIN]</span>, optional; the default <code>*.azurestaticapps.net</code> and <code>*.azurecontainerapps.io</code> addresses work at no cost.</p>
+  <h3>Privacy</h3>
+  <ul class="tight">
+    <li>Receipt images are held in memory for one request, sent to Document Intelligence, and dropped. They are never written to our storage.</li>
+    <li>Only item names, prices, adjustments, merchant, date and total are kept from a scan. Raw text, card digits and staff names are discarded.</li>
+    <li>Document Intelligence's own retention of analyze results <span class="ph">[VERIFY IN MICROSOFT DOCS]</span> is stated in the README.</li>
+    <li>Bills, including people's names and payment notes, delete 30 days after the last change. The organizer can delete sooner.</li>
+    <li>Pages send <code>noindex</code> and <code>no-referrer</code>, as today, so links don't leak to search engines or other sites.</li>
+    <li>The sample receipt ships as JSON with made-up names, not as the original photo.</li>
+  </ul>
+</section>
+
+<!-- 9 -->
+<section id="security">
+  <span class="eyebrow">9 · Isolation</span>
+  <h2>Many bills, nothing leaking between them</h2>
+  <p>Anyone can use the app for any number of bills. Each bill is sealed off: a person sees a bill only if they hold its link, and nothing from one bill (names, items, amounts, payment notes) can show up in another. There are no accounts, so the rules below do the work an account system would.</p>
+
+  <div class="grid2">
+    <div class="box"><h3>1 · Separate storage per bill</h3>
+      <ul class="tight">
+        <li>One blob per bill: <code>bills/{id}.json</code>. No shared index, no list of bills, no search.</li>
+        <li>The API reads and writes only the exact id in the URL. There is no endpoint that returns more than one bill.</li>
+        <li>Every op is checked against that bill's own people and units, so an id from bill A is rejected in bill B.</li>
+      </ul></div>
+    <div class="box"><h3>2 · Links that can't be guessed</h3>
+      <ul class="tight">
+        <li>Bill id: 128 random bits from a crypto RNG, 22 base62 characters. Never a counter, date or name.</li>
+        <li>Unknown, deleted and expired bills all return the same <code>404</code>, so probing learns nothing.</li>
+        <li>More than 20 not-found lookups from one IP in 10 minutes gets <code>429</code>, so ids can't be brute-forced.</li>
+      </ul></div>
+    <div class="box"><h3>3 · Two levels of access</h3>
+      <ul class="tight">
+        <li><b>Claim link</b> (<code>/b/{id}</code>): view, join, claim, add people, say "I've paid".</li>
+        <li><b>Organizer key</b>: a second 128-bit secret, sent once on create, kept in the organizer's browser, stored only as a SHA-256 hash and compared in constant time. Needed to edit the receipt, confirm payments, undo claims, lock or delete.</li>
+        <li><b>Organizer link</b> (<code>/b/{id}#key</code>): the key travels after <code>#</code>, which browsers never send to servers or put in referrers. The app offers "Save organizer link" for moving to another phone.</li>
+        <li>Responses never include the key hash or any server field. The client gets exactly what its access level allows.</li>
+      </ul></div>
+    <div class="box"><h3>4 · Nothing carries over on the device</h3>
+      <ul class="tight">
+        <li>A new bill starts empty. People from earlier bills are only suggestions, read from this browser, and are never sent to the server unless tapped.</li>
+        <li>Local storage is keyed per bill: <code>bill:{id}:me</code>, <code>bill:{id}:key</code>. Opening bill B never reads bill A's entries.</li>
+        <li>"Forget this device" in settings clears recent bills, friends, names and organizer keys, for shared or borrowed phones.</li>
+      </ul></div>
+    <div class="box"><h3>5 · Guards inside a bill</h3>
+      <ul class="tight">
+        <li><b>Activity list</b>: "Ben claimed Kakuni Belly · 6:20 PM". The last 100 events are kept inside the bill and deleted with it.</li>
+        <li><b>Payment needs both sides</b>: "I've paid" sets <i>waiting</i>, and only the receiver (organizer key) sets <i>confirmed</i>. Totals count confirmed payments only.</li>
+        <li><b>Organizer undo and lock</b>: undo any claim, or lock the bill so it can only be viewed.</li>
+      </ul></div>
+    <div class="box"><h3>6 · No leaks outside the bill</h3>
+      <ul class="tight">
+        <li>Logs and Application Insights record a salted hash of the bill id, never the id, names or amounts. Request bodies are not logged.</li>
+        <li>Headers: <code>Cache-Control: no-store</code>, <code>Referrer-Policy: no-referrer</code>, <code>X-Robots-Tag: noindex</code>, strict CSP with no third-party scripts, HTTPS only, CORS limited to the app's own origin.</li>
+        <li>Scan results go back only to the person who scanned and are not saved until they create the bill.</li>
+        <li>Rate-limit counters hold a salted hash of the IP, not the IP, and expire after 2 days.</li>
+      </ul></div>
+  </div>
+
+  <div class="note"><b>What a link can't protect against.</b> Anyone the link is forwarded to can claim items in that bill. That is the trade-off of no accounts. The activity list, payment confirmation, undo and lock make mistakes or mischief visible and fixable. If a group needs more, passkey sign-in can be added later without changing how bills are stored.</div>
+
+  <h3>Security tests (in CI, alongside the maths tests)</h3>
+  <ul class="tight">
+    <li>An op on bill A that names a person or unit from bill B is rejected and bill B is unchanged.</li>
+    <li>Edit, confirm, undo, lock and delete without the organizer key, or with another bill's key, return <code>403</code>.</li>
+    <li>Unknown, deleted and expired ids give identical <code>404</code> bodies. Not-found lookups past the limit give <code>429</code>.</li>
+    <li>No API response contains <code>organizerKeyHash</code>, and no route lists bills.</li>
+    <li>Ids and keys come from the crypto RNG and are 22 base62 characters (property test).</li>
+    <li>After creating bill B on the same browser, bill B's state contains nothing from bill A.</li>
+  </ul>
+</section>
+
+<!-- 10 -->
+<section id="decisions">
+  <span class="eyebrow">10 · Open</span>
+  <h2>Open decisions and placeholders</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Question</th><th>Recommendation</th></tr></thead>
+    <tbody>
+      <tr><td>API language</td><td><b>Decided: .NET 10 minimal API</b> on Container Apps. The server owns the maths, so there is still exactly one engine. The current TypeScript engine and its tests are ported to C# and xUnit first, and both must agree on the Ramen Nagi fixture before the TypeScript one is removed.</td></tr>
+      <tr><td>New repo or evolve this one?</td><td>New public repo seeded from this one without the photo, QR and names in history.</td></tr>
+      <tr><td>Domain</td><td><span class="ph">[DOMAIN]</span> SWA's default <code>*.azurestaticapps.net</code> works at no cost.</td></tr>
+      <tr><td>Scan cap</td><td>15 per day, 3 per IP per hour, both settings.</td></tr>
+      <tr><td>Retention</td><td>30 days after the last change.</td></tr>
+      <tr><td>App name</td><td><span class="ph">[APP NAME]</span> "Receipt Splitter" used here as a working name.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- 10 -->
+<section id="build">
+  <span class="eyebrow">11 · Plan</span>
+  <h2>Build order</h2>
+  <p>One small module at a time, each with tests and CI green before the next starts, and a plan or mockup shown first.</p>
+  <ol class="tight">
+    <li><b>Maths engine (C#).</b> Generic <code>Allocate</code>, per-receipt totals, split modes, person-scoped discounts, settle-up. xUnit tests including the Ramen Nagi fixture, the senior example and property tests. CI on every PR.</li>
+    <li><b>Bill data and API (.NET 10 minimal API).</b> Create/get/patch on Blob with ETags, organizer key, sample bill, the isolation rules and security tests in section 9. Managed identity. Bicep and the deploy pipeline below.</li>
+    <li><b>Claim screen.</b> Current UI driven by bill data: dynamic people, shared units, currency formatting.</li>
+    <li><b>Review and manual entry.</b> Line editor, adjustments, confirmed-total lock.</li>
+    <li><b>Share and settle-up.</b> Link, QR, payment note, transfers, paid toggles.</li>
+    <li><b>Scan.</b> Document Intelligence, quota, rate limit, privacy notes in README.</li>
+    <li><b>Demo and launch.</b> Short screen recording with the sample, budget alert, README.</li>
+  </ol>
+</section>
+
+</div>
