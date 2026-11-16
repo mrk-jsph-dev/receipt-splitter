@@ -107,8 +107,16 @@ export interface PersonShare {
   total: number;
 }
 
+/** One person's part of one unit's price; personId null is the unclaimed price. */
+export interface UnitShare {
+  unitId: string;
+  personId: string | null;
+  amount: number;
+}
+
 export interface ReceiptBreakdown {
   receiptId: string;
+  items: UnitShare[];
   people: PersonShare[];
   unclaimed: PersonShare;
   computedTotal: number;
@@ -204,4 +212,37 @@ export async function getBill(id: string, etag?: string | null): Promise<GetBill
 export async function createSampleBill(): Promise<Created> {
   const response = await send('/api/bills', { method: 'POST', body: JSON.stringify({ source: 'sample' }) });
   return (await response.json()) as Created;
+}
+
+/** A write's answer: the bill as it is now, with its new ETag. */
+export interface Written {
+  data: BillResponse;
+  etag: string | null;
+}
+
+/** The latest bill that comes with a 409, 412 or 422, so the screen can show what changed. */
+export function latestFrom(error: unknown): BillResponse | null {
+  if (!(error instanceof ApiError)) return null;
+  const body = error.body as Partial<BillResponse> | undefined;
+  return body?.bill ? { bill: body.bill, breakdown: body.breakdown ?? null } : null;
+}
+
+async function written(response: Response): Promise<Written> {
+  return { data: (await response.json()) as BillResponse, etag: response.headers.get('ETag') };
+}
+
+export type Op =
+  | { op: 'join'; name: string }
+  | { op: 'addPerson'; name: string }
+  | { op: 'rename'; personId: string; name: string; from: string }
+  | { op: 'removePerson'; personId: string; from: string }
+  | { op: 'claim'; unitId: string; personId: string; from: ClaimDoc[]; weight?: number }
+  | { op: 'unclaim'; unitId: string; personId: string; from: ClaimDoc[] }
+  | { op: 'setWeight'; unitId: string; personId: string; weight: number; from: ClaimDoc[] }
+  | { op: 'markPaid'; personId: string; from: PaymentStatus | null }
+  | { op: 'unmarkPaid'; personId: string; from: PaymentStatus | null };
+
+/** Anyone with the link: one op. A 409 means the bill moved on; its body has the latest bill. */
+export async function patchBill(id: string, op: Op): Promise<Written> {
+  return written(await send(`/api/bills/${id}`, { method: 'PATCH', body: JSON.stringify(op) }));
 }

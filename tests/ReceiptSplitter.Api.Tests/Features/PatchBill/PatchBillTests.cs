@@ -163,6 +163,28 @@ public class PatchBillTests(ApiFactory factory) : IClassFixture<ApiFactory>
     }
 
     [Fact]
+    public async Task I_have_not_paid_yet_takes_back_a_waiting_payment_but_never_a_confirmed_one()
+    {
+        var (client, id, bill) = await SampleAsync();
+        var ben = bill.PersonId("Ben");
+        var dan = bill.PersonId("Dan");
+        await client.PatchAsync(id, new { op = "markPaid", personId = ben, from = (string?)null });
+        await client.PatchAsync(id, new { op = "markPaid", personId = dan, from = (string?)null });
+        await Change(id, b => b.Payments.Single(p => p.PersonId == dan).Status = PaymentStatus.Confirmed);
+
+        var undo = await client.PatchAsync(id, new { op = "unmarkPaid", personId = ben, from = "waiting" });
+        var again = await client.PatchAsync(id, new { op = "unmarkPaid", personId = ben, from = "waiting" });
+        var confirmed = await client.PatchAsync(id, new { op = "unmarkPaid", personId = dan, from = "confirmed" });
+
+        Assert.Equal(HttpStatusCode.OK, undo.StatusCode);
+        var after = (await undo.ReadAsync<BillResponse>())!.Bill;
+        Assert.DoesNotContain(after.Payments, p => p.PersonId == ben);
+        Assert.Equal("Ben hasn't paid yet after all", after.Activity[^1].Text);
+        Assert.Equal(HttpStatusCode.Conflict, again.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, confirmed.StatusCode);
+    }
+
+    [Fact]
     public async Task A_locked_bill_takes_no_ops()
     {
         var (client, id, bill) = await SampleAsync();

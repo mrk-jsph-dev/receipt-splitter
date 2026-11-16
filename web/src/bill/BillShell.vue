@@ -6,7 +6,8 @@ import AppButton from '../design/components/AppButton.vue';
 import ReceiptPeso from '../design/icons/ReceiptPeso.vue';
 import { formatMoney } from '../shared/money';
 import { recentBills } from '../shared/storage';
-import { claimableUnits, unclaimedUnits } from './summary';
+import BreakdownSheet from './BreakdownSheet.vue';
+import { claimableUnits, personName, unclaimedUnits } from './summary';
 import { provideBill } from './useBill';
 
 // The frame inside a bill: a tab bar at the bottom on phones, a 76 px icon rail on tablets and a
@@ -15,7 +16,8 @@ import { provideBill } from './useBill';
 const props = defineProps<{ id: string }>();
 const router = useRouter();
 const state = provideBill(props.id);
-const { data, missing, problem, waking } = state;
+const { data, missing, problem, waking, me, notice, breakdownFor } = state;
+const myBalance = computed(() => (me.value ? data.value?.breakdown?.people.find((p) => p.personId === me.value) ?? null : null));
 
 const bill = computed(() => data.value?.bill ?? null);
 const others = recentBills().filter((b) => b.id !== props.id).slice(0, 5);
@@ -87,13 +89,27 @@ onMounted(state.load);
             <p class="sub truncate">{{ subtitle }}</p>
           </div>
         </div>
-        <div class="tb-r" />
+        <div class="tb-r">
+          <button v-if="bill && me" type="button" class="you" :aria-label="`You're ${personName(bill, me)}. Change who you are`" @click="state.setMe(null)">
+            <span class="chip me">You're {{ personName(bill, me) }}</span><span class="change medium-up">Change</span>
+          </button>
+        </div>
       </header>
       <p v-if="problem" class="problem sm" role="status">{{ problem }}</p>
       <main class="content">
         <RouterView v-if="bill" />
       </main>
     </div>
+
+    <div v-if="bill && me && myBalance" class="sharebar compact-only">
+      <div>
+        <div class="cap2">{{ myBalance.net > 0 ? 'You get back' : 'Your share' }}</div>
+        <div class="amt">{{ formatMoney(myBalance.net > 0 ? myBalance.net : myBalance.owed, bill.currency) }}</div>
+      </div>
+      <AppButton sm @click="breakdownFor = me">Breakdown</AppButton>
+    </div>
+    <p class="toast" :class="{ shown: notice !== '' }" role="status" aria-live="polite">{{ notice }}</p>
+    <BreakdownSheet v-if="bill" />
 
     <nav class="tabbar" aria-label="Bill sections">
       <RouterLink v-for="s in sections" :key="s.name" :to="{ name: s.name, params: { id } }" class="tab">
@@ -126,7 +142,7 @@ onMounted(state.load);
 .sub { font-size: 12px; color: var(--muted); }
 .problem { color: var(--warn); padding: 8px 16px 0; }
 .content {
-  padding: 16px max(16px, env(safe-area-inset-right)) calc(96px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  padding: 16px max(16px, env(safe-area-inset-right)) calc(160px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
   display: flex; flex-direction: column; gap: 16px; min-width: 0;
 }
 
@@ -140,6 +156,24 @@ onMounted(state.load);
   font-size: 11px; font-weight: 500; color: var(--muted); border-radius: 10px;
 }
 .tab.router-link-exact-active { color: var(--accent); }
+
+.you { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; border-radius: 8px; }
+.you:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.you .change { font-size: 12.5px; color: var(--muted); text-decoration: underline; }
+.sharebar {
+  position: fixed; left: 12px; right: 12px; bottom: calc(72px + env(safe-area-inset-bottom)); z-index: 15;
+  background: var(--ink); color: var(--surface); border-radius: 14px; padding: 8px 8px 8px 16px;
+  display: flex; justify-content: space-between; align-items: center; box-shadow: var(--lift);
+}
+.sharebar .cap2 { font-size: 12px; opacity: .7; }
+.sharebar .amt { font-size: 18px; }
+.sharebar :deep(.btn) { background: var(--surface); color: var(--ink); border: 0; }
+.toast {
+  position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(140px + env(safe-area-inset-bottom)); z-index: 40;
+  max-width: min(560px, calc(100vw - 32px)); background: var(--ink); color: var(--surface); border-radius: 12px;
+  padding: 10px 14px; font-size: 13.5px; box-shadow: var(--lift); pointer-events: none; opacity: 0;
+}
+.toast.shown { opacity: 1; }
 
 /* ---------- Medium: 76 px icon rail ---------- */
 @media (min-width: 640px) {
@@ -164,6 +198,7 @@ onMounted(state.load);
   .topbar { padding: 14px 24px; }
   .t { font-size: 18px; }
   .content { padding: 20px 24px 32px; gap: 20px; }
+  .toast { bottom: 24px; }
 }
 
 /* ---------- Expanded: 240 px sidebar ---------- */
