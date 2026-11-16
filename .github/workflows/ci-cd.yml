@@ -1,0 +1,66 @@
+# One manual pipeline. Nothing runs on push or pull request, to save Actions minutes.
+# Run:  gh workflow run ci-cd.yml -f target=test   (or infra | api | web | all)
+name: ci-cd
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: What to run. Tests always run first.
+        type: choice
+        default: test
+        options: [test, infra, api, web, all]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-cd-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+          cache: true
+          cache-dependency-path: '**/*.csproj'
+
+      - name: .NET tests
+        run: dotnet test --configuration Release
+
+      - name: .NET vulnerable packages
+        run: |
+          dotnet list package --vulnerable --include-transitive | tee vuln.txt
+          ! grep -q "has the following vulnerable packages" vuln.txt
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Web install
+        working-directory: web
+        run: npm ci
+
+      - name: Web tests and build
+        working-directory: web
+        run: |
+          npm test
+          npm run build
+
+      - name: Web audit
+        working-directory: web
+        run: npm audit --audit-level=high
+
+  # Module 3 adds the deploy jobs here, each with `needs: test` and an `if:` on inputs.target:
+  #   infra  -> az deployment group create -f infra/main.bicep (OIDC login, production environment)
+  #   api    -> build + push ghcr.io image, az containerapp update, wait for /healthz
+  #   web    -> build web/, deploy to Static Web Apps (token fetched after OIDC login)
+  #   smoke  -> create sample bill, claim, check totals, delete
