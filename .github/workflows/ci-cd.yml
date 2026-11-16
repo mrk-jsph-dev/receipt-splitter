@@ -14,6 +14,11 @@ on:
 permissions:
   contents: read
 
+# Resource names from infra/main.bicep (namePrefix in main.bicepparam).
+env:
+  API_APP: receipt-splitter-api
+  WEB_APP: receipt-splitter-web
+
 concurrency:
   group: ci-cd-${{ github.ref }}
   cancel-in-progress: true
@@ -59,8 +64,201 @@ jobs:
         working-directory: web
         run: npm audit --audit-level=high
 
-  # Module 3 adds the deploy jobs here, each with `needs: test` and an `if:` on inputs.target:
-  #   infra  -> az deployment group create -f infra/main.bicep (OIDC login, production environment)
-  #   api    -> build + push ghcr.io image, az containerapp update, wait for /healthz
-  #   web    -> build web/, deploy to Static Web Apps (token fetched after OIDC login)
-  #   smoke  -> create sample bill, claim, check totals, delete
+  # Deploy jobs. Each runs only from main, needs the tests, and waits for approval on the
+  # GitHub "production" environment. Azure sign-in is OIDC: no Azure secret is stored in GitHub.
+
+  infra:
+    needs: test
+    if: contains(fromJSON('["infra", "all"]'), inputs.target)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Deploys run from main only
+        run: test "$GITHUB_REF" = refs/heads/main || { echo "::error::Deploy from main only."; exit 1; }
+
+      - uses: actions/checkout@v4
+
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      # Passes the image that is running now back in, so an infra run never rolls back the API.
+      # Before the first API release there is no image, and main.bicep skips the Container App.
+      - name: Deploy Bicep
+        env:
+          RG: ${{ vars.AZURE_RESOURCE_GROUP }}
+          BUDGET_ALERT_EMAIL: ${{ vars.BUDGET_ALERT_EMAIL }}
+        run: |
+          API_IMAGE=$(az resource show -g "$RG" -n "$API_APP" --resource-type Microsoft.App/containerApps \
+            --query 'properties.template.containers[0].image' -o tsv 2>/dev/null || true)
+          export API_IMAGE
+          az deployment group create -g "$RG" -n main -p infra/main.bicepparam --query properties.outputs
+
+  api:
+    needs: [test, infra]
+    if: >-
+      always() && needs.test.result == 'success'
+      && contains(fromJSON('["success", "skipped"]'), needs.infra.result)
+      && contains(fromJSON('["api", "all"]'), inputs.target)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
+    steps:
+      - name: Deploys run from main only
+        run: test "$GITHUB_REF" = refs/heads/main || { echo "::error::Deploy from main only."; exit 1; }
+
+      - uses: actions/checkout@v4
+
+      - name: Image name
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/receipt-splitter-api:${GITHUB_SHA}" >> "$GITHUB_ENV"
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        run: |
+          docker build -f src/ReceiptSplitter.Api/Dockerfile -t "$IMAGE" .
+          docker push "$IMAGE"
+
+      # Container Apps pulls without a login, so the package has to be public.
+      - name: Check the image is public
+        run: |
+          docker logout ghcr.io
+          if ! docker manifest inspect "$IMAGE" > /dev/null; then
+            echo "::error::Make the package public, then run target=api again: https://github.com/${GITHUB_REPOSITORY}/pkgs/container/receipt-splitter-api/settings"
+            exit 1
+          fi
+
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      # The same Bicep as infra with the new image, so port, probes, settings and roles stay in one
+      # place. The new revision takes traffic only once its /healthz probe passes.
+      - name: Release
+        env:
+          RG: ${{ vars.AZURE_RESOURCE_GROUP }}
+          BUDGET_ALERT_EMAIL: ${{ vars.BUDGET_ALERT_EMAIL }}
+        run: API_IMAGE="$IMAGE" az deployment group create -g "$RG" -n main -p infra/main.bicepparam --query properties.outputs
+
+      - name: Wait for /healthz
+        env:
+          RG: ${{ vars.AZURE_RESOURCE_GROUP }}
+        run: |
+          fqdn=$(az resource show -g "$RG" -n "$API_APP" --resource-type Microsoft.App/containerApps \
+            --query properties.configuration.ingress.fqdn -o tsv)
+          for _ in $(seq 1 36); do
+            curl -fsS "https://$fqdn/healthz" && exit 0
+            sleep 5
+          done
+          echo "::error::https://$fqdn/healthz did not return 200"
+          exit 1
+
+  web:
+    needs: [test, infra, api]
+    if: >-
+      always() && needs.test.result == 'success'
+      && contains(fromJSON('["success", "skipped"]'), needs.infra.result)
+      && contains(fromJSON('["success", "skipped"]'), needs.api.result)
+      && contains(fromJSON('["web", "all"]'), inputs.target)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Deploys run from main only
+        run: test "$GITHUB_REF" = refs/heads/main || { echo "::error::Deploy from main only."; exit 1; }
+
+      - uses: actions/checkout@v4
+
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      # The deploy token is read at run time and masked, so it is never stored as a secret.
+      - name: API address and deploy token
+        id: azure
+        env:
+          RG: ${{ vars.AZURE_RESOURCE_GROUP }}
+        run: |
+          fqdn=$(az resource show -g "$RG" -n "$API_APP" --resource-type Microsoft.App/containerApps \
+            --query properties.configuration.ingress.fqdn -o tsv 2>/dev/null || true)
+          if [ -z "$fqdn" ]; then
+            echo "::error::No API yet. Run target=api first."
+            exit 1
+          fi
+          echo "VITE_API_BASE_URL=https://$fqdn" >> "$GITHUB_ENV"
+          token=$(az staticwebapp secrets list -g "$RG" -n "$WEB_APP" --query properties.apiKey -o tsv)
+          echo "::add-mask::$token"
+          echo "token=$token" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Build
+        working-directory: web
+        run: |
+          npm ci
+          npm run build
+
+      - uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ steps.azure.outputs.token }}
+          action: upload
+          app_location: web/dist
+          skip_app_build: true
+          skip_api_build: true
+
+  # Runs after any deploy. Signs in with the main-branch credential, so it needs no second approval.
+  smoke:
+    needs: [test, infra, api, web]
+    if: >-
+      always() && inputs.target != 'test'
+      && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Create, claim, check totals, delete
+        env:
+          RG: ${{ vars.AZURE_RESOURCE_GROUP }}
+        run: |
+          fqdn=$(az resource show -g "$RG" -n "$API_APP" --resource-type Microsoft.App/containerApps \
+            --query properties.configuration.ingress.fqdn -o tsv 2>/dev/null || true)
+          if [ -z "$fqdn" ]; then
+            echo "No API deployed yet, nothing to check."
+            exit 0
+          fi
+          infra/smoke.sh "https://$fqdn"

@@ -57,7 +57,13 @@ One workflow, started by hand only: `.github/workflows/ci-cd.yml`.
 gh workflow run ci-cd.yml -f target=test    # test | infra | api | web | all
 ```
 
-Tests always run first, and nothing deploys unless they pass. Deploy jobs arrive in module 3.
+Tests always run first, and nothing deploys unless they pass. Deploys run only from `main`, wait
+for approval on the `production` environment, and sign in to Azure with OIDC (no stored secrets).
+After any deploy, a smoke test creates the sample bill, claims an item, checks the totals and
+deletes it.
+
+First-time Azure setup, what each Bicep file does, and how to roll back:
+[`infra/README.md`](infra/README.md).
 
 ## Privacy
 
