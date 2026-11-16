@@ -9,6 +9,8 @@ import PaidRing from '../design/components/PaidRing.vue';
 import SegmentedControl from '../design/components/SegmentedControl.vue';
 import { startError, startManual, startSample } from '../bill/startSample';
 import { currencies, currency } from '../shared/currencies';
+import { scanQuota } from '../shared/api';
+import { fillTray } from '../scan/tray';
 import { formatMoney } from '../shared/money';
 import { forgetDevice, getProfileName } from '../shared/storage';
 import { isSettled, useDeviceBills, type DeviceBill } from './deviceBills';
@@ -18,7 +20,6 @@ const router = useRouter();
 const { bills, load, reset } = useDeviceBills();
 const busy = ref(false);
 const error = ref('');
-const notice = ref('');
 const forgetting = ref(false);
 const name = ref(getProfileName());
 
@@ -75,8 +76,14 @@ async function typeIn() {
 }
 
 function picked(files: File[]) {
-  notice.value = `${files.length === 1 ? '1 photo' : `${files.length} photos`} picked. Reading receipts is coming soon, so for now try the sample or type it in.`;
+  fillTray(files);
+  void router.push('/scan');
 }
+
+const scansLeft = ref<number | null>(null);
+onMounted(async () => {
+  scansLeft.value = await scanQuota().catch(() => null);
+});
 
 function forget() {
   forgetDevice();
@@ -98,8 +105,7 @@ onMounted(load);
           <p class="muted">No sign-up. Add the receipt, share the link, and everyone taps what they had.</p>
         </div>
         <div class="starts">
-          <ScanCard @picked="picked" />
-          <p v-if="notice" class="sm muted" role="status">{{ notice }}</p>
+          <ScanCard :remaining="scansLeft" @picked="picked" />
           <button type="button" class="start" :disabled="busy" @click="typing = true">
             <span class="tile acc"><PencilLine /></span>
             <span class="grow"><b>Type it in</b><span class="sm muted">Enter the lines and total yourself</span></span>

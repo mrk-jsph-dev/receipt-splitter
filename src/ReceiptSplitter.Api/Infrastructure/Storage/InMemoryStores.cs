@@ -22,6 +22,13 @@ public sealed class InMemoryBillStore : IBillStore
         }
     }
 
+    /// <summary>Every stored bill as its JSON, so tests can prove what never gets stored.</summary>
+    public IReadOnlyList<string> Snapshot()
+    {
+        lock (_lock)
+            return _bills.Values.Select(v => v.Json).ToList();
+    }
+
     public Task<bool> CreateAsync(BillDocument bill, CancellationToken ct)
     {
         lock (_lock)

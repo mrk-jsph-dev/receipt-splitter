@@ -98,3 +98,8 @@ export function recentBills(): RecentBill[] {
 export function forgetDevice() {
   for (const key of keys()) if (key.startsWith('profile:') || key.startsWith(billPrefix)) write(key, null);
 }
+
+/** After "Delete this bill now": everything this browser kept about one bill. */
+export function forgetBill(id: string) {
+  for (const key of keys()) if (key.startsWith(`${billPrefix}${id}:`)) write(key, null);
+}
