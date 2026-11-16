@@ -35,7 +35,27 @@ public sealed record BreakdownView(
     IReadOnlyList<Core.Receipts.ReceiptBreakdown> Receipts,
     IReadOnlyList<PersonBalance> People,
     IReadOnlyList<BillProblem> Problems,
-    IReadOnlyList<Transfer> Transfers);
+    IReadOnlyList<Transfer> Transfers,
+    BillProgress Progress);
+
+/// <summary>
+/// Headline numbers for lists and headers, worked out here so the browser never adds money up.
+/// </summary>
+/// <param name="Total">Sum of every receipt's printed total.</param>
+/// <param name="Owing">People who owe money overall (net below zero).</param>
+/// <param name="Confirmed">Of those, how many the organizer has confirmed as paid.</param>
+/// <param name="PaidPercent">Confirmed out of owing, 0 to 100, rounded down. 0 when nobody owes yet.</param>
+public sealed record BillProgress(long Total, int Owing, int Confirmed, int PaidPercent)
+{
+    public static BillProgress From(BillDocument doc, IReadOnlyList<PersonBalance> people)
+    {
+        var total = doc.Receipts.Sum(r => r.ConfirmedTotal);
+        var confirmed = doc.Payments.Where(p => p.Status == PaymentStatus.Confirmed).Select(p => p.PersonId).ToHashSet();
+        var owing = people.Where(p => p.Net < 0).ToList();
+        var paid = owing.Count(p => confirmed.Contains(p.PersonId));
+        return new BillProgress(total, owing.Count, paid, owing.Count == 0 ? 0 : paid * 100 / owing.Count);
+    }
+}
 
 public sealed record BillResponse(BillView Bill, BreakdownView? Breakdown = null)
 {
@@ -60,7 +80,7 @@ public sealed record BillResponse(BillView Bill, BreakdownView? Breakdown = null
         var bill = BillCalculator.Calculate(people, doc.Receipts.Select(r => CoreMapping.ToCore(r, doc.People)).ToList());
         var canShare = doc.Receipts.Count > 0 && bill.Problems.All(p => p.Code != ProblemCode.TotalMismatch);
         var transfers = bill.CanSettle ? SettleUp.Transfers(bill) : [];
-        return new BreakdownView(canShare, bill.CanSettle, bill.Receipts, bill.People, bill.Problems, transfers);
+        return new BreakdownView(canShare, bill.CanSettle, bill.Receipts, bill.People, bill.Problems, transfers, BillProgress.From(doc, bill.People));
     }
 }
 

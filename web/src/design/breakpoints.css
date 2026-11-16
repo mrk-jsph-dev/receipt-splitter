@@ -1,0 +1,22 @@
+/* The one place the sizes live (docs/SPEC.md "Breakpoints"). Mobile first: the base rules are
+   the phone layout and each size adds rules with min-width. CSS custom media isn't available
+   without a build plugin, so components repeat these numbers in their own min-width queries:
+
+   compact   < 640 px    phones, portrait            (base rules)
+   medium    >= 640 px   tablets, phones in landscape
+   expanded  >= 1024 px  laptops and desktops
+   wide      >= 1240 px  large monitors
+
+   useBreakpoint() in ./useBreakpoint.ts reads the same numbers, for behaviour CSS can't do. */
+
+.medium-up, .expanded-up { display: none !important; }
+
+@media (min-width: 640px) {
+  .compact-only { display: none !important; }
+  .medium-up { display: revert !important; }
+}
+
+@media (min-width: 1024px) {
+  .expanded-up { display: revert !important; }
+  .below-expanded { display: none !important; }
+}
