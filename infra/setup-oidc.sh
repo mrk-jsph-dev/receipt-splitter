@@ -49,20 +49,30 @@ if ! az ad sp show --id "$client_id" --output none 2>/dev/null; then
 fi
 principal_id=$(az ad sp show --id "$client_id" --query id -o tsv)
 
+# GitHub decides the subject's prefix: "repo:owner/repo", or with immutable subjects
+# "repo:owner@<id>/repo@<id>". Ask GitHub rather than guess, so the credential always matches.
+prefix=$(gh api "repos/$repo/actions/oidc/customization/sub" -q '.sub_claim_prefix // empty' 2>/dev/null || true)
+prefix=${prefix:-repo:$repo}
+
 add_credential() {
-  local name=$1 subject=$2
-  if [[ -z "$(az ad app federated-credential list --id "$client_id" --query "[?name=='$name'].name" -o tsv)" ]]; then
-    az ad app federated-credential create --id "$client_id" --output none --parameters "{
-      \"name\": \"$name\",
-      \"issuer\": \"https://token.actions.githubusercontent.com\",
-      \"subject\": \"$subject\",
-      \"audiences\": [\"api://AzureADTokenExchange\"]
-    }"
+  local name=$1 subject=$2 current parameters
+  parameters="{
+    \"name\": \"$name\",
+    \"issuer\": \"https://token.actions.githubusercontent.com\",
+    \"subject\": \"$subject\",
+    \"audiences\": [\"api://AzureADTokenExchange\"]
+  }"
+  current=$(az ad app federated-credential list --id "$client_id" --query "[?name=='$name'].subject" -o tsv)
+  if [[ -z "$current" ]]; then
+    az ad app federated-credential create --id "$client_id" --output none --parameters "$parameters"
+  elif [[ "$current" != "$subject" ]]; then
+    az ad app federated-credential update --id "$client_id" --federated-credential-id "$name" \
+      --output none --parameters "$parameters"
   fi
 }
-echo "Federated credentials..."
-add_credential github-main "repo:$repo:ref:refs/heads/main"
-add_credential github-production "repo:$repo:environment:production"
+echo "Federated credentials for $prefix..."
+add_credential github-main "$prefix:ref:refs/heads/main"
+add_credential github-production "$prefix:environment:production"
 
 echo "Role assignments on $group..."
 az role assignment create --assignee-object-id "$principal_id" --assignee-principal-type ServicePrincipal \
