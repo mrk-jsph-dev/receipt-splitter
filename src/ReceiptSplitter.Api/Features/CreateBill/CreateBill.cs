@@ -33,8 +33,12 @@ public static class CreateBill
         TimeProvider clock,
         IOptions<BillLimits> limits,
         PrivacyHash hash,
+        CreateCap cap,
         ILogger<CreateBillRequest> log)
     {
+        if (await cap.IsReachedAsync(http.RequestAborted))
+            return ApiResults.TooMany("daily-cap");
+
         var (bill, error) = request.Source == BillSource.Sample
             ? FromSample(limits.Value)
             : FromManual(request, limits.Value);
@@ -50,6 +54,7 @@ public static class CreateBill
         // A clash between two random 128-bit ids will not happen, but a retry costs nothing.
         while (!await store.CreateAsync(bill, http.RequestAborted))
             bill.Id = SecureIds.NewSecret();
+        await cap.RecordAsync(http.RequestAborted);
 
         log.LogInformation("Bill {BillHash} created from {Source}", await hash.OfAsync(bill.Id), request.Source);
         http.Response.Headers.ETag = ApiResults.ETagOf(bill);

@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using ReceiptSplitter.Api.Infrastructure.RateLimits;
 using ReceiptSplitter.Api.Infrastructure.Storage;
 
 namespace ReceiptSplitter.Api.Infrastructure.Security;
@@ -18,5 +19,5 @@ public sealed class PrivacyHash(ILimitStore limits)
     }
 
     public Task<string> OfClientAsync(HttpContext http) =>
-        OfAsync(http.Connection.RemoteIpAddress?.ToString() ?? "unknown", http.RequestAborted);
+        OfAsync(ClientKey.Of(http), http.RequestAborted);
 }
