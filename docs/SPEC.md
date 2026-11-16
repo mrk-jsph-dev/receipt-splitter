@@ -306,7 +306,7 @@ Polling: every 10 s while the tab is visible, stopped when hidden, slowed to 30 
 
 ## Architecture, deployment, cost and privacy
 
-    Browser (React + TypeScript + Vite)  — display only, no money maths
+    Browser (Vue + TypeScript + Vite)    — display only, no money maths
       │  static files
       ├─▶ Azure Static Web Apps — Free plan
       │  https://api.[DOMAIN]/…  (CORS: the SWA origin only)
@@ -332,7 +332,7 @@ After about 5 idle minutes the API scales to zero. The first request after that 
 
 ### Project layout
 
-`src/ReceiptSplitter.Core` (money maths, models, no I/O), `src/ReceiptSplitter.Api` (.NET 10 minimal API, `Program.cs` + endpoint groups), `tests/ReceiptSplitter.Core.Tests` and `tests/ReceiptSplitter.Api.Tests` (xUnit: maths, isolation, security), `web/` (React), `infra/` (Bicep), `samples/`, `.github/workflows/ci-cd.yml`.
+`src/ReceiptSplitter.Core` (money maths, models, no I/O), `src/ReceiptSplitter.Api` (.NET 10 minimal API, `Program.cs` + endpoint groups), `tests/ReceiptSplitter.Core.Tests` and `tests/ReceiptSplitter.Api.Tests` (xUnit: maths, isolation, security), `web/` (Vue), `infra/` (Bicep), `samples/`, `.github/workflows/ci-cd.yml`.
 
 ### Why Blob for bills
 
