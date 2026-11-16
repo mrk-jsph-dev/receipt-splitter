@@ -107,3 +107,14 @@ describe('when storage is blocked', () => {
     set.mockRestore();
   });
 });
+
+describe('forgetBill', () => {
+  it('clears one bill and leaves the others', async () => {
+    const { forgetBill, getBillValue, setBillValue } = await import('./storage');
+    setBillValue('AAAAAAAAAAAAAAAAAAAAAA', 'key', 'k1');
+    setBillValue('BBBBBBBBBBBBBBBBBBBBBB', 'key', 'k2');
+    forgetBill('AAAAAAAAAAAAAAAAAAAAAA');
+    expect(getBillValue('AAAAAAAAAAAAAAAAAAAAAA', 'key')).toBeNull();
+    expect(getBillValue('BBBBBBBBBBBBBBBBBBBBBB', 'key')).toBe('k2');
+  });
+});

@@ -54,13 +54,14 @@ function drop(event: DragEvent) {
       <span v-else-if="payment === 'waiting'" class="chip">Sent</span>
       <span v-else-if="you" class="chip me">You</span>
     </span>
-    <b class="truncate">{{ person.name }}</b>
+    <b class="truncate">{{ person.name }}<span v-if="person.card === 'senior' || person.card === 'pwd'" class="card-tag">{{ person.card === 'senior' ? 'Senior' : 'PWD' }}</span></b>
     <span class="amt">{{ balance ? formatMoney(balance.owed, bill.currency) : '—' }}</span>
     <span class="sm muted items">{{ over ? `Drop to give ${person.name} this item` : items.join(', ') || 'Nothing yet' }}</span>
   </button>
 </template>
 
 <style scoped>
+.card-tag { margin-left: 6px; font-size: 11px; font-weight: 600; color: var(--accent); }
 .person { all: unset; box-sizing: border-box; cursor: pointer; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); display: flex; flex-direction: column; gap: 6px; padding: 14px; min-width: 0; }
 .person:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .person .amt { font-size: 16px; }

@@ -254,4 +254,20 @@ public class PatchBillTests(ApiFactory factory) : IClassFixture<ApiFactory>
         change(stored.Bill);
         Assert.True(await factory.Store.ReplaceAsync(stored.Bill, stored.ETag, default));
     }
+
+    [Fact]
+    public async Task A_card_holder_is_marked_once_and_a_stale_from_is_refused()
+    {
+        using var client = factory.NewClient();
+        var created = await client.CreateSampleAsync();
+        var lia = (await client.GetBillAsync(created.Id)).Bill.PersonId("Lia");
+
+        var set = await client.PatchAsync(created.Id, new { op = "setCard", personId = lia, card = "senior", from = "none" });
+        var stale = await client.PatchAsync(created.Id, new { op = "setCard", personId = lia, card = "pwd", from = "none" });
+
+        var bill = (await set.ReadAsync<BillResponse>())!.Bill;
+        Assert.Equal(Card.Senior, bill.People.Single(p => p.Id == lia).Card);
+        Assert.Equal("Lia has a senior card", bill.Activity[^1].Text);
+        Assert.Equal(HttpStatusCode.Conflict, stale.StatusCode);
+    }
 }

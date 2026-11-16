@@ -144,6 +144,10 @@ export interface BillProgress {
   owing: number;
   confirmed: number;
   paidPercent: number;
+  /** What the confirmed people owed in total. */
+  collected: number;
+  /** What everyone not yet confirmed still owes. */
+  toCollect: number;
 }
 
 export interface Breakdown {
@@ -189,7 +193,7 @@ export const isBillId = (id: string) => /^[0-9A-Za-z]{22}$/.test(id);
 async function send(path: string, init: RequestInit = {}): Promise<Response> {
   const response = await fetch(`${baseUrl}${path}`, {
     ...init,
-    headers: { Accept: 'application/json', ...(init.body ? { 'Content-Type': 'application/json' } : {}), ...init.headers },
+    headers: { Accept: 'application/json', ...(init.body && !(init.body instanceof FormData) ? { 'Content-Type': 'application/json' } : {}), ...init.headers },
   });
   if (response.ok || response.status === 304) return response;
 
@@ -240,9 +244,148 @@ export type Op =
   | { op: 'unclaim'; unitId: string; personId: string; from: ClaimDoc[] }
   | { op: 'setWeight'; unitId: string; personId: string; weight: number; from: ClaimDoc[] }
   | { op: 'markPaid'; personId: string; from: PaymentStatus | null }
-  | { op: 'unmarkPaid'; personId: string; from: PaymentStatus | null };
+  | { op: 'unmarkPaid'; personId: string; from: PaymentStatus | null }
+  | { op: 'setCard'; personId: string; card: Card; from: Card };
 
 /** Anyone with the link: one op. A 409 means the bill moved on; its body has the latest bill. */
 export async function patchBill(id: string, op: Op): Promise<Written> {
   return written(await send(`/api/bills/${id}`, { method: 'PATCH', body: JSON.stringify(op) }));
+}
+
+// Organizer calls. The key goes in a header only, never in the address.
+
+export interface LineDraft {
+  name: string;
+  quantity: number;
+  unitPrice: number;
+  /** As printed, when it isn't quantity × price (3 for 100.00). */
+  lineTotal?: number | null;
+  id?: string;
+}
+
+export interface AdjustmentDraft {
+  kind: AdjustmentKind;
+  label: string;
+  amount: number;
+  rate?: number | null;
+  includedInPrices?: boolean;
+  split: AdjustmentSplit;
+  scope?: { units?: string[] | null; people?: string[] | null } | null;
+  id?: string;
+}
+
+export interface ReceiptDraft {
+  label: string;
+  merchant?: string | null;
+  receiptDate?: string | null;
+  confirmedTotal: number;
+  lines: LineDraft[];
+  adjustments: AdjustmentDraft[];
+  splitMode: SplitMode;
+  participants: string[];
+  /** Left out on a new bill, the organizer is the payer. */
+  payers?: { personId: string; amount: number }[];
+  shares?: Record<string, number> | null;
+}
+
+/** The server's total check for a receipt being edited. Nothing is saved. */
+export interface ReceiptCheck {
+  items: number;
+  lineTotals: number[];
+  adjustments: number;
+  computedTotal: number;
+  confirmedTotal: number;
+  difference: number;
+  matches: boolean;
+  /** Per adjustment: what its percent comes to, or null without a percent. */
+  suggested: (number | null)[];
+  breakdown: ReceiptBreakdown | null;
+}
+
+function organizer(key: string, ifMatch?: string | null): Record<string, string> {
+  return { 'X-Organizer-Key': key, ...(ifMatch ? { 'If-Match': ifMatch } : {}) };
+}
+
+export async function createManualBill(
+  organizerName: string | null,
+  currency: Currency,
+  draft?: ReceiptDraft,
+  source: 'manual' | 'scan' = 'manual',
+): Promise<Created> {
+  const body = { source, organizerName, currency, draft };
+  const response = await send('/api/bills', { method: 'POST', body: JSON.stringify(body) });
+  return (await response.json()) as Created;
+}
+
+export async function addReceipt(id: string, key: string, draft: ReceiptDraft | null, source: 'manual' | 'scan' = 'manual'): Promise<Written> {
+  const body = draft ? { source, draft } : { source: 'sample' };
+  return written(await send(`/api/bills/${id}/receipts`, { method: 'POST', headers: organizer(key), body: JSON.stringify(body) }));
+}
+
+export async function replaceReceipt(id: string, key: string, etag: string, receiptId: string, draft: ReceiptDraft): Promise<Written> {
+  return written(
+    await send(`/api/bills/${id}/receipts/${receiptId}`, { method: 'PUT', headers: organizer(key, etag), body: JSON.stringify(draft) }),
+  );
+}
+
+export async function deleteReceipt(id: string, key: string, etag: string, receiptId: string): Promise<Written> {
+  return written(await send(`/api/bills/${id}/receipts/${receiptId}`, { method: 'DELETE', headers: organizer(key, etag) }));
+}
+
+export async function checkReceipt(id: string, key: string, draft: ReceiptDraft, receiptId?: string, signal?: AbortSignal): Promise<ReceiptCheck> {
+  const response = await send(`/api/bills/${id}/receipts/check`, {
+    method: 'POST',
+    headers: organizer(key),
+    body: JSON.stringify({ draft, receiptId }),
+    signal,
+  });
+  return (await response.json()) as ReceiptCheck;
+}
+
+export async function updateSettings(
+  id: string,
+  key: string,
+  etag: string,
+  settings: { title: string; currency: Currency; paymentNote: string | null },
+): Promise<Written> {
+  return written(await send(`/api/bills/${id}/settings`, { method: 'PUT', headers: organizer(key, etag), body: JSON.stringify(settings) }));
+}
+
+/** share, lock, confirm, decline and undo: organizer actions with an optional small body. */
+export async function organizerAction(
+  id: string,
+  key: string,
+  action: 'share' | 'lock' | 'confirm' | 'decline' | 'undo',
+  body?: { personId: string } | { activityId: string },
+): Promise<Written> {
+  return written(
+    await send(`/api/bills/${id}/${action}`, { method: 'POST', headers: organizer(key), body: body ? JSON.stringify(body) : undefined }),
+  );
+}
+
+export async function deleteBill(id: string, key: string): Promise<void> {
+  await send(`/api/bills/${id}`, { method: 'DELETE', headers: organizer(key) });
+}
+
+// Scanning. The photo goes to the API once, is read and dropped; nothing is saved until a bill is made.
+
+export interface ScanResult {
+  draft: ReceiptDraft;
+  remainingToday: number;
+  readCurrency: string | null;
+}
+
+export async function scanReceipt(file: Blob, currency: Currency, previous?: ReceiptDraft, signal?: AbortSignal): Promise<ScanResult> {
+  const form = new FormData();
+  form.append('file', file, file instanceof File ? file.name : 'receipt.jpg');
+  form.append('currencyCode', currency.code);
+  form.append('currencyDigits', String(currency.digits));
+  if (previous) form.append('previous', JSON.stringify(previous));
+  const response = await send('/api/scans', { method: 'POST', body: form, signal });
+  return (await response.json()) as ScanResult;
+}
+
+export async function scanQuota(): Promise<number> {
+  const response = await send('/api/scans/quota');
+  return ((await response.json()) as { remainingToday: number }).remainingToday;
 }

@@ -177,7 +177,8 @@ public static class ReceiptDrafts
                 IncludedInPrices = adjustment.IncludedInPrices,
                 Split = adjustment.Split,
                 Scope = scopeUnits is null && scopePeople is null ? null : new ScopeDoc(scopeUnits, scopePeople),
-                Source = old?.Source ?? (source == ReceiptSource.Scan ? AdjustmentSource.Scan : AdjustmentSource.Manual),
+                // A scanned fee stays flagged until the organizer saves the receipt, which counts as reviewing it.
+                Source = existing is null && source == ReceiptSource.Scan ? AdjustmentSource.Scan : AdjustmentSource.Manual,
             });
         }
 

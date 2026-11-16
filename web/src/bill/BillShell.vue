@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeft, ArrowLeftRight, ListChecks, ReceiptText, Smartphone, Users } from 'lucide-vue-next';
+import { ArrowLeft, ArrowLeftRight, ListChecks, ReceiptText, Share2, Smartphone, Users } from 'lucide-vue-next';
 import { computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import AppButton from '../design/components/AppButton.vue';
@@ -16,7 +16,7 @@ import { provideBill } from './useBill';
 const props = defineProps<{ id: string }>();
 const router = useRouter();
 const state = provideBill(props.id);
-const { data, missing, problem, waking, me, notice, breakdownFor } = state;
+const { data, missing, problem, waking, me, notice, breakdownFor, isOrganizer } = state;
 const myBalance = computed(() => (me.value ? data.value?.breakdown?.people.find((p) => p.personId === me.value) ?? null : null));
 
 const bill = computed(() => data.value?.bill ?? null);
@@ -90,12 +90,19 @@ onMounted(state.load);
           </div>
         </div>
         <div class="tb-r">
+          <RouterLink v-if="bill" :to="{ name: 'share', params: { id } }" class="share-btn" aria-label="Share this bill">
+            <Share2 class="s" /><span class="medium-up">Share</span>
+          </RouterLink>
           <button v-if="bill && me" type="button" class="you" :aria-label="`You're ${personName(bill, me)}. Change who you are`" @click="state.setMe(null)">
             <span class="chip me">You're {{ personName(bill, me) }}</span><span class="change medium-up">Change</span>
           </button>
         </div>
       </header>
       <p v-if="problem" class="problem sm" role="status">{{ problem }}</p>
+      <div v-if="bill && isOrganizer && bill.status === 'draft' && $route.name !== 'share'" class="draft sm">
+        <span>Not shared yet. Check each receipt and add people, then share the link.</span>
+        <RouterLink :to="{ name: 'share', params: { id } }" class="link-btn">Ready to share</RouterLink>
+      </div>
       <main class="content">
         <RouterView v-if="bill" />
       </main>
@@ -141,6 +148,15 @@ onMounted(state.load);
 .t { font-weight: 650; font-size: 16px; letter-spacing: -.01em; }
 .sub { font-size: 12px; color: var(--muted); }
 .problem { color: var(--warn); padding: 8px 16px 0; }
+.draft {
+  margin: 12px 16px 0; padding: 10px 14px; border-radius: 12px; background: var(--amber-soft); color: var(--ink);
+  display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; justify-content: space-between;
+}
+.share-btn {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 44px; min-width: 44px; justify-content: center; padding: 0 12px;
+  border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-size: 14px; font-weight: 550;
+}
+.share-btn.router-link-active { border-color: var(--accent); color: var(--accent); }
 .content {
   padding: 16px max(16px, env(safe-area-inset-right)) calc(160px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
   display: flex; flex-direction: column; gap: 16px; min-width: 0;
@@ -198,6 +214,7 @@ onMounted(state.load);
   .topbar { padding: 14px 24px; }
   .t { font-size: 18px; }
   .content { padding: 20px 24px 32px; gap: 20px; }
+  .draft { margin: 16px 24px 0; }
   .toast { bottom: 24px; }
 }
 
