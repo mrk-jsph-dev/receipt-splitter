@@ -1,3 +1,4 @@
+using ReceiptSplitter.Api.Infrastructure.RateLimits;
 using ReceiptSplitter.Api.Shared;
 
 namespace ReceiptSplitter.Api.Features.GetBill;
@@ -5,7 +6,7 @@ namespace ReceiptSplitter.Api.Features.GetBill;
 /// <summary>Anyone with the link. Answers 304 when the client already has this version, which keeps polling cheap.</summary>
 public static class GetBill
 {
-    public static void Map(IEndpointRouteBuilder app) => app.MapGet("/api/bills/{id}", Handle);
+    public static void Map(IEndpointRouteBuilder app) => app.MapGet("/api/bills/{id}", Handle).RequireRateLimiting(RateLimitPolicies.Read);
 
     private static async Task<IResult> Handle(string id, HttpContext http, BillAccess access)
     {

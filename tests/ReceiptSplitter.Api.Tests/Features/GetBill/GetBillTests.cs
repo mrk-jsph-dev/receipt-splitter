@@ -78,6 +78,23 @@ public class GetBillTests(ApiFactory factory) : IClassFixture<ApiFactory>
         return client.SendAsync(request);
     }
 
+    [Fact]
+    public async Task Reading_too_often_from_one_IP_gets_429_and_other_IPs_still_read()
+    {
+        using var limited = new ApiFactory().With("RateLimits:ReadsPerMinute", "2");
+        using var client = limited.NewClient();
+        using var other = limited.NewClient();
+        var created = await client.CreateSampleAsync();
+
+        await client.GetBillAsync(created.Id);
+        await client.GetBillAsync(created.Id);
+        var third = await client.GetAsync($"/api/bills/{created.Id}");
+
+        Assert.Equal(HttpStatusCode.TooManyRequests, third.StatusCode);
+        Assert.Contains("\"rate\"", await third.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, (await other.GetAsync($"/api/bills/{created.Id}")).StatusCode);
+    }
+
     private static string Single(HttpResponseMessage response, string header) =>
         Assert.Single(response.Headers.TryGetValues(header, out var values) ? values : response.Content.Headers.GetValues(header));
 }
