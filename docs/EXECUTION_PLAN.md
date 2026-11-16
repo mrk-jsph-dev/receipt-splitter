@@ -127,7 +127,8 @@ compile. If anything fails, fix it as the first commit of module 1.
    `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_RESOURCE_GROUP`, plus
    `BUDGET_ALERT_EMAIL` for the budget alerts.
 3. Create a GitHub environment named `production` with yourself as required reviewer.
-4. Make the GHCR package public after the first API push (the api job stops with the link).
+4. After the first `target=infra` run, add the GHCR pull token to the Container App once
+   (`infra/README.md`, setup step 6). The image stays private.
 
 **Done when**
 - `az bicep build -f infra/main.bicep` has no warnings.
