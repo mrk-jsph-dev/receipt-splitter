@@ -62,6 +62,7 @@ const status = computed(() => {
   return { text: c.difference < 0 ? `${gap} short of the receipt total ${money(c.confirmedTotal)}` : `${gap} over the receipt total ${money(c.confirmedTotal)}`, ok: false };
 });
 
+const toCheck = computed(() => form.lines.filter((l) => l.unsure).length + form.adjustments.filter((a) => a.fromScan).length);
 const lineTotal = (i: number) => (check.value && checkDraft.value && check.value.lineTotals[i] !== undefined ? money(check.value.lineTotals[i]) : '—');
 const units = computed(() =>
   (original.value?.lines ?? []).flatMap((l) => l.units.map((u, n) => ({ id: u.id, label: l.quantity > 1 ? `${l.name} #${n + 1}` : l.name }))),
@@ -203,13 +204,18 @@ const problem = (rowKey: string) => result.value.problems[rowKey];
       </section>
 
       <section class="card" aria-labelledby="lines-h">
-        <div class="row"><h3 id="lines-h" class="h">Items</h3><span class="sm muted">{{ form.lines.length }} {{ form.lines.length === 1 ? 'line' : 'lines' }}</span></div>
+        <div class="row">
+          <h3 id="lines-h" class="h">Items</h3>
+          <span v-if="toCheck > 0" class="chip flag">{{ toCheck }} to check</span>
+          <span v-else class="sm muted">{{ form.lines.length }} {{ form.lines.length === 1 ? 'line' : 'lines' }}</span>
+        </div>
         <ul class="list">
           <li v-for="(line, i) in form.lines" :key="line.key">
             <button type="button" class="li line" :class="{ bad: problem(line.key) }" @click="editLine(i)">
               <span class="grow">
                 <span class="nm truncate">{{ line.name || 'New line' }}</span>
                 <span class="sm muted">{{ line.qty }} × {{ line.price || '—' }}<template v-if="line.printed"> · printed {{ line.printed }}</template></span>
+                <span v-if="line.unsure" class="sm err">Not sure about this price · tap to check</span>
                 <span v-if="problem(line.key)" class="sm err">{{ problem(line.key) }}</span>
               </span>
               <span class="amt">{{ lineTotal(i) }}</span>
@@ -227,7 +233,8 @@ const problem = (rowKey: string) => result.value.problems[rowKey];
               <span class="grow">
                 <span class="nm truncate">{{ a.label || kindLabel(a.kind) }}</span>
                 <span class="chips">
-                  <span class="chip">{{ kindLabel(a.kind) }}</span>
+                  <span v-if="a.fromScan" class="chip flag">Read as {{ kindLabel(a.kind).toLowerCase() }}. Right?</span>
+                  <span v-else class="chip">{{ kindLabel(a.kind) }}</span>
                   <span v-if="a.appliesTo === 'people'" class="chip">{{ a.people.map((id) => bill.people.find((p) => p.id === id)?.name).join(', ') || 'pick people' }} only</span>
                   <span v-else class="chip">{{ splitLabel(a.split) }}</span>
                   <span v-if="a.included" class="chip">in prices</span>
@@ -340,7 +347,7 @@ const problem = (rowKey: string) => result.value.problems[rowKey];
       :line-total="lineTotal(lineAt)"
       :status="status.text"
       :matches="status.ok"
-      @close="lineAt = null"
+      @close="form.lines[lineAt!].unsure = false; lineAt = null"
       @remove="removeLine"
     />
     <AdjustmentSheet
@@ -353,7 +360,7 @@ const problem = (rowKey: string) => result.value.problems[rowKey];
       :units="units"
       :suggestion="suggestionFor(adjAt).text"
       :suggested-text="suggestionFor(adjAt).value"
-      @close="adjAt = null"
+      @close="form.adjustments[adjAt!].fromScan = false; adjAt = null"
       @remove="removeAdjustment"
       @to-item="adjustmentToItem"
     />

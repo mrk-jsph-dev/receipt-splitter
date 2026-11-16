@@ -41,6 +41,17 @@ export const routes = [
   { name: 'bill-settle', path: `/b/${two}/settle` },
   { name: 'bill-share', path: `/b/${two}/share` },
   { name: 'receipt-edit', path: `/b/${two}/receipts/${twoBill.receipts[0].id}` },
+  {
+    name: 'scan-tray',
+    path: '/',
+    // Two photos picked from the gallery, the second marked as the next page of the first.
+    steps: async (page) => {
+      const photo = { name: 'receipt.jpg', mimeType: 'image/jpeg', buffer: Buffer.from([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3]) };
+      await page.locator('input[type=file]:not([capture])').setInputFiles([photo, { ...photo, name: 'receipt-page-2.jpg' }]);
+      await page.waitForURL('**/scan');
+      await page.getByRole('radio', { name: 'Next page' }).click();
+    },
+  },
   { name: 'not-found', path: '/b/Missing000000000000001' },
 ];
 
@@ -66,6 +77,8 @@ try {
         deviceScaleFactor: 1,
       });
       await context.route('**/api/**', async (route) => {
+        if (route.request().url().endsWith('/api/scans/quota'))
+          return route.fulfill({ status: 200, contentType: 'application/json', body: '{"remainingToday":12}' });
         if (route.request().url().endsWith('/receipts/check'))
           return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(check) });
         const match = /\/api\/bills\/([0-9A-Za-z]{22})/.exec(route.request().url());

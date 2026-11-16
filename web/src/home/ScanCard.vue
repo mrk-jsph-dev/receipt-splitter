@@ -4,8 +4,9 @@ import { ref } from 'vue';
 import AppButton from '../design/components/AppButton.vue';
 
 // Two ways in on phones and tablets (Take photo opens the camera, From gallery the photo library),
-// and Upload photos plus a drop zone on laptops. Module 8 sends the files; for now they are only picked.
+// and Upload photos plus a drop zone on laptops. Picked files go to the scan page to be read.
 
+const props = withDefaults(defineProps<{ remaining?: number | null }>(), { remaining: null });
 const emit = defineEmits<{ picked: [files: File[]] }>();
 
 const camera = ref<HTMLInputElement | null>(null);
@@ -23,6 +24,7 @@ function pick(event: Event) {
 
 function drop(event: DragEvent) {
   dragging.value = false;
+  if (props.remaining === 0) return;
   const files = Array.from(event.dataTransfer?.files ?? []).filter((f) => accepted.test(f.type));
   if (files.length > 0) emit('picked', files);
 }
@@ -35,18 +37,20 @@ function drop(event: DragEvent) {
       <div class="grow">
         <b id="scan-title">Scan a receipt</b>
         <span class="sm sub">Take a photo or use one you already have. JPG, PNG, HEIC or PDF.</span>
+        <span v-if="remaining === 0" class="sm sub" role="status">Today's scans are used up. Type it in or try the sample.</span>
+        <span v-else-if="remaining !== null" class="sm sub">{{ remaining }} {{ remaining === 1 ? 'scan' : 'scans' }} left today</span>
       </div>
     </div>
 
     <!-- Phones and tablets. -->
     <div class="btns below-expanded">
-      <AppButton @click="camera?.click()"><Camera class="s" />Take photo</AppButton>
-      <AppButton class="alt" @click="gallery?.click()"><Image class="s" />From gallery</AppButton>
+      <AppButton :disabled="remaining === 0" @click="camera?.click()"><Camera class="s" />Take photo</AppButton>
+      <AppButton class="alt" :disabled="remaining === 0" @click="gallery?.click()"><Image class="s" />From gallery</AppButton>
     </div>
 
     <!-- Laptops and desktops. -->
     <div class="desk">
-      <AppButton block @click="gallery?.click()"><Upload class="s" />Upload photos</AppButton>
+      <AppButton block :disabled="remaining === 0" @click="gallery?.click()"><Upload class="s" />Upload photos</AppButton>
       <div
         class="drop"
         :class="{ dragging }"

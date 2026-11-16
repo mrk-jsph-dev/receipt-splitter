@@ -14,6 +14,8 @@ export interface LineRow {
   price: string;
   /** Printed line total when it isn't qty × price, such as 3 for 100.00. Empty otherwise. */
   printed: string;
+  /** The scan wasn't sure about this line. Cleared once the organizer opens it. */
+  unsure?: boolean;
 }
 
 export interface AdjustmentRow {
@@ -28,6 +30,8 @@ export interface AdjustmentRow {
   units: string[];
   people: string[];
   included: boolean;
+  /** Read from a photo and not checked yet: "We read this as a discount. Right?" */
+  fromScan?: boolean;
 }
 
 export interface ReceiptForm {
@@ -79,6 +83,7 @@ export function fromReceipt(receipt: Receipt, people: string[], digits: number):
       price: moneyText(l.unitPrice, digits),
       // Shown only when it differs from qty × price. Compared as whole minor units.
       printed: l.lineTotal !== l.quantity * l.unitPrice ? moneyText(l.lineTotal, digits) : '',
+      unsure: l.confidence != null && l.confidence < 0.8,
     })),
     adjustments: receipt.adjustments.map((a) => ({
       key: rowKey(),
@@ -92,6 +97,7 @@ export function fromReceipt(receipt: Receipt, people: string[], digits: number):
       units: a.scope?.units ?? [],
       people: a.scope?.people ?? [],
       included: a.includedInPrices,
+      fromScan: a.source === 'scan',
     })),
     splitMode: receipt.splitMode,
     participants: receipt.participants.length > 0 ? [...receipt.participants] : [...people],
