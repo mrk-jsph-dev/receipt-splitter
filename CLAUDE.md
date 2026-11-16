@@ -26,6 +26,11 @@ Read before changing anything substantial:
   Container Apps (Consumption, scale 0 to 1). Not Azure Functions.
 - Maths: `src/ReceiptSplitter.Core`, pure C#, no I/O. The server owns all money maths and
   returns computed breakdowns. The browser never calculates money.
+- .NET layout: vertical slices. Organise code by feature, not by layer (no `Services/`,
+  `Repositories/`, `Models/` folders). Core: `Shared/` (bill model, money, `Allocate`),
+  `Receipts/`, `Bills/`, `Settlement/`. API: one folder per endpoint under `Features/`
+  (request, handler, endpoint mapping together); cross-cutting code (storage, auth, rate
+  limits) under `Infrastructure/`. Test projects mirror the same folders.
 - Web: React + TypeScript + Vite in `web/`, on Azure Static Web Apps Free.
 - Storage: Blob Storage, one JSON blob per bill, ETag concurrency, lifecycle deletes.
 - Scanning: Azure AI Document Intelligence F0, prebuilt receipt model.
