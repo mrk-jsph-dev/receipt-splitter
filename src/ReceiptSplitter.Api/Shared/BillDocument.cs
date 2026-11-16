@@ -17,7 +17,7 @@ public enum PaymentStatus { Waiting, Confirmed }
 public enum ActivityKind
 {
     AddPerson, Join, Rename, RemovePerson, Claim, Unclaim, SetWeight, MarkPaid, UnmarkPaid,
-    AddReceipt, EditReceipt, RemoveReceipt, ClaimRemoved, Settings, Share, Lock, Confirm, Undo,
+    AddReceipt, EditReceipt, RemoveReceipt, ClaimRemoved, Settings, Share, Lock, Confirm, Undo, SetCard, Decline,
 }
 
 public sealed record CurrencyInfo(string Code, int Digits)
