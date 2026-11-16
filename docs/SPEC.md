@@ -34,7 +34,7 @@ MVP ships first. Next follows once the MVP is live. Later is out of scope until 
 | **Activity and payment confirmation** | See who claimed what. "I've paid" waits for the receiver to confirm.                                                                                                                                                                                                                                          | Missing                  | MVP                              |
 | **Sample receipt**                    | "Try the sample" builds a bill from a bundled JSON receipt. No AI call, no upload.                                                                                                                                                                                                                            | Missing                  | MVP                              |
 | **Manual entry**                      | Type items, quantities and prices. Works when scanning is capped or unavailable.                                                                                                                                                                                                                              | Missing                  | MVP                              |
-| **Receipt scan**                      | Photo to draft items with Azure AI Document Intelligence. Daily cap and per-device rate limit.                                                                                                                                                                                                                | Missing                  | MVP                              |
+| **Receipt scan**                      | Take a photo or pick one from the gallery (or upload on desktop), then draft items with Azure AI Document Intelligence. Daily cap and per-device rate limit.                                                                                                                                                                                                                | Missing                  | MVP                              |
 | **Several receipts in one bill**      | Dinner, then drinks, then dessert in one link. Each receipt keeps its own fees, its own payer and its own list of who was there. One settle-up nets across all of them. Long receipts can be scanned as two photos.                                                                                           | Missing                  | MVP                              |
 | **Review before share**               | Every read line is editable. Low-confidence lines are flagged. Sharing stays locked until the computed total matches the receipt total the organizer confirms.                                                                                                                                                | Missing                  | MVP                              |
 | **Add people**                        | The organizer types names, taps friends from earlier bills on this phone, or shows a QR so each person joins and adds themselves. Anyone can add a friend who has no phone. A printed headcount (Ramen Nagi prints "HeadCount 12") is shown as a hint. Rename at any time; remove only people with no claims. | 12 fixed names           | MVP                              |
@@ -66,7 +66,7 @@ MVP ships first. Next follows once the MVP is live. Later is out of scope until 
 
 [Open the clickable end-to-end walkthrough](https://claude.ai/artifact/4SR3rM6twuBoUXJUywnKTZ) for all 28 screens in order, including an ending with a second receipt, from scan to settled.
 
-Mobile first, because people claim at the table, and responsive at every size (see "Responsive layout" below). Cool graphite and deep teal, soft glass cards, big rounded pills, a gradient band at the top of each screen and one black card for the key action. Teal means yours, amber means still unclaimed, red means check this, green means paid. Receipt lines keep a mono face like the printed slip. Numbers use the bundled sample receipt and made-up names (Ana, Ben, Carla, Dan), and are worked out with the rules in section 6.
+Mobile first, because people claim at the table, and responsive at every size (see "Responsive layout" below). Graphite and deep teal, minimal and flat: white cards with hairline borders, one accent, Lucide icons. The responsive section below supersedes the older glass-card look in the walkthrough. Teal means yours, amber means still unclaimed, red means check this, green means paid. Receipt lines keep a mono face like the printed slip. Numbers use the bundled sample receipt and made-up names (Ana, Ben, Carla, Dan), and are worked out with the rules in section 6.
 
 See `docs/design/walkthrough.html` for every screen, `docs/design/responsive.html` for tablet and desktop layouts, and `docs/design/spec.html` for the rendered mockups.
 
@@ -74,67 +74,100 @@ See `docs/design/walkthrough.html` for every screen, `docs/design/responsive.htm
 
 The app is one responsive site, not a phone layout framed on a big screen. It fits phones,
 tablets, laptops and large monitors with the same routes, components and data. See
-`docs/design/responsive.html` for Home, Bill (claim), Review receipt and Settle up at
+`docs/design/responsive.html` for Home, Bill (claim), Check receipt and Settle up at
 390 px, 834 px and 1280 px.
 
-Look and feel follow the clean card style: white cards on a light graphite-grey ground, solid
-deep teal buttons, one dark balance card, a paid-percentage ring on each bill, a receipt card
-with a torn edge, and Recent · Unfinished · Settled tabs. Colors stay graphite and deep teal,
-light and dark, from `web/src/design/tokens.css`.
+### No accounts, and it shows
+
+There is no sign-in, so nothing may look like a profile or an account.
+
+- No greeting ("Hi Ana"), profile avatar, "Me" tab or notification bell.
+- No money totals across bills ("You're owed ₱…"). Money is shown per bill only.
+- No app-wide Settle or Activity. Both live inside each bill.
+- Home is a start page ("Split a bill": scan, type in, try the sample) plus **On this device**,
+  the bills this browser has opened, with a footnote: saved in this browser only, bills
+  delete 30 days after the last change, and a **Forget this device** link.
+- A name belongs to one bill: the bill header shows "You're Ben · Change".
+
+### Look
+
+Minimal and flat. Graphite neutrals with one deep teal accent, light and dark.
+
+| Token | Light | Dark | Use |
+|---|---|---|---|
+| `--bg` | `#F6F7F7` | `#0D1112` | Page ground |
+| `--surface` | `#FFFFFF` | `#151A1C` | Cards, bars |
+| `--ink` | `#111618` | `#E9EEEF` | Text |
+| `--muted` | `#6B777B` | `#8C989C` | Secondary text |
+| `--line` | `#E3E7E8` | `#252C2F` | 1 px borders |
+| `--accent` | `#0E6B6B` | `#4DBDB5` | Actions and "you" |
+| `--amber` | `#9A6210` | `#E3B25A` | Unclaimed |
+| `--ok` | `#1F7A55` | `#5CCB9B` | Paid |
+| `--warn` | `#B4442B` | `#EE8B71` | Check this |
+
+- Cards: white, 1 px border, 14 px radius, no shadow. Only the receipt card lifts.
+- Avatars: neutral grey initials. The current person's avatar is teal.
+- Type: Inter for everything (drop Sora), JetBrains Mono for receipt lines. Tabular figures
+  for amounts.
+- Icons: Lucide only, via `lucide-vue-next`, stroke 1.75, 20 px (16 px in chips and small
+  buttons). No emoji, no filled icons, no second icon set. Icon-only buttons get an
+  `aria-label`.
 
 ### Breakpoints
 
 Mobile-first: base CSS is the phone layout, and each size adds rules with `min-width`.
 
-| Size | Width | Typical device | Navigation | Sheets and dialogs |
-|---|---|---|---|---|
-| Compact | < 640 px | Phones, portrait | Bottom tab bar: Home, Bills, New split (centre), Settle, Me | Bottom sheets |
-| Medium | 640 to 1023 px | Tablets, phones in landscape, narrow windows | 84 px icon rail on the left | Centred dialog, max 480 px |
-| Expanded | ≥ 1024 px | Laptops, desktops | 248 px sidebar: labels, New split button, recent bills on this device, your name | Side drawer for breakdowns, dialog for edits |
-| Wide | ≥ 1240 px | Large monitors | Same as expanded | Same |
+| Size | Width | Typical device | Home | Inside a bill | Sheets and dialogs |
+|---|---|---|---|---|---|
+| Compact | < 640 px | Phones, portrait | One column: start actions, then bills on this device | Tab bar at the bottom: Items, People, Receipts, Settle. Your share pinned above it | Bottom sheets |
+| Medium | 640 to 1023 px | Tablets, phones in landscape, narrow windows | Two columns: start actions, bills | 76 px icon rail with the same four sections. Items and people left, summary pinned right | Centred dialog, max 480 px |
+| Expanded | ≥ 1024 px | Laptops, desktops | Start actions pinned left, bills two across | 240 px sidebar: home link, the four sections with counts, other bills on this device. Three columns: unclaimed · people · summary. Drag items onto people | Side drawer for breakdowns, dialog for edits |
+| Wide | ≥ 1240 px | Large monitors | Content stops at 1120 px and centres | Same as expanded | Same |
 
-Content stops growing at 1280 px and centres. Nothing on any screen has a fixed 480 px width.
+Home has no navigation bar at any size: it is one page. Nothing has a fixed 480 px width.
 
-### Screens per size
+### Scan: camera or gallery
 
-| Screen | Compact | Medium | Expanded |
-|---|---|---|---|
-| Welcome, Your name | One column, centred card | Centred card, max 480 px | Two columns: intro left, card right. No app shell (no nav before a name exists). |
-| Home | One column: balance card, New split tiles, bills tabs, bill cards | Two columns: balance and New split side by side; bill cards two across | Three columns: balance + New split + bills (three across) on the left, activity rail on the right |
-| Bill (claim) | Tabs: Items · People · Summary. "Your share" bar pinned above the tab bar | Items and people on the left, summary pinned on the right | Three columns: unclaimed items · people grid · sticky summary with receipt. Drag items onto people |
-| Review receipt | Receipt card, then line editor below | Receipt card left, editor right | Receipt card left, editor centre, total check and fees right |
-| Settle up | One column: transfers, then paid list | Two columns: transfers and paid list | Transfers and paid list, plus "who owes whom" summary card |
+The scan card offers two ways in, so people can use a receipt photo they already took:
+
+- Phones and tablets: **Take photo** (`<input type="file" accept="image/*" capture="environment">`)
+  and **From gallery** (`<input type="file" accept="image/*,application/pdf" multiple>`, no
+  `capture`, so the OS shows the photo library and files).
+- Laptops and desktops: **Upload photos** plus a drop zone for dragged files.
+- Accepted: JPEG, PNG, HEIC and PDF, up to 4 MB each after client-side resize
+  [VERIFY Document Intelligence F0 formats and size limit].
+- Several files picked at once: each becomes its own receipt, then the "new receipt or next
+  page?" question lets the organizer join a long receipt's pages.
+- Every file counts once toward the daily scan cap. Files are read once and never stored,
+  whether they came from the camera or the gallery.
 
 ### Input and accessibility rules
 
 - Every tap target is at least 44 × 44 px at every size.
-- Drag and drop only under `(pointer: fine)` and the expanded size. Tap to assign always works.
+- Drag and drop only under `(pointer: fine)` and the expanded size. Mine and Share always work.
 - Hover styles only under `(hover: hover)`.
 - Every action works with Tab, Enter and Escape. The focus ring is always visible.
 - Text runs at most about 70 characters wide. Amounts never wrap. Long names and shop names
-  truncate with an ellipsis and show in full on hover or in the detail view.
-- Numbers use tabular figures so columns line up.
+  truncate with an ellipsis and show in full in the detail view.
 - Fixed bars add `env(safe-area-inset-*)` so notches and home bars never cover them.
 - `prefers-reduced-motion` turns off sheet and drawer slide animations.
 
 ### How it is built
 
-- One `AppShell.vue` owns the bottom tab bar, icon rail and sidebar, switched by CSS only.
-  Screens render inside it and lay out their own content with CSS grid.
-- Breakpoints live once in `web/src/design/breakpoints.css` as comments plus the three
-  `@media` values; a small `useBreakpoint()` composable exists only for behaviour that CSS
-  can't do (for example, sheet vs drawer, drag and drop on or off).
+- `BillShell.vue` owns the bill's tab bar, icon rail and sidebar, switched by CSS only.
+  Home renders without it.
+- Breakpoints live once in `web/src/design/breakpoints.css`; a small `useBreakpoint()`
+  composable exists only for behaviour CSS can't do (sheet vs drawer, drag and drop on or off).
 - One `Overlay.vue` renders as a bottom sheet, a centred dialog or a side drawer by size.
-- `HeroBand` stays only on Welcome and Your name at compact size. Inside the shell, screens
-  use a plain top bar.
-- No separate mobile and desktop pages, no CSS framework, no UI library.
+- `HeroBand` is retired. Welcome and Your name use the same flat cards.
+- No separate mobile and desktop pages, no CSS framework, no UI library besides the icons.
 
 ### Checks
 
 Playwright screenshots at 360, 390, 768, 1024, 1280 and 1600 px, light and dark, for each
-built screen. At every width: no horizontal page scroll, no clipped text, nav visible, and
-the primary action on screen without scrolling. Rotate a phone to landscape: medium layout.
-Browser zoom at 200 %: still usable.
+built screen. At every width: no horizontal page scroll, no clipped text, and the primary
+action on screen without scrolling. Rotate a phone to landscape: medium layout. Browser zoom
+at 200 %: still usable.
 
 ## User flows
 
@@ -142,7 +175,7 @@ Browser zoom at 200 %: still usable.
 
 1.  First visit only: welcome screen, then "What should we call you?". The name is saved in this browser, not an account, and becomes the organizer's name on new bills. Skippable.
 2.  Start: scan, sample, or type in.
-3.  Scan only: photo is sent once, read, and dropped. Draft lines come back.
+3.  Scan only: take a photo or pick one or more from the gallery (upload or drag in on desktop). Each file is sent once, read, and dropped. Draft lines come back.
 4.  Review: fix lines, set currency, add tax, tip, service and discounts as printed, pick how each is split, confirm the receipt total.
 5.  Optional: "Add another receipt" (scan, sample or type in) and repeat the review. For each receipt, set who paid it and who was there.
 6.  Share is enabled only when every receipt's computed total = its confirmed total.
@@ -348,7 +381,7 @@ JSON over HTTPS. No accounts. The bill id in the link grants claim access. The o
 | Method and path                                 | Who       | Does                                                                                                                                                                                                                                                                                                                                                                                    |
 |-------------------------------------------------|-----------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `POST /api/bills`                               | anyone    | Body `{ source: "sample" | "manual", draft? }`. Returns `{ id, organizerKey }` once. Rate limited per IP, plus a daily cap across all clients (`429` with `{ reason: "daily-cap" }`). There is no route that lists bills.                                                                                                                                                                                                                                           |
-| `POST /api/scans`                               | anyone    | Image (JPEG/PNG/HEIC, ≤ 4 MB). Checks daily cap and per-IP limit, reads with Document Intelligence, returns draft lines, adjustments, total and confidences. Optional `append: true` joins a second photo of the same long receipt to the previous draft. Each photo counts once toward the cap. The image is never stored. `429` with `{ reason: "daily-cap" | "rate" }` when limited. |
+| `POST /api/scans`                               | anyone    | Image or PDF from the camera or the gallery (JPEG/PNG/HEIC/PDF, ≤ 4 MB) [VERIFY]. Checks daily cap and per-IP limit, reads with Document Intelligence, returns draft lines, adjustments, total and confidences. Optional `append: true` joins a second photo of the same long receipt to the previous draft. Each photo counts once toward the cap. The image is never stored. `429` with `{ reason: "daily-cap" | "rate" }` when limited. |
 | `GET /api/scans/quota`                          | anyone    | `{ remainingToday }` for the start screen.                                                                                                                                                                                                                                                                                                                                              |
 | `GET /api/bills/{id}`                           | link      | Returns the bill with an `ETag`. Honors `If-None-Match` and answers `304` when nothing changed, which keeps polling cheap.                                                                                                                                                                                                                                                              |
 | `PATCH /api/bills/{id}`                         | link      | One op: `addPerson`, `join` (add yourself and remember it on this device), `rename`, `removePerson` (no claims only), `claim`, `unclaim`, `setWeight`, `markPaid` (sets waiting). Each carries `from`; mismatch returns `409` with the latest bill.                                                                                                                                     |

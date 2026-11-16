@@ -173,31 +173,36 @@ responsive site. Do it before module 5 so every later screen is built responsive
 
 > Implement module 4b from docs/EXECUTION_PLAN.md: the "Responsive layout" section of
 > docs/SPEC.md, matching docs/design/responsive.html (open it in a browser; it shows Home,
-> Bill, Review and Settle at 390, 834 and 1280 px). Keep the graphite and deep teal tokens.
-> Remove the 480 px `.screen` cap and the phone frame on wide screens. Add
-> `web/src/design/breakpoints.css` (compact < 640, medium 640 to 1023, expanded >= 1024,
-> wide >= 1240, content max 1280 px), mobile-first `min-width` media queries only. Add
-> `AppShell.vue` with a bottom tab bar (compact), an 84 px icon rail (medium) and a 248 px
-> sidebar with New split, recent bills on this device and your name (expanded), switched by
-> CSS. Put Home and Bill inside the shell; Welcome and Your name stay outside it. Restyle Home
-> to the clean card look: dark balance card, New split tiles, Recent / Unfinished / Settled
-> tabs, bill cards with a paid-percentage ring (the percentage comes from the API, no money
-> maths in the browser), activity rail on expanded. Add `Overlay.vue` (bottom sheet, centred
-> dialog or side drawer by size) and a `useBreakpoint()` composable for behaviour only.
-> Follow the input rules: 44 px targets, hover only under (hover: hover), drag only under
-> (pointer: fine), safe-area insets, reduced motion. Add a local Playwright script
-> (`npm run screens`) that screenshots each route at 360, 390, 768, 1024, 1280 and 1600 px in
-> light and dark into `web/screens/` (git-ignored) and fails on horizontal scroll. Do not add
-> it to CI. Show me the plan first.
+> Bill, Check receipt and Settle at 390, 834 and 1280 px). Nothing may look like an account:
+> remove any greeting, profile avatar, "Me" tab, bell and cross-bill money totals. Apply the
+> minimal look: the colour tokens in the spec table (light and dark), flat white cards with
+> 1 px borders, neutral avatars, Inter only (drop Sora), JetBrains Mono for receipt lines,
+> Lucide icons through `lucide-vue-next` (stroke 1.75). Remove the 480 px `.screen` cap, the
+> phone frame on wide screens and `HeroBand`. Add `web/src/design/breakpoints.css` (compact
+> < 640, medium 640 to 1023, expanded >= 1024, wide >= 1240), mobile-first `min-width`
+> queries only. Rebuild Home as "Split a bill" (scan card with Take photo and From gallery on
+> touch sizes, Upload photos and a drop zone on expanded; Type it in; Try the sample) plus
+> "On this device" with a paid-percentage ring per bill (from the API, no money maths in the
+> browser) and the Forget this device footnote. Add `BillShell.vue` (bottom tab bar, 76 px
+> icon rail, 240 px sidebar with Items, People, Receipts, Settle) and put the bill route in
+> it. Add `Overlay.vue` (bottom sheet, centred dialog or side drawer by size) and a
+> `useBreakpoint()` composable for behaviour only. Follow the input rules: 44 px targets,
+> hover only under (hover: hover), drag only under (pointer: fine), safe-area insets, reduced
+> motion. The scan inputs only pick files for now; module 8 sends them. Add a local
+> Playwright script (`npm run screens`) that screenshots each route at 360, 390, 768, 1024,
+> 1280 and 1600 px in light and dark into `web/screens/` (git-ignored) and fails on
+> horizontal scroll. Do not add it to CI. Show me the plan first.
 
 **Touches:** `web/src/design/`, `web/src/App.vue`, `web/src/home/`, `web/src/bill/`,
-`web/package.json`, `web/.gitignore`
+`web/package.json` (adds `lucide-vue-next`), `web/.gitignore`
 
 **Done when**
 - `cd web && npm test && npm run build` pass.
 - `npm run screens` passes: no horizontal scroll at any of the six widths, light and dark.
-- At 390 px the app shows the bottom tab bar; at 834 px the icon rail; at 1280 px the sidebar
-  and three columns on Home. Compare with docs/design/responsive.html.
+- Home at 390, 834 and 1280 px matches docs/design/responsive.html, with no greeting, avatar,
+  bell or "Me" tab. A bill shows the bottom tab bar at 390 px, the icon rail at 834 px and
+  the sidebar at 1280 px.
+- On a phone, From gallery opens the photo library and Take photo opens the camera.
 - At 1600 px content stops at 1280 px and centres; no phone frame.
 - `grep -rn "max-width: *480px" web/src` finds nothing outside dialogs.
 - Tab through Home with the keyboard: every control reachable, focus ring visible.
@@ -276,7 +281,8 @@ responsive site. Do it before module 5 so every later screen is built responsive
 > memory only and never logged or stored, daily cap and per-IP limit, quota endpoint, append
 > mode for long receipts, and the keyword/sign classifier for service charge, discounts, tax,
 > senior/PWD and VAT exempt lines with flags for review. In the web app (walkthrough steps 4, 5, 21
-> and 22): camera capture via file input, client-side resize under 4 MB, the receipt tray, "new receipt or next page?",
+> and 22): camera capture and gallery upload via file inputs (the module 4b scan card; several files at
+> once, plus drag and drop on desktop), client-side resize under 4 MB, the receipt tray, "new receipt or next page?",
 > and the reading screen. Check the current Document Intelligence receipt field list first and
 > update the [VERIFY] notes in SPEC.md. Show me the plan first.
 
@@ -284,6 +290,7 @@ responsive site. Do it before module 5 so every later screen is built responsive
 - Scanning the Ramen Nagi photo (kept outside the repo) produces the 9 lines, flags the
   service charge and discount, and matches 5,255.80 after review.
 - Tests prove the image bytes never reach storage or logs.
+- A receipt photo picked from the phone gallery scans the same as one taken with the camera.
 - At the cap, Scan is disabled and Sample still works.
 - Layout checked with `cd web && npm run screens` (360 to 1600 px, light and dark), per the
   "Responsive layout" section of docs/SPEC.md.
