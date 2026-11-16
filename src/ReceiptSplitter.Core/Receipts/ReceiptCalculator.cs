@@ -23,15 +23,20 @@ public sealed record PersonShare(string? PersonId, long Subtotal, IReadOnlyDicti
     public long Total => checked(Subtotal + Adjustments.Values.Sum());
 }
 
+/// <summary>One person's part of one unit's price, or the unclaimed price when <see cref="PersonId"/> is null.</summary>
+public sealed record UnitShare(string UnitId, string? PersonId, long Amount);
+
 /// <param name="People">One entry per bill person, in people order, including people not on this receipt.</param>
 /// <param name="ComputedTotal">Σ line totals + Σ adjustments not already included in prices.</param>
+/// <param name="Items">Items mode only: each unit's price per claimant, in line, unit and people order.</param>
 public sealed record ReceiptBreakdown(
     string ReceiptId,
     IReadOnlyList<PersonShare> People,
     PersonShare Unclaimed,
     long ComputedTotal,
     long ConfirmedTotal,
-    IReadOnlyList<ReceiptWarning> Warnings)
+    IReadOnlyList<ReceiptWarning> Warnings,
+    IReadOnlyList<UnitShare> Items)
 {
     /// <summary>Computed minus printed. Sharing stays blocked until this is zero.</summary>
     public long Difference => ComputedTotal - ConfirmedTotal;
@@ -76,6 +81,7 @@ public static class ReceiptCalculator
         private readonly Dictionary<string, long[]> _adjustmentShares = new();
         private readonly Dictionary<string, long[]> _unitShares = new();
         private readonly Dictionary<string, int[]> _unitClaimants = new();
+        private readonly List<UnitShare> _items = [];
         private readonly List<ReceiptWarning> _warnings = [];
 
         public Context(IReadOnlyList<Person> people, Receipt receipt)
@@ -124,6 +130,10 @@ public static class ReceiptCalculator
                     _unitClaimants[unit.Id] = claimants;
                     for (var b = 0; b < shares.Length; b++)
                         _subtotals[b] += shares[b];
+                    if (claimants.Length == 0)
+                        _items.Add(new UnitShare(unit.Id, null, shares[_unclaimed]));
+                    foreach (var p in claimants)
+                        _items.Add(new UnitShare(unit.Id, _people[p].Id, shares[p]));
                 }
             }
 
@@ -189,7 +199,8 @@ public static class ReceiptCalculator
                 Bucket(_unclaimed),
                 computed,
                 _receipt.ConfirmedTotal,
-                _warnings);
+                _warnings,
+                _items);
         }
 
         /// <summary>Step 4: a unit's price over its claimants by weight, or to Unclaimed.</summary>

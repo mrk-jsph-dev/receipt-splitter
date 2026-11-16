@@ -1,0 +1,1162 @@
+{
+ "bill": {
+  "id": "TwoReceipts00000000001",
+  "version": 28,
+  "createdAt": "2026-11-16T16:05:26.3415087+00:00",
+  "updatedAt": "2026-11-16T16:05:26.4699263+00:00",
+  "expiresAt": "2026-12-16T16:05:26.4699263+00:00",
+  "title": "Ramen dinner",
+  "currency": {
+   "code": "PHP",
+   "digits": 2
+  },
+  "status": "shared",
+  "people": [
+   {
+    "id": "Uf6DHmiF",
+    "name": "Ana",
+    "card": "none"
+   },
+   {
+    "id": "znQ5JNbc",
+    "name": "Ben",
+    "card": "none"
+   },
+   {
+    "id": "lD8YoAlE",
+    "name": "Carla",
+    "card": "none"
+   },
+   {
+    "id": "fUauvoqp",
+    "name": "Dan",
+    "card": "none"
+   },
+   {
+    "id": "YbtIfEyy",
+    "name": "Eli",
+    "card": "none"
+   },
+   {
+    "id": "dsfm857u",
+    "name": "Fay",
+    "card": "none"
+   },
+   {
+    "id": "ZSYTvznw",
+    "name": "Gio",
+    "card": "none"
+   },
+   {
+    "id": "rvLvm16F",
+    "name": "Hana",
+    "card": "none"
+   },
+   {
+    "id": "iFyBKKgE",
+    "name": "Ivan",
+    "card": "none"
+   },
+   {
+    "id": "SbldtsDQ",
+    "name": "Jo",
+    "card": "none"
+   },
+   {
+    "id": "bHO0UXba",
+    "name": "Kai",
+    "card": "none"
+   },
+   {
+    "id": "6smJHkzj",
+    "name": "Lia",
+    "card": "none"
+   }
+  ],
+  "receipts": [
+   {
+    "id": "nvYo53l7",
+    "label": "Dinner",
+    "merchant": "Ramen Nagi",
+    "receiptDate": "2026-09-25",
+    "source": "sample",
+    "photos": 0,
+    "confirmedTotal": 525580,
+    "lines": [
+     {
+      "id": "IC1kY0NY",
+      "name": "Butao King",
+      "quantity": 8,
+      "unitPrice": 48500,
+      "lineTotal": 388000,
+      "confidence": null,
+      "units": [
+       {
+        "id": "IC1kY0NY-1",
+        "claims": [
+         {
+          "personId": "Uf6DHmiF",
+          "weight": 1
+         }
+        ]
+       },
+       {
+        "id": "IC1kY0NY-2",
+        "claims": [
+         {
+          "personId": "znQ5JNbc",
+          "weight": 1
+         }
+        ]
+       },
+       {
+        "id": "IC1kY0NY-3",
+        "claims": [
+         {
+          "personId": "YbtIfEyy",
+          "weight": 1
+         }
+        ]
+       },
+       {
+        "id": "IC1kY0NY-4",
+        "claims": [
+         {
+          "personId": "dsfm857u",
+          "weight": 1
+         }
+        ]
+       },
+       {
+        "id": "IC1kY0NY-5",
+        "claims": [
+         {
+          "personId": "ZSYTvznw",
+          "weight": 1
+         }
+        ]
+       },
+       {
+        "id": "IC1kY0NY-6",
+        "claims": [
+         {
+          "personId": "rvLvm16F",
+          "weight": 1
+         }
+        ]
+       },
+       {
+        "id": "IC1kY0NY-7",
+        "claims": [
+         {
+          "personId": "bHO0UXba",
+          "weight": 1
+         }
+        ]
+       },
+       {
+        "id": "IC1kY0NY-8",
+        "claims": [
+         {
+          "personId": "6smJHkzj",
+          "weight": 1
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "id": "ae4I8zZg",
+      "name": "Classic Gyoza",
+      "quantity": 1,
+      "unitPrice": 19000,
+      "lineTotal": 19000,
+      "confidence": null,
+      "units": [
+       {
+        "id": "ae4I8zZg-1",
+        "claims": [
+         {
+          "personId": "znQ5JNbc",
+          "weight": 1
+         },
+         {
+          "personId": "dsfm857u",
+          "weight": 1
+         },
+         {
+          "personId": "ZSYTvznw",
+          "weight": 1
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "id": "Mx9J3yr4",
+      "name": "Coke Zero",
+      "quantity": 1,
+      "unitPrice": 11500,
+      "lineTotal": 11500,
+      "confidence": null,
+      "units": [
+       {
+        "id": "Mx9J3yr4-1",
+        "claims": [
+         {
+          "personId": "fUauvoqp",
+          "weight": 1
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "id": "GTXCttPp",
+      "name": "Kaedama (thick)",
+      "quantity": 1,
+      "unitPrice": 9500,
+      "lineTotal": 9500,
+      "confidence": null,
+      "units": [
+       {
+        "id": "GTXCttPp-1",
+        "claims": [
+         {
+          "personId": "SbldtsDQ",
+          "weight": 1
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "id": "2gMPgQ9R",
+      "name": "Kaedama (thin)",
+      "quantity": 3,
+      "unitPrice": 9500,
+      "lineTotal": 28500,
+      "confidence": null,
+      "units": [
+       {
+        "id": "2gMPgQ9R-1",
+        "claims": [
+         {
+          "personId": "Uf6DHmiF",
+          "weight": 1
+         }
+        ]
+       },
+       {
+        "id": "2gMPgQ9R-2",
+        "claims": [
+         {
+          "personId": "ZSYTvznw",
+          "weight": 1
+         }
+        ]
+       },
+       {
+        "id": "2gMPgQ9R-3",
+        "claims": [
+         {
+          "personId": "6smJHkzj",
+          "weight": 1
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "id": "Y1igTMZe",
+      "name": "Gyu King",
+      "quantity": 2,
+      "unitPrice": 79500,
+      "lineTotal": 159000,
+      "confidence": null,
+      "units": [
+       {
+        "id": "Y1igTMZe-1",
+        "claims": [
+         {
+          "personId": "lD8YoAlE",
+          "weight": 1
+         }
+        ]
+       },
+       {
+        "id": "Y1igTMZe-2",
+        "claims": [
+         {
+          "personId": "iFyBKKgE",
+          "weight": 1
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "id": "1Dxa18QO",
+      "name": "Kakuni Belly",
+      "quantity": 1,
+      "unitPrice": 19500,
+      "lineTotal": 19500,
+      "confidence": null,
+      "units": [
+       {
+        "id": "1Dxa18QO-1",
+        "claims": [
+         {
+          "personId": "rvLvm16F",
+          "weight": 1
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "id": "AIfJPCYF",
+      "name": "Red King",
+      "quantity": 2,
+      "unitPrice": 59500,
+      "lineTotal": 119000,
+      "confidence": null,
+      "units": [
+       {
+        "id": "AIfJPCYF-1",
+        "claims": [
+         {
+          "personId": "fUauvoqp",
+          "weight": 1
+         }
+        ]
+       },
+       {
+        "id": "AIfJPCYF-2",
+        "claims": [
+         {
+          "personId": "SbldtsDQ",
+          "weight": 1
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "id": "JwIiVdu5",
+      "name": "Tamago",
+      "quantity": 1,
+      "unitPrice": 8500,
+      "lineTotal": 8500,
+      "confidence": null,
+      "units": [
+       {
+        "id": "JwIiVdu5-1",
+        "claims": [
+         {
+          "personId": "bHO0UXba",
+          "weight": 1
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "adjustments": [
+     {
+      "id": "2j6krJSl",
+      "kind": "service",
+      "label": "SERVICE CHARGE",
+      "amount": 68080,
+      "rate": null,
+      "includedInPrices": false,
+      "split": "equal",
+      "scope": null,
+      "source": "manual"
+     },
+     {
+      "id": "yAy1Ehij",
+      "kind": "discount",
+      "label": "40% BDO OFF",
+      "amount": -305000,
+      "rate": 4000,
+      "includedInPrices": false,
+      "split": "proportional",
+      "scope": null,
+      "source": "manual"
+     }
+    ],
+    "splitMode": "items",
+    "shares": null,
+    "participants": [],
+    "payers": [
+     {
+      "personId": "Uf6DHmiF",
+      "amount": 525580
+     }
+    ]
+   },
+   {
+    "id": "AJLBNLw2",
+    "label": "Milk tea",
+    "merchant": "Tea House",
+    "receiptDate": "2026-09-25",
+    "source": "manual",
+    "photos": 0,
+    "confirmedTotal": 60000,
+    "lines": [
+     {
+      "id": "pWtyhwTf",
+      "name": "Wintermelon milk tea",
+      "quantity": 4,
+      "unitPrice": 15000,
+      "lineTotal": 60000,
+      "confidence": null,
+      "units": [
+       {
+        "id": "pWtyhwTf-1",
+        "claims": []
+       },
+       {
+        "id": "pWtyhwTf-2",
+        "claims": []
+       },
+       {
+        "id": "pWtyhwTf-3",
+        "claims": []
+       },
+       {
+        "id": "pWtyhwTf-4",
+        "claims": []
+       }
+      ]
+     }
+    ],
+    "adjustments": [],
+    "splitMode": "equal",
+    "shares": null,
+    "participants": [
+     "Uf6DHmiF",
+     "znQ5JNbc",
+     "lD8YoAlE",
+     "fUauvoqp"
+    ],
+    "payers": [
+     {
+      "personId": "znQ5JNbc",
+      "amount": 60000
+     }
+    ]
+   }
+  ],
+  "payments": [
+   {
+    "personId": "fUauvoqp",
+    "status": "waiting"
+   },
+   {
+    "personId": "lD8YoAlE",
+    "status": "confirmed"
+   },
+   {
+    "personId": "rvLvm16F",
+    "status": "confirmed"
+   }
+  ],
+  "activity": [
+   {
+    "id": "U0iCVLhz",
+    "at": "2026-11-16T16:05:26.3448481+00:00",
+    "kind": "claim",
+    "text": "Ana claimed Butao King",
+    "personId": "Uf6DHmiF",
+    "unitId": "IC1kY0NY-1"
+   },
+   {
+    "id": "4EBk45yA",
+    "at": "2026-11-16T16:05:26.3481983+00:00",
+    "kind": "claim",
+    "text": "Ben claimed Butao King",
+    "personId": "znQ5JNbc",
+    "unitId": "IC1kY0NY-2"
+   },
+   {
+    "id": "o8TeKiXI",
+    "at": "2026-11-16T16:05:26.3523164+00:00",
+    "kind": "claim",
+    "text": "Eli claimed Butao King",
+    "personId": "YbtIfEyy",
+    "unitId": "IC1kY0NY-3"
+   },
+   {
+    "id": "nxtf1qz0",
+    "at": "2026-11-16T16:05:26.3560159+00:00",
+    "kind": "claim",
+    "text": "Fay claimed Butao King",
+    "personId": "dsfm857u",
+    "unitId": "IC1kY0NY-4"
+   },
+   {
+    "id": "PZGvvNsz",
+    "at": "2026-11-16T16:05:26.3603623+00:00",
+    "kind": "claim",
+    "text": "Gio claimed Butao King",
+    "personId": "ZSYTvznw",
+    "unitId": "IC1kY0NY-5"
+   },
+   {
+    "id": "1O0dUjuY",
+    "at": "2026-11-16T16:05:26.3647798+00:00",
+    "kind": "claim",
+    "text": "Hana claimed Butao King",
+    "personId": "rvLvm16F",
+    "unitId": "IC1kY0NY-6"
+   },
+   {
+    "id": "aJBCysaF",
+    "at": "2026-11-16T16:05:26.3684449+00:00",
+    "kind": "claim",
+    "text": "Kai claimed Butao King",
+    "personId": "bHO0UXba",
+    "unitId": "IC1kY0NY-7"
+   },
+   {
+    "id": "83z2HQGM",
+    "at": "2026-11-16T16:05:26.3721718+00:00",
+    "kind": "claim",
+    "text": "Lia claimed Butao King",
+    "personId": "6smJHkzj",
+    "unitId": "IC1kY0NY-8"
+   },
+   {
+    "id": "ZrL88nIN",
+    "at": "2026-11-16T16:05:26.3756997+00:00",
+    "kind": "claim",
+    "text": "Ben claimed Classic Gyoza",
+    "personId": "znQ5JNbc",
+    "unitId": "ae4I8zZg-1"
+   },
+   {
+    "id": "RZYdXlrw",
+    "at": "2026-11-16T16:05:26.3790089+00:00",
+    "kind": "claim",
+    "text": "Fay claimed Classic Gyoza",
+    "personId": "dsfm857u",
+    "unitId": "ae4I8zZg-1"
+   },
+   {
+    "id": "zjmMY7W3",
+    "at": "2026-11-16T16:05:26.3826303+00:00",
+    "kind": "claim",
+    "text": "Gio claimed Classic Gyoza",
+    "personId": "ZSYTvznw",
+    "unitId": "ae4I8zZg-1"
+   },
+   {
+    "id": "2NRTaV2n",
+    "at": "2026-11-16T16:05:26.3866633+00:00",
+    "kind": "claim",
+    "text": "Dan claimed Coke Zero",
+    "personId": "fUauvoqp",
+    "unitId": "Mx9J3yr4-1"
+   },
+   {
+    "id": "i3DqSU1Z",
+    "at": "2026-11-16T16:05:26.3906507+00:00",
+    "kind": "claim",
+    "text": "Jo claimed Kaedama (thick)",
+    "personId": "SbldtsDQ",
+    "unitId": "GTXCttPp-1"
+   },
+   {
+    "id": "njdSEObo",
+    "at": "2026-11-16T16:05:26.4100612+00:00",
+    "kind": "claim",
+    "text": "Ana claimed Kaedama (thin)",
+    "personId": "Uf6DHmiF",
+    "unitId": "2gMPgQ9R-1"
+   },
+   {
+    "id": "FCijKe6w",
+    "at": "2026-11-16T16:05:26.4168825+00:00",
+    "kind": "claim",
+    "text": "Gio claimed Kaedama (thin)",
+    "personId": "ZSYTvznw",
+    "unitId": "2gMPgQ9R-2"
+   },
+   {
+    "id": "GOGTTHIr",
+    "at": "2026-11-16T16:05:26.4214195+00:00",
+    "kind": "claim",
+    "text": "Lia claimed Kaedama (thin)",
+    "personId": "6smJHkzj",
+    "unitId": "2gMPgQ9R-3"
+   },
+   {
+    "id": "mGLXW4C8",
+    "at": "2026-11-16T16:05:26.4250447+00:00",
+    "kind": "claim",
+    "text": "Carla claimed Gyu King",
+    "personId": "lD8YoAlE",
+    "unitId": "Y1igTMZe-1"
+   },
+   {
+    "id": "aberr0sJ",
+    "at": "2026-11-16T16:05:26.428898+00:00",
+    "kind": "claim",
+    "text": "Ivan claimed Gyu King",
+    "personId": "iFyBKKgE",
+    "unitId": "Y1igTMZe-2"
+   },
+   {
+    "id": "pxWK2kN4",
+    "at": "2026-11-16T16:05:26.4329737+00:00",
+    "kind": "claim",
+    "text": "Hana claimed Kakuni Belly",
+    "personId": "rvLvm16F",
+    "unitId": "1Dxa18QO-1"
+   },
+   {
+    "id": "7AAfmE4i",
+    "at": "2026-11-16T16:05:26.4368127+00:00",
+    "kind": "claim",
+    "text": "Dan claimed Red King",
+    "personId": "fUauvoqp",
+    "unitId": "AIfJPCYF-1"
+   },
+   {
+    "id": "MErYWLEh",
+    "at": "2026-11-16T16:05:26.4407819+00:00",
+    "kind": "claim",
+    "text": "Jo claimed Red King",
+    "personId": "SbldtsDQ",
+    "unitId": "AIfJPCYF-2"
+   },
+   {
+    "id": "7jlmCbmR",
+    "at": "2026-11-16T16:05:26.4452837+00:00",
+    "kind": "claim",
+    "text": "Kai claimed Tamago",
+    "personId": "bHO0UXba",
+    "unitId": "JwIiVdu5-1"
+   },
+   {
+    "id": "Fb6qP9qf",
+    "at": "2026-11-16T16:05:26.4505513+00:00",
+    "kind": "addReceipt",
+    "text": "Milk tea was added",
+    "personId": null,
+    "unitId": null
+   },
+   {
+    "id": "ctHjnJeW",
+    "at": "2026-11-16T16:05:26.4524959+00:00",
+    "kind": "share",
+    "text": "The bill was shared",
+    "personId": null,
+    "unitId": null
+   },
+   {
+    "id": "nsX5s1Id",
+    "at": "2026-11-16T16:05:26.4584201+00:00",
+    "kind": "markPaid",
+    "text": "Dan says they've paid",
+    "personId": "fUauvoqp",
+    "unitId": null
+   },
+   {
+    "id": "DFawR9qk",
+    "at": "2026-11-16T16:05:26.4665119+00:00",
+    "kind": "confirm",
+    "text": "Carla's payment was confirmed",
+    "personId": "lD8YoAlE",
+    "unitId": null
+   },
+   {
+    "id": "PtYIJJlQ",
+    "at": "2026-11-16T16:05:26.4697156+00:00",
+    "kind": "confirm",
+    "text": "Hana's payment was confirmed",
+    "personId": "rvLvm16F",
+    "unitId": null
+   }
+  ],
+  "headcountHint": 12,
+  "paymentNote": null,
+  "lockedAt": null
+ },
+ "breakdown": {
+  "canShare": true,
+  "canSettle": true,
+  "receipts": [
+   {
+    "receiptId": "nvYo53l7",
+    "people": [
+     {
+      "personId": "Uf6DHmiF",
+      "subtotal": 58000,
+      "adjustments": {
+       "2j6krJSl": 5674,
+       "yAy1Ehij": -23200
+      },
+      "total": 40474
+     },
+     {
+      "personId": "znQ5JNbc",
+      "subtotal": 54834,
+      "adjustments": {
+       "2j6krJSl": 5674,
+       "yAy1Ehij": -21934
+      },
+      "total": 38574
+     },
+     {
+      "personId": "lD8YoAlE",
+      "subtotal": 79500,
+      "adjustments": {
+       "2j6krJSl": 5674,
+       "yAy1Ehij": -31800
+      },
+      "total": 53374
+     },
+     {
+      "personId": "fUauvoqp",
+      "subtotal": 71000,
+      "adjustments": {
+       "2j6krJSl": 5674,
+       "yAy1Ehij": -28400
+      },
+      "total": 48274
+     },
+     {
+      "personId": "YbtIfEyy",
+      "subtotal": 48500,
+      "adjustments": {
+       "2j6krJSl": 5673,
+       "yAy1Ehij": -19400
+      },
+      "total": 34773
+     },
+     {
+      "personId": "dsfm857u",
+      "subtotal": 54833,
+      "adjustments": {
+       "2j6krJSl": 5673,
+       "yAy1Ehij": -21933
+      },
+      "total": 38573
+     },
+     {
+      "personId": "ZSYTvznw",
+      "subtotal": 64333,
+      "adjustments": {
+       "2j6krJSl": 5673,
+       "yAy1Ehij": -25733
+      },
+      "total": 44273
+     },
+     {
+      "personId": "rvLvm16F",
+      "subtotal": 68000,
+      "adjustments": {
+       "2j6krJSl": 5673,
+       "yAy1Ehij": -27200
+      },
+      "total": 46473
+     },
+     {
+      "personId": "iFyBKKgE",
+      "subtotal": 79500,
+      "adjustments": {
+       "2j6krJSl": 5673,
+       "yAy1Ehij": -31800
+      },
+      "total": 53373
+     },
+     {
+      "personId": "SbldtsDQ",
+      "subtotal": 69000,
+      "adjustments": {
+       "2j6krJSl": 5673,
+       "yAy1Ehij": -27600
+      },
+      "total": 47073
+     },
+     {
+      "personId": "bHO0UXba",
+      "subtotal": 57000,
+      "adjustments": {
+       "2j6krJSl": 5673,
+       "yAy1Ehij": -22800
+      },
+      "total": 39873
+     },
+     {
+      "personId": "6smJHkzj",
+      "subtotal": 58000,
+      "adjustments": {
+       "2j6krJSl": 5673,
+       "yAy1Ehij": -23200
+      },
+      "total": 40473
+     }
+    ],
+    "unclaimed": {
+     "personId": null,
+     "subtotal": 0,
+     "adjustments": {
+      "2j6krJSl": 0,
+      "yAy1Ehij": 0
+     },
+     "total": 0
+    },
+    "computedTotal": 525580,
+    "confirmedTotal": 525580,
+    "warnings": [],
+    "items": [
+     {
+      "unitId": "IC1kY0NY-1",
+      "personId": "Uf6DHmiF",
+      "amount": 48500
+     },
+     {
+      "unitId": "IC1kY0NY-2",
+      "personId": "znQ5JNbc",
+      "amount": 48500
+     },
+     {
+      "unitId": "IC1kY0NY-3",
+      "personId": "YbtIfEyy",
+      "amount": 48500
+     },
+     {
+      "unitId": "IC1kY0NY-4",
+      "personId": "dsfm857u",
+      "amount": 48500
+     },
+     {
+      "unitId": "IC1kY0NY-5",
+      "personId": "ZSYTvznw",
+      "amount": 48500
+     },
+     {
+      "unitId": "IC1kY0NY-6",
+      "personId": "rvLvm16F",
+      "amount": 48500
+     },
+     {
+      "unitId": "IC1kY0NY-7",
+      "personId": "bHO0UXba",
+      "amount": 48500
+     },
+     {
+      "unitId": "IC1kY0NY-8",
+      "personId": "6smJHkzj",
+      "amount": 48500
+     },
+     {
+      "unitId": "ae4I8zZg-1",
+      "personId": "znQ5JNbc",
+      "amount": 6334
+     },
+     {
+      "unitId": "ae4I8zZg-1",
+      "personId": "dsfm857u",
+      "amount": 6333
+     },
+     {
+      "unitId": "ae4I8zZg-1",
+      "personId": "ZSYTvznw",
+      "amount": 6333
+     },
+     {
+      "unitId": "Mx9J3yr4-1",
+      "personId": "fUauvoqp",
+      "amount": 11500
+     },
+     {
+      "unitId": "GTXCttPp-1",
+      "personId": "SbldtsDQ",
+      "amount": 9500
+     },
+     {
+      "unitId": "2gMPgQ9R-1",
+      "personId": "Uf6DHmiF",
+      "amount": 9500
+     },
+     {
+      "unitId": "2gMPgQ9R-2",
+      "personId": "ZSYTvznw",
+      "amount": 9500
+     },
+     {
+      "unitId": "2gMPgQ9R-3",
+      "personId": "6smJHkzj",
+      "amount": 9500
+     },
+     {
+      "unitId": "Y1igTMZe-1",
+      "personId": "lD8YoAlE",
+      "amount": 79500
+     },
+     {
+      "unitId": "Y1igTMZe-2",
+      "personId": "iFyBKKgE",
+      "amount": 79500
+     },
+     {
+      "unitId": "1Dxa18QO-1",
+      "personId": "rvLvm16F",
+      "amount": 19500
+     },
+     {
+      "unitId": "AIfJPCYF-1",
+      "personId": "fUauvoqp",
+      "amount": 59500
+     },
+     {
+      "unitId": "AIfJPCYF-2",
+      "personId": "SbldtsDQ",
+      "amount": 59500
+     },
+     {
+      "unitId": "JwIiVdu5-1",
+      "personId": "bHO0UXba",
+      "amount": 8500
+     }
+    ],
+    "difference": 0,
+    "matches": true
+   },
+   {
+    "receiptId": "AJLBNLw2",
+    "people": [
+     {
+      "personId": "Uf6DHmiF",
+      "subtotal": 15000,
+      "adjustments": {},
+      "total": 15000
+     },
+     {
+      "personId": "znQ5JNbc",
+      "subtotal": 15000,
+      "adjustments": {},
+      "total": 15000
+     },
+     {
+      "personId": "lD8YoAlE",
+      "subtotal": 15000,
+      "adjustments": {},
+      "total": 15000
+     },
+     {
+      "personId": "fUauvoqp",
+      "subtotal": 15000,
+      "adjustments": {},
+      "total": 15000
+     },
+     {
+      "personId": "YbtIfEyy",
+      "subtotal": 0,
+      "adjustments": {},
+      "total": 0
+     },
+     {
+      "personId": "dsfm857u",
+      "subtotal": 0,
+      "adjustments": {},
+      "total": 0
+     },
+     {
+      "personId": "ZSYTvznw",
+      "subtotal": 0,
+      "adjustments": {},
+      "total": 0
+     },
+     {
+      "personId": "rvLvm16F",
+      "subtotal": 0,
+      "adjustments": {},
+      "total": 0
+     },
+     {
+      "personId": "iFyBKKgE",
+      "subtotal": 0,
+      "adjustments": {},
+      "total": 0
+     },
+     {
+      "personId": "SbldtsDQ",
+      "subtotal": 0,
+      "adjustments": {},
+      "total": 0
+     },
+     {
+      "personId": "bHO0UXba",
+      "subtotal": 0,
+      "adjustments": {},
+      "total": 0
+     },
+     {
+      "personId": "6smJHkzj",
+      "subtotal": 0,
+      "adjustments": {},
+      "total": 0
+     }
+    ],
+    "unclaimed": {
+     "personId": null,
+     "subtotal": 0,
+     "adjustments": {},
+     "total": 0
+    },
+    "computedTotal": 60000,
+    "confirmedTotal": 60000,
+    "warnings": [],
+    "items": [],
+    "difference": 0,
+    "matches": true
+   }
+  ],
+  "people": [
+   {
+    "personId": "Uf6DHmiF",
+    "owed": 55474,
+    "paid": 525580,
+    "net": 470106
+   },
+   {
+    "personId": "znQ5JNbc",
+    "owed": 53574,
+    "paid": 60000,
+    "net": 6426
+   },
+   {
+    "personId": "lD8YoAlE",
+    "owed": 68374,
+    "paid": 0,
+    "net": -68374
+   },
+   {
+    "personId": "fUauvoqp",
+    "owed": 63274,
+    "paid": 0,
+    "net": -63274
+   },
+   {
+    "personId": "YbtIfEyy",
+    "owed": 34773,
+    "paid": 0,
+    "net": -34773
+   },
+   {
+    "personId": "dsfm857u",
+    "owed": 38573,
+    "paid": 0,
+    "net": -38573
+   },
+   {
+    "personId": "ZSYTvznw",
+    "owed": 44273,
+    "paid": 0,
+    "net": -44273
+   },
+   {
+    "personId": "rvLvm16F",
+    "owed": 46473,
+    "paid": 0,
+    "net": -46473
+   },
+   {
+    "personId": "iFyBKKgE",
+    "owed": 53373,
+    "paid": 0,
+    "net": -53373
+   },
+   {
+    "personId": "SbldtsDQ",
+    "owed": 47073,
+    "paid": 0,
+    "net": -47073
+   },
+   {
+    "personId": "bHO0UXba",
+    "owed": 39873,
+    "paid": 0,
+    "net": -39873
+   },
+   {
+    "personId": "6smJHkzj",
+    "owed": 40473,
+    "paid": 0,
+    "net": -40473
+   }
+  ],
+  "problems": [],
+  "transfers": [
+   {
+    "fromPersonId": "lD8YoAlE",
+    "toPersonId": "Uf6DHmiF",
+    "amount": 68374
+   },
+   {
+    "fromPersonId": "fUauvoqp",
+    "toPersonId": "Uf6DHmiF",
+    "amount": 63274
+   },
+   {
+    "fromPersonId": "iFyBKKgE",
+    "toPersonId": "Uf6DHmiF",
+    "amount": 53373
+   },
+   {
+    "fromPersonId": "SbldtsDQ",
+    "toPersonId": "Uf6DHmiF",
+    "amount": 47073
+   },
+   {
+    "fromPersonId": "rvLvm16F",
+    "toPersonId": "Uf6DHmiF",
+    "amount": 46473
+   },
+   {
+    "fromPersonId": "ZSYTvznw",
+    "toPersonId": "Uf6DHmiF",
+    "amount": 44273
+   },
+   {
+    "fromPersonId": "6smJHkzj",
+    "toPersonId": "Uf6DHmiF",
+    "amount": 40473
+   },
+   {
+    "fromPersonId": "bHO0UXba",
+    "toPersonId": "Uf6DHmiF",
+    "amount": 39873
+   },
+   {
+    "fromPersonId": "dsfm857u",
+    "toPersonId": "Uf6DHmiF",
+    "amount": 38573
+   },
+   {
+    "fromPersonId": "YbtIfEyy",
+    "toPersonId": "Uf6DHmiF",
+    "amount": 28347
+   },
+   {
+    "fromPersonId": "YbtIfEyy",
+    "toPersonId": "znQ5JNbc",
+    "amount": 6426
+   }
+  ],
+  "progress": {
+   "total": 585580,
+   "owing": 10,
+   "confirmed": 2,
+   "paidPercent": 20,
+   "collected": 114847,
+   "toCollect": 361685
+  }
+ }
+}

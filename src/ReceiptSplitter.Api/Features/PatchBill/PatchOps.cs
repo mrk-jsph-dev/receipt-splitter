@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using ReceiptSplitter.Api.Shared;
+using ReceiptSplitter.Core.Shared;
 
 namespace ReceiptSplitter.Api.Features.PatchBill;
 
@@ -16,6 +17,8 @@ namespace ReceiptSplitter.Api.Features.PatchBill;
 [JsonDerivedType(typeof(UnclaimOp), "unclaim")]
 [JsonDerivedType(typeof(SetWeightOp), "setWeight")]
 [JsonDerivedType(typeof(MarkPaidOp), "markPaid")]
+[JsonDerivedType(typeof(UnmarkPaidOp), "unmarkPaid")]
+[JsonDerivedType(typeof(SetCardOp), "setCard")]
 public record PatchOp;
 
 /// <summary>Adds a friend, for example one without a phone. Two people can't share a name.</summary>
@@ -41,3 +44,11 @@ public sealed record SetWeightOp(string UnitId, string PersonId, long Weight, IR
 /// <summary>"I've paid". Sets waiting; only the organizer can confirm.</summary>
 /// <param name="From">The payment status the client saw, or null for none.</param>
 public sealed record MarkPaidOp(string PersonId, PaymentStatus? From) : PatchOp;
+
+/// <summary>"I haven't paid yet": takes back a waiting payment. A confirmed one stays; only the organizer changes it.</summary>
+/// <param name="From">The payment status the client saw.</param>
+public sealed record UnmarkPaidOp(string PersonId, PaymentStatus? From) : PatchOp;
+
+/// <summary>Marks a senior or PWD card holder, so everyone sees why their discount stays with them.</summary>
+/// <param name="From">The card as the client saw it.</param>
+public sealed record SetCardOp(string PersonId, Card Card, Card From) : PatchOp;
