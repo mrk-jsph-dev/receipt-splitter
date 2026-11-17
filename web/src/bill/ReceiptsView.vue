@@ -80,7 +80,7 @@ async function typeIn() {
       <span class="sm muted">Long receipt? Scan it as two photos and they join into one.</span>
       <input ref="picker" class="visually-hidden" type="file" accept="image/*,application/pdf" multiple tabindex="-1" aria-hidden="true" @change="scanPicked" />
     </div>
-    <p v-if="editable" class="sm muted">You can add receipts later too, even after sharing. Everyone with the link sees them within 10 seconds.</p>
+    <p v-if="editable" class="sm muted">You can add receipts later too, even after sharing. Everyone with the link sees them when they open or refresh the bill.</p>
   </section>
 </template>
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ArrowLeft, ArrowLeftRight, ListChecks, ReceiptText, Share2, Smartphone, Users } from 'lucide-vue-next';
-import { computed, onMounted } from 'vue';
+import { ArrowLeft, ArrowLeftRight, ListChecks, ReceiptText, RefreshCw, Share2, Smartphone, Users } from 'lucide-vue-next';
+import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import AppButton from '../design/components/AppButton.vue';
 import ReceiptPeso from '../design/icons/ReceiptPeso.vue';
@@ -19,7 +19,7 @@ import { provideBill } from './useBill';
 const props = defineProps<{ id: string }>();
 const router = useRouter();
 const state = provideBill(props.id);
-const { data, missing, needsPin, problem, waking, me, notice, breakdownFor, isOrganizer } = state;
+const { data, missing, needsPin, problem, waking, me, notice, breakdownFor, isOrganizer, paused, syncedAt } = state;
 const myBalance = computed(() => (me.value ? data.value?.breakdown?.people.find((p) => p.personId === me.value) ?? null : null));
 
 const bill = computed(() => data.value?.bill ?? null);
@@ -48,6 +48,16 @@ const subtitle = computed(() => {
   const total = data.value?.breakdown ? ` · ${formatMoney(data.value.breakdown.progress.total, b.currency)}` : '';
   return b.status === 'locked' ? `Locked · ${receipts}${total}` : `${receipts}${total}`;
 });
+
+// Manual sync: always there, and the way back after polling pauses for an idle tab.
+const refreshing = ref(false);
+async function refresh() {
+  refreshing.value = true;
+  await state.refresh();
+  refreshing.value = false;
+  if (!problem.value) state.say('Up to date.');
+}
+const updatedAt = computed(() => (syncedAt.value ? new Date(syncedAt.value).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : ''));
 
 onMounted(state.load);
 </script>
@@ -97,6 +107,9 @@ onMounted(state.load);
           </div>
         </div>
         <div class="tb-r">
+          <button v-if="bill" type="button" class="share-btn" :aria-label="refreshing ? 'Refreshing' : 'Refresh'" :aria-busy="refreshing || undefined" :disabled="refreshing" @click="refresh">
+            <RefreshCw class="s" :class="{ spin: refreshing }" />
+          </button>
           <RouterLink v-if="bill" :to="{ name: 'share', params: { id } }" class="share-btn" aria-label="Share this bill">
             <Share2 class="s" /><span class="medium-up">Share</span>
           </RouterLink>
@@ -106,6 +119,10 @@ onMounted(state.load);
         </div>
       </header>
       <p v-if="problem" class="problem sm" role="status">{{ problem }}</p>
+      <p v-else-if="(paused || !state.autoSync) && bill" class="paused sm" role="status">
+        <span><template v-if="paused">Paused to save data · </template>Updated {{ updatedAt || 'just now' }}</span>
+        <button v-if="paused" type="button" class="link-btn" @click="refresh">Refresh</button>
+      </p>
       <div v-if="bill && isOrganizer && bill.status === 'draft' && $route.name !== 'share'" class="draft sm" :class="{ ready: !blocker }">
         <template v-if="blocker">
           <span><b>Not shared yet.</b> {{ blocker.text }}</span>
@@ -174,6 +191,8 @@ onMounted(state.load);
 .t { font-weight: 650; font-size: 16px; letter-spacing: -.01em; }
 .sub { font-size: 12px; color: var(--muted); }
 .problem { color: var(--warn); padding: 8px 16px 0; }
+.paused { display: flex; flex-wrap: wrap; align-items: center; gap: 0 12px; min-height: 28px; color: var(--muted); padding: 6px 16px 0; }
+button.share-btn { font: inherit; cursor: pointer; }
 .loading { display: flex; flex-direction: column; gap: 12px; max-width: 720px; }
 .draft {
   margin: 12px 16px 0; padding: 10px 14px; border-radius: 12px; background: var(--amber-soft); color: var(--ink);
