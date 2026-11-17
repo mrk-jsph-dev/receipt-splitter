@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ChevronRight, PencilLine, ReceiptText, Smartphone } from 'lucide-vue-next';
+import { ChevronRight, LoaderCircle, PencilLine, ReceiptText, Smartphone } from 'lucide-vue-next';
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import AppButton from '../design/components/AppButton.vue';
@@ -106,15 +106,16 @@ onMounted(load);
         </div>
         <div class="starts">
           <ScanCard :remaining="scansLeft" @picked="picked" />
-          <button type="button" class="start" :disabled="busy" @click="typing = true">
+          <button type="button" class="start press" :disabled="busy" @click="typing = true">
             <span class="tile acc"><PencilLine /></span>
             <span class="grow"><b>Type it in</b><span class="sm muted">Enter the lines and total yourself</span></span>
             <ChevronRight class="chev" />
           </button>
-          <button type="button" class="start" :disabled="busy" :aria-busy="busy || undefined" @click="sample">
+          <button type="button" class="start press" :disabled="busy" :aria-busy="busy && !typing ? true : undefined" @click="sample">
             <span class="tile acc"><ReceiptText /></span>
-            <span class="grow"><b>Try the sample</b><span class="sm muted">A ready bill, nothing to upload</span></span>
-            <ChevronRight class="chev" />
+            <span class="grow"><b>Try the sample</b><span class="sm muted">{{ busy && !typing ? 'Setting up the bill…' : 'A ready bill, nothing to upload' }}</span></span>
+            <LoaderCircle v-if="busy && !typing" class="chev spin" aria-hidden="true" />
+            <ChevronRight v-else class="chev" />
           </button>
           <p v-if="error" class="sm error" role="alert">{{ error }}</p>
         </div>
@@ -129,7 +130,7 @@ onMounted(load);
         <p v-else-if="shown.length === 0" class="card empty sm muted">Nothing here.</p>
         <ul v-else class="billlist">
           <li v-for="row in shown" :key="row.id">
-            <RouterLink :to="`/b/${row.id}`" class="billrow">
+            <RouterLink :to="`/b/${row.id}`" class="billrow press">
               <span class="tile"><ReceiptText /></span>
               <span class="grow">
                 <b class="truncate">{{ row.data?.bill.title || row.title || 'Untitled bill' }}</b>
@@ -197,6 +198,7 @@ onMounted(load);
 }
 .start b, .start .sm { display: block; }
 .start:disabled { cursor: default; opacity: .6; }
+.start[aria-busy] { opacity: 1; cursor: progress; }
 .start:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .chev { color: var(--muted); }
 .empty { text-align: center; padding: 22px; }

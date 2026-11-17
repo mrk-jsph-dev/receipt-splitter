@@ -55,10 +55,11 @@ async function typeIn() {
       :key="r.id"
       :to="editable ? { name: 'receipt', params: { id: state.id, receiptId: r.id } } : undefined"
       class="card rc"
+      :class="{ press: editable }"
     >
       <div class="row"><b class="truncate">{{ i + 1 }} · {{ r.label }}<template v-if="r.merchant"> · {{ r.merchant }}</template></b><span class="amt">{{ money(r.confirmedTotal) }}</span></div>
       <div class="row">
-        <span class="sm muted truncate">
+        <span class="sm muted meta">
           {{ r.lines.length }} {{ r.lines.length === 1 ? 'item' : 'items' }} · {{ modes[r.splitMode] }} · {{ there(r.participants.length) }}
           <template v-if="r.payers.length"> · paid by {{ payerNames(bill, r) }}</template>
         </span>
@@ -69,7 +70,7 @@ async function typeIn() {
       </div>
     </component>
 
-    <div v-if="editable && bill.receipts.length < 10" class="card add">
+    <div v-if="editable && bill.receipts.length < 10" class="card add-card add">
       <b>Add another receipt</b>
       <span class="sm muted">Drinks after dinner, dessert, a second page of a long receipt. Each one keeps its own fees and payer.</span>
       <div class="two">
@@ -86,8 +87,9 @@ async function typeIn() {
 <style scoped>
 .col { display: flex; flex-direction: column; gap: 12px; max-width: 720px; }
 .rc { display: flex; flex-direction: column; gap: 6px; color: inherit; text-decoration: none; }
-a.rc:hover { border-color: var(--accent); }
 .end { display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; }
-.add { display: flex; flex-direction: column; gap: 8px; border: 1.5px dashed var(--line); background: transparent; box-shadow: none; }
+.add { gap: 8px; }
+.meta { min-width: 0; }
+.rc .row:last-child { align-items: flex-start; }
 .two { display: flex; gap: 8px; flex-wrap: wrap; }
 </style>

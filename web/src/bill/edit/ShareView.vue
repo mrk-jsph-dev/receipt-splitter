@@ -6,6 +6,7 @@ import AppButton from '../../design/components/AppButton.vue';
 import TextField from '../../design/components/TextField.vue';
 import { organizerAction, setPin, updateSettings } from '../../shared/api';
 import { formatMoney } from '../../shared/money';
+import { shareBlocker } from '../sharing';
 import { useBill } from '../useBill';
 
 // Ready to share: bill name, how to pay the organizer, the claim link with a QR code for the
@@ -38,19 +39,7 @@ async function saveSettings() {
   if (ok) state.say('Saved.');
 }
 
-const blocked = computed(() => {
-  const b = bill.value;
-  if (b.receipts.length === 0) return 'Add a receipt first.';
-  if (b.people.length === 0) return 'Add at least one person first.';
-  const empty = b.receipts.find((r) => r.lines.length === 0);
-  if (empty) return `${empty.label} has no items yet.`;
-  const off = breakdown.value?.receipts.filter((r) => !r.matches) ?? [];
-  if (off.length > 0) {
-    const names = off.map((r) => b.receipts.find((x) => x.id === r.receiptId)?.label ?? 'A receipt');
-    return `${names.join(', ')} ${off.length === 1 ? "doesn't" : "don't"} match the printed total yet.`;
-  }
-  return '';
-});
+const blocked = computed(() => shareBlocker(bill.value, breakdown.value)?.text ?? '');
 const sharing = ref(false);
 // Optional PIN: friends type it once per phone. Only a hash is kept on the server.
 const pin = ref('');
@@ -170,7 +159,7 @@ async function copy(text: string, what: string) {
         </div>
       </section>
 
-      <section class="card keep">
+      <section class="card callout keep">
         <h3 class="h"><KeyRound class="s" /> Save your organizer link</h3>
         <p class="sm muted">Needed to edit or confirm payments from another phone. Keep it to yourself.</p>
         <AppButton sm @click="copy(organizerLink, 'Organizer link')"><Copy class="s" /> Copy organizer link</AppButton>
@@ -191,7 +180,6 @@ async function copy(text: string, what: string) {
 .qr :deep(svg) { display: block; width: 100%; height: auto; }
 .grow { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .link { overflow-wrap: anywhere; }
-.keep { border: 1.5px solid var(--accent); }
 .opt { font-weight: 400; margin-left: 4px; }
 .pin-form { display: flex; flex-direction: column; gap: 10px; }
 .btns { display: flex; gap: 8px; flex-wrap: wrap; }

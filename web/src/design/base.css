@@ -104,3 +104,27 @@ svg.lucide.s, .chip svg.lucide, .btn.sm svg.lucide { width: 16px; height: 16px; 
 @media (prefers-reduced-motion: no-preference) {
   button, a { transition: background-color .15s, border-color .15s, color .15s; }
 }
+
+/* Needs your attention or worth knowing: one style for every such card. */
+.callout { background: var(--accent-soft); border-color: var(--accent); }
+
+/* A place to add something: dashed, no fill. Only for "add" cards. */
+.add-card { border: 1.5px dashed var(--line); background: transparent; }
+
+/* Tappable cards and rows answer the press. */
+.press { cursor: pointer; }
+@media (hover: hover) { .press:hover { border-color: var(--muted); } }
+
+/* Placeholder blocks while a bill loads, in the shape of what's coming. */
+.skeleton { border-radius: 8px; background: var(--soft); min-height: 14px; }
+
+.spin { animation: spin 0.9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: no-preference) {
+  .card { transition: border-color .15s, background-color .15s, transform .12s; }
+  .press:active { transform: scale(.985); }
+  .skeleton { animation: shimmer 1.2s ease-in-out infinite; }
+  @keyframes shimmer { 50% { opacity: .5; } }
+}
+@media (prefers-reduced-motion: reduce) { .spin { animation-duration: 2.4s; } }
