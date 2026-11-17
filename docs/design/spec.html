@@ -790,13 +790,13 @@ interface Adjustment {
   </table></div>
   <h3>Deployment plan</h3>
   <p>Everything is created by Bicep files kept in the repo under <code>infra/</code>: <code>main.bicep</code> (entry point), <code>modules/</code> (storage, docintel, containerapp, staticwebapp, roles, budget) and <code>main.bicepparam</code> (region, names, budget amount; no secrets). GitHub signs in to Azure with OpenID Connect (a federated credential), so no Azure password or key is stored in GitHub.</p>
-  <p><b>One manual pipeline:</b> <code>.github/workflows/ci-cd.yml</code>, triggered only by <code>workflow_dispatch</code>. Nothing runs on push or pull request. It has one input, <code>target</code>: <code>test</code>, <code>infra</code>, <code>api</code>, <code>web</code> or <code>all</code>. The <code>test</code> job always runs first, and every deploy job <code>needs: test</code>, so nothing ships with failing tests. Dependency caching, a 15-minute timeout and cancel-in-progress keep runs short. Start it from the Actions tab or with <code>gh workflow run ci-cd.yml -f target=api</code>.</p>
+  <p><b>One manual pipeline:</b> <code>.github/workflows/ci-cd.yml</code>, triggered only by <code>workflow_dispatch</code>. Nothing runs on push or pull request. It has one input, <code>target</code>: <code>test</code>, <code>infra</code>, <code>api</code>, <code>web</code>, <code>api-web</code> (api then web, no infra) or <code>all</code>. The <code>test</code> job always runs first, and every deploy job <code>needs: test</code>, so nothing ships with failing tests. Dependency caching, a 15-minute timeout and cancel-in-progress keep runs short. Start it from the Actions tab or with <code>gh workflow run ci-cd.yml -f target=api</code>.</p>
   <pre>ci-cd.yml   (on: workflow_dispatch, input target)
   test     always       dotnet test · web build + tests · dotnet list package --vulnerable · npm audit
-  infra    target ∈ {infra, all}   needs test   az deployment group create (Bicep)
-  api      target ∈ {api, all}     needs test   build + push GHCR image, update Container App, wait for /healthz
-  web      target ∈ {web, all}     needs test   build web, deploy to SWA
-  smoke    after any deploy        sample bill: create, claim, check totals, delete</pre>
+  infra    target ∈ {infra, all}            needs test   az deployment group create (Bicep)
+  api      target ∈ {api, api-web, all}     needs test   build + push GHCR image, update Container App, wait for /healthz
+  web      target ∈ {web, api-web, all}     needs test   build web, deploy to SWA
+  smoke    after any deploy                 sample bill: create, claim, check totals, delete</pre>
   <div class="tbl"><table>
     <thead><tr><th>Step</th><th>What happens</th><th>Who</th></tr></thead>
     <tbody>

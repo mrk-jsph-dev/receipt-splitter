@@ -120,6 +120,7 @@ changing the start date once the budget exists.
 gh workflow run ci-cd.yml -f target=infra   # first time: everything except the API
 gh workflow run ci-cd.yml -f target=api     # build, push, release the API, wait for /healthz
 gh workflow run ci-cd.yml -f target=web     # build and upload the Vue app
+gh workflow run ci-cd.yml -f target=api-web # api, then web; skips infra (use when infra/ has not changed)
 gh workflow run ci-cd.yml -f target=all     # infra, then api, then web
 ```
 

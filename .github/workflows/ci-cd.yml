@@ -1,5 +1,5 @@
 # One manual pipeline. Nothing runs on push or pull request, to save Actions minutes.
-# Run:  gh workflow run ci-cd.yml -f target=test   (or infra | api | web | all)
+# Run:  gh workflow run ci-cd.yml -f target=test   (or infra | api | web | api-web | all)
 name: ci-cd
 
 on:
@@ -9,7 +9,7 @@ on:
         description: What to run. Tests always run first.
         type: choice
         default: test
-        options: [test, infra, api, web, all]
+        options: [test, infra, api, web, api-web, all]
 
 permissions:
   contents: read
@@ -100,7 +100,7 @@ jobs:
     if: >-
       always() && needs.test.result == 'success'
       && contains(fromJSON('["success", "skipped"]'), needs.infra.result)
-      && contains(fromJSON('["api", "all"]'), inputs.target)
+      && contains(fromJSON('["api", "api-web", "all"]'), inputs.target)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: production
@@ -162,7 +162,7 @@ jobs:
       always() && needs.test.result == 'success'
       && contains(fromJSON('["success", "skipped"]'), needs.infra.result)
       && contains(fromJSON('["success", "skipped"]'), needs.api.result)
-      && contains(fromJSON('["web", "all"]'), inputs.target)
+      && contains(fromJSON('["web", "api-web", "all"]'), inputs.target)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: production

@@ -465,14 +465,14 @@ Bills grow with items and people, and a Table property caps at 64 KB. A blob per
 
 Everything is created by Bicep files kept in the repo under `infra/`: `main.bicep` (entry point), `modules/` (storage, docintel, containerapp, staticwebapp, roles, budget) and `main.bicepparam` (region, names, budget amount; no secrets). GitHub signs in to Azure with OpenID Connect (a federated credential), so no Azure password or key is stored in GitHub.
 
-**One manual pipeline:** `.github/workflows/ci-cd.yml`, triggered only by `workflow_dispatch`. Nothing runs on push or pull request. It has one input, `target`: `test`, `infra`, `api`, `web` or `all`. The `test` job always runs first, and every deploy job `needs: test`, so nothing ships with failing tests. Dependency caching, a 15-minute timeout and cancel-in-progress keep runs short. Start it from the Actions tab or with `gh workflow run ci-cd.yml -f target=api`.
+**One manual pipeline:** `.github/workflows/ci-cd.yml`, triggered only by `workflow_dispatch`. Nothing runs on push or pull request. It has one input, `target`: `test`, `infra`, `api`, `web`, `api-web` (api then web, no infra) or `all`. The `test` job always runs first, and every deploy job `needs: test`, so nothing ships with failing tests. Dependency caching, a 15-minute timeout and cancel-in-progress keep runs short. Start it from the Actions tab or with `gh workflow run ci-cd.yml -f target=api`.
 
     ci-cd.yml   (on: workflow_dispatch, input target)
       test     always       dotnet test · web build + tests · dotnet list package --vulnerable · npm audit
-      infra    target ∈ {infra, all}   needs test   az deployment group create (Bicep)
-      api      target ∈ {api, all}     needs test   build + push GHCR image, update Container App, wait for /healthz
-      web      target ∈ {web, all}     needs test   build web, deploy to SWA
-      smoke    after any deploy        sample bill: create, claim, check totals, delete
+      infra    target ∈ {infra, all}            needs test   az deployment group create (Bicep)
+      api      target ∈ {api, api-web, all}     needs test   build + push GHCR image, update Container App, wait for /healthz
+      web      target ∈ {web, api-web, all}     needs test   build web, deploy to SWA
+      smoke    after any deploy                 sample bill: create, claim, check totals, delete
 
 | Step               | What happens                                                                                                                                                                                                                                                                                                  | Who                                       |
 |--------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------|
