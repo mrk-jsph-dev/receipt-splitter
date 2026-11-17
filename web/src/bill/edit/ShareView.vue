@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { Copy, Link2, KeyRound } from 'lucide-vue-next';
+import { Copy, Link2, KeyRound, LockKeyhole } from 'lucide-vue-next';
 import { renderSVG } from 'uqr';
 import { computed, ref, watch } from 'vue';
 import AppButton from '../../design/components/AppButton.vue';
 import TextField from '../../design/components/TextField.vue';
-import { organizerAction, updateSettings } from '../../shared/api';
+import { organizerAction, setPin, updateSettings } from '../../shared/api';
 import { formatMoney } from '../../shared/money';
 import { useBill } from '../useBill';
 
@@ -52,6 +52,27 @@ const blocked = computed(() => {
   return '';
 });
 const sharing = ref(false);
+// Optional PIN: friends type it once per phone. Only a hash is kept on the server.
+const pin = ref('');
+const pinOpen = ref(false);
+const pinSaving = ref(false);
+const pinError = ref('');
+async function savePin(value: string | null) {
+  if (value !== null && !/^[0-9]{4,6}$/.test(value)) {
+    pinError.value = 'Use 4 to 6 digits.';
+    return;
+  }
+  pinSaving.value = true;
+  pinError.value = '';
+  const had = bill.value.hasPin;
+  const ok = await state.organize((k) => setPin(state.id, k, value));
+  pinSaving.value = false;
+  if (!ok) return;
+  pin.value = '';
+  pinOpen.value = false;
+  state.say(value === null ? 'PIN removed. Anyone with the link can open the bill.' : had ? 'PIN changed. Friends will be asked for the new one.' : 'PIN added. Friends will be asked for it once.');
+}
+
 async function share() {
   sharing.value = true;
   const ok = await state.organize((k) => organizerAction(state.id, k, 'share'), () => "The bill can't be shared until every receipt matches its total.");
@@ -74,6 +95,7 @@ async function copy(text: string, what: string) {
     <h2 class="h">Share this bill</h2>
     <p class="muted">Send this link to the group. Anyone with it can claim their items.</p>
     <p class="mono sm link">{{ claimLink }}</p>
+    <p v-if="bill.hasPin" class="sm muted">They'll also need the bill's PIN. Ask the organizer to tell them.</p>
     <AppButton @click="copy(claimLink, 'Link')"><Copy class="s" /> Copy link</AppButton>
   </section>
 
@@ -99,6 +121,34 @@ async function copy(text: string, what: string) {
           hint="Shown on everyone's breakdown."
         />
         <AppButton :disabled="!changed || bill.status === 'locked'" :busy="saving" @click="saveSettings">Save</AppButton>
+      </section>
+
+      <section class="card" aria-labelledby="pin-h">
+        <h3 id="pin-h" class="h"><LockKeyhole class="s" /> PIN <span class="sm muted opt">optional</span></h3>
+        <template v-if="bill.hasPin && !pinOpen">
+          <p class="sm"><span class="chip ok">On</span> Friends type the PIN once on each phone to open this bill.</p>
+          <div class="btns">
+            <AppButton sm :disabled="bill.status === 'locked'" @click="pinOpen = true">Change PIN</AppButton>
+            <AppButton sm variant="danger" :busy="pinSaving" :disabled="bill.status === 'locked'" @click="savePin(null)">Remove PIN</AppButton>
+          </div>
+        </template>
+        <form v-else class="pin-form" @submit.prevent="savePin(pin)">
+          <TextField
+            v-model="pin"
+            :label="bill.hasPin ? 'New PIN' : 'Add a PIN'"
+            inputmode="numeric"
+            autocomplete="off"
+            mono
+            :maxlength="6"
+            placeholder="4 to 6 digits"
+            hint="Tell friends the PIN out loud or in a separate message, not with the link. It's never shown again."
+            :error="pinError || undefined"
+          />
+          <div class="btns">
+            <AppButton type="submit" sm :busy="pinSaving" :disabled="pin.length < 4 || bill.status === 'locked'">{{ bill.hasPin ? 'Change PIN' : 'Add PIN' }}</AppButton>
+            <AppButton v-if="pinOpen" sm variant="quiet" @click="pinOpen = false; pin = ''; pinError = ''">Cancel</AppButton>
+          </div>
+        </form>
       </section>
 
       <section v-if="bill.status === 'draft'" class="card">
@@ -142,6 +192,9 @@ async function copy(text: string, what: string) {
 .grow { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .link { overflow-wrap: anywhere; }
 .keep { border: 1.5px solid var(--accent); }
+.opt { font-weight: 400; margin-left: 4px; }
+.pin-form { display: flex; flex-direction: column; gap: 10px; }
+.btns { display: flex; gap: 8px; flex-wrap: wrap; }
 .wrapchip { white-space: normal; height: auto; padding-block: 4px; align-self: flex-start; }
 .card :deep(.btn) { align-self: flex-start; }
 

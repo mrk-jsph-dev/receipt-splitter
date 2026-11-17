@@ -20,8 +20,8 @@ public static class HttpHardening
         services.AddCors(cors => cors.AddPolicy(CorsPolicy, policy => policy
             .WithOrigins(origins)
             .WithMethods("GET", "POST", "PUT", "PATCH", "DELETE")
-            .WithHeaders("Content-Type", "If-None-Match", "If-Match", OrganizerKey.Header)
-            .WithExposedHeaders("ETag")));
+            .WithHeaders("Content-Type", "If-None-Match", "If-Match", OrganizerKey.Header, BillPin.Header, PersonToken.Header)
+            .WithExposedHeaders("ETag", "Retry-After", PersonToken.Header)));
 
         // Container Apps ingress appends the caller's IP to X-Forwarded-For. Only the last entry is
         // trusted, so a client can't pick its own IP to dodge the per-IP limits.

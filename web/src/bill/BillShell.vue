@@ -7,6 +7,7 @@ import ReceiptPeso from '../design/icons/ReceiptPeso.vue';
 import { formatMoney } from '../shared/money';
 import { recentBills } from '../shared/storage';
 import BreakdownSheet from './BreakdownSheet.vue';
+import PinGate from './PinGate.vue';
 import { claimableUnits, personName, unclaimedUnits } from './summary';
 import { provideBill } from './useBill';
 
@@ -16,7 +17,7 @@ import { provideBill } from './useBill';
 const props = defineProps<{ id: string }>();
 const router = useRouter();
 const state = provideBill(props.id);
-const { data, missing, problem, waking, me, notice, breakdownFor, isOrganizer } = state;
+const { data, missing, needsPin, problem, waking, me, notice, breakdownFor, isOrganizer } = state;
 const myBalance = computed(() => (me.value ? data.value?.breakdown?.people.find((p) => p.personId === me.value) ?? null : null));
 
 const bill = computed(() => data.value?.bill ?? null);
@@ -36,7 +37,7 @@ const sections = computed(() => {
 
 const subtitle = computed(() => {
   const b = bill.value;
-  if (!b) return waking.value ? 'Waking up…' : 'Loading…';
+  if (!b) return needsPin.value ? 'PIN needed' : waking.value ? 'Waking up…' : 'Loading…';
   const receipts = `${b.receipts.length} ${b.receipts.length === 1 ? 'receipt' : 'receipts'}`;
   const total = data.value?.breakdown ? ` · ${formatMoney(data.value.breakdown.progress.total, b.currency)}` : '';
   return b.status === 'locked' ? `Locked · ${receipts}${total}` : `${receipts}${total}`;
@@ -93,7 +94,7 @@ onMounted(state.load);
           <RouterLink v-if="bill" :to="{ name: 'share', params: { id } }" class="share-btn" aria-label="Share this bill">
             <Share2 class="s" /><span class="medium-up">Share</span>
           </RouterLink>
-          <button v-if="bill && me" type="button" class="you" :aria-label="`You're ${personName(bill, me)}. Change who you are`" @click="state.setMe(null)">
+          <button v-if="bill && me" type="button" class="you" :aria-label="`You're ${personName(bill, me)}. Change who you are`" @click="state.leaveMe()">
             <span class="chip me">You're {{ personName(bill, me) }}</span><span class="change medium-up">Change</span>
           </button>
         </div>
@@ -105,6 +106,7 @@ onMounted(state.load);
       </div>
       <main class="content">
         <RouterView v-if="bill" />
+        <PinGate v-else-if="needsPin" />
       </main>
     </div>
 

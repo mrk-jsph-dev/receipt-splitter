@@ -3,7 +3,7 @@ using ReceiptSplitter.Api.Shared;
 
 namespace ReceiptSplitter.Api.Features.GetBill;
 
-/// <summary>Anyone with the link. Answers 304 when the client already has this version, which keeps polling cheap.</summary>
+/// <summary>Anyone with the link, plus the PIN token if the bill has a PIN. Answers 304 when the client already has this version, which keeps polling cheap.</summary>
 public static class GetBill
 {
     public static void Map(IEndpointRouteBuilder app) => app.MapGet("/api/bills/{id}", Handle).RequireRateLimiting(RateLimitPolicies.Read);
@@ -15,6 +15,8 @@ public static class GetBill
             return error;
 
         var bill = stored!.Bill;
+        if (access.AuthorizeLinkHolder(http, bill) is { } denied)
+            return denied;
         var etag = ApiResults.ETagOf(bill);
         if (http.Request.GetTypedHeaders().IfNoneMatch.Any(tag => tag.Tag == etag || tag.Tag == "*"))
         {
