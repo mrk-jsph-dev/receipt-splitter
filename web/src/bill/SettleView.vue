@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Copy, Lock, LockOpen, Trash2 } from 'lucide-vue-next';
+import { Copy, FileText, Lock, LockOpen, Trash2 } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import AppButton from '../design/components/AppButton.vue';
@@ -142,7 +142,10 @@ async function remove() {
           </li>
         </ul>
       </section>
-      <AppButton v-if="breakdown" @click="copySummary"><Copy class="s" /> Copy summary for the group chat</AppButton>
+      <div v-if="breakdown" class="share-out">
+        <AppButton @click="copySummary"><Copy class="s" /> Copy summary for the group chat</AppButton>
+        <AppButton v-if="isOrganizer" @click="router.push({ name: 'report', params: { id: state.id } })"><FileText class="s" /> Full breakdown (PDF)</AppButton>
+      </div>
     </div>
 
     <div class="side">
@@ -199,6 +202,7 @@ async function remove() {
 .toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .life :deep(.btn) { align-self: flex-start; }
 .main > :deep(.btn) { align-self: flex-start; }
+.share-out { display: flex; flex-wrap: wrap; gap: 8px; }
 @media (prefers-reduced-motion: reduce) { .toggle i { transition: none; } }
 @media (min-width: 1024px) {
   .settle { grid-template-columns: minmax(0, 1fr) 340px; align-items: start; }
