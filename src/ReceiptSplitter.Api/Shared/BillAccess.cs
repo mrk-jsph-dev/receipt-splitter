@@ -22,6 +22,7 @@ public sealed record OpError(int Status, string Reason)
     public static OpError Invalid(string reason) => new(StatusCodes.Status400BadRequest, reason);
     public static OpError Conflict(string reason) => new(StatusCodes.Status409Conflict, reason);
     public static OpError Unprocessable(string reason) => new(StatusCodes.Status422UnprocessableEntity, reason);
+    public static OpError Forbidden(string reason) => new(StatusCodes.Status403Forbidden, reason);
 }
 
 public sealed record ErrorBody(string Error, string? Reason = null);
@@ -61,6 +62,7 @@ public static class ApiResults
         {
             StatusCodes.Status412PreconditionFailed => "precondition-failed",
             StatusCodes.Status422UnprocessableEntity => "cannot-share",
+            StatusCodes.Status403Forbidden => "forbidden",
             _ => "conflict",
         };
         var response = BillResponse.From(bill, retentionDays);
@@ -134,6 +136,20 @@ public sealed class BillAccess(
         return tokens.Count == 1 && BillPin.TokenMatches(tokens[0], bill.PinHash, bill.Id) ? null : ApiResults.PinRequired();
     }
 
+    /// <summary>The request carries this bill's organizer key.</summary>
+    public static bool IsOrganizer(HttpContext http, BillDocument bill)
+    {
+        var keys = http.Request.Headers[OrganizerKey.Header];
+        return keys.Count == 1 && OrganizerKey.Matches(keys[0], bill.OrganizerKeyHash);
+    }
+
+    /// <summary>The request carries the person token of the phone holding this person's name.</summary>
+    public static bool HoldsPerson(HttpContext http, PersonDoc person)
+    {
+        var tokens = http.Request.Headers[PersonToken.Header];
+        return person.HoldHash is not null && tokens.Count == 1 && OrganizerKey.Matches(tokens[0], person.HoldHash);
+    }
+
     /// <summary>A link holder's op. See <see cref="WriteAsync"/>.</summary>
     public Task<IResult> UpdateAsync(HttpContext http, string id, string operation, Func<BillDocument, OpError?> apply) =>
         WriteAsync(http, id, operation, organizer: false, requireIfMatch: false, apply);
@@ -142,15 +158,15 @@ public sealed class BillAccess(
     /// An organizer's op. If it leaves a shared bill with a receipt that no longer matches its
     /// total, the bill goes back to draft until it matches again.
     /// </summary>
-    public Task<IResult> OrganizerUpdateAsync(HttpContext http, string id, string operation, bool requireIfMatch, Func<BillDocument, OpError?> apply) =>
-        WriteAsync(http, id, operation, organizer: true, requireIfMatch, apply);
+    public Task<IResult> OrganizerUpdateAsync(HttpContext http, string id, string operation, bool requireIfMatch, Func<BillDocument, OpError?> apply, bool allowLocked = false) =>
+        WriteAsync(http, id, operation, organizer: true, requireIfMatch, apply, allowLocked);
 
     /// <summary>
     /// Applies one op and saves it. <paramref name="apply"/> must check everything before it changes
     /// the bill, so a refused op leaves the bill as it was read. A storage clash is retried here with
     /// fresh data; the client only sees 409 when its own <c>from</c> no longer holds.
     /// </summary>
-    private async Task<IResult> WriteAsync(HttpContext http, string id, string operation, bool organizer, bool requireIfMatch, Func<BillDocument, OpError?> apply)
+    private async Task<IResult> WriteAsync(HttpContext http, string id, string operation, bool organizer, bool requireIfMatch, Func<BillDocument, OpError?> apply, bool allowLocked = false)
     {
         for (var attempt = 1; ; attempt++)
         {
@@ -163,7 +179,7 @@ public sealed class BillAccess(
                 return denied;
             if (!organizer && AuthorizeLinkHolder(http, bill) is { } locked)
                 return locked;
-            if (bill.Status == BillStatus.Locked)
+            if (bill.Status == BillStatus.Locked && !allowLocked)
                 return ApiResults.Conflict(bill, "locked", Limits.RetentionDays);
 
             var opError = apply(bill);

@@ -18,7 +18,7 @@ import YourShare from './YourShare.vue';
 // Claim what you had. Phones: one column with a filter; tablets: items and people, summary on the
 // right; laptops: items, people and summary side by side, and items can be dragged onto people.
 
-const { data, me, run, say, syncedAt, breakdownFor } = useBill();
+const { data, me, run, say, syncedAt, breakdownFor, isOrganizer } = useBill();
 const { canDrag } = useBreakpoint();
 const bill = computed(() => data.value!.bill);
 const breakdown = computed(() => data.value!.breakdown);
@@ -162,7 +162,7 @@ const synced = computed(() => {
             @share="openShare(line)"
             @let-go="letGo(line)"
           />
-          <p v-if="canDrag && !locked" class="sm muted">Drag an item onto a person, or use Mine and Share.</p>
+          <p v-if="canDrag && !locked" class="sm muted">{{ isOrganizer ? 'Drag an item onto a person, or use Mine and Share.' : 'Drag an item onto yourself, or use Mine and Share.' }}</p>
         </template>
 
         <div v-else-if="receipt" class="card">
@@ -188,7 +188,7 @@ const synced = computed(() => {
             :breakdown="breakdown"
             :person="p"
             :me="me"
-            :can-drop="canDrag && !locked"
+            :can-drop="canDrag && !locked && (isOrganizer || p.id === me)"
             @open="breakdownFor = p.id"
             @drop-line="dropOn(p.id, $event)"
           />
@@ -213,6 +213,7 @@ const synced = computed(() => {
       :line="sharingLine"
       :unit="sharingUnit"
       :me="me"
+      :only-me="!isOrganizer"
       :breakdown="receiptBreakdown"
       @close="sharing = null"
       @save="saveShare"

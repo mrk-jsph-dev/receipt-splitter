@@ -17,7 +17,7 @@ public enum PaymentStatus { Waiting, Confirmed }
 public enum ActivityKind
 {
     AddPerson, Join, Rename, RemovePerson, Claim, Unclaim, SetWeight, MarkPaid, UnmarkPaid,
-    AddReceipt, EditReceipt, RemoveReceipt, ClaimRemoved, Settings, Share, Lock, Confirm, Undo, SetCard, Decline, Pin,
+    AddReceipt, EditReceipt, RemoveReceipt, ClaimRemoved, Settings, Share, Lock, Confirm, Undo, SetCard, Decline, Pin, Pick, Release, Reopen,
 }
 
 public sealed record CurrencyInfo(string Code, int Digits)
@@ -76,6 +76,12 @@ public sealed class PersonDoc
     public required string Id { get; set; }
     public required string Name { get; set; }
     public Card Card { get; set; }
+
+    /// <summary>
+    /// SHA-256 of the person token held by the one phone that joined as or picked this person.
+    /// Null while nobody holds the name. Never sent to clients; see <see cref="PersonView"/>.
+    /// </summary>
+    public string? HoldHash { get; set; }
 }
 
 public sealed class ReceiptDoc

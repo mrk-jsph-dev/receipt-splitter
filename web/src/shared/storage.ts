@@ -8,8 +8,8 @@ const profileFriends = 'profile:friends';
 const maxFriends = 30;
 const billPrefix = 'bill:';
 
-/** me: who you are in the bill; key: organizer key; pin: the token from unlocking its PIN; seen: for the home list. */
-export type BillField = 'me' | 'key' | 'pin' | 'seen';
+/** me: who you are in the bill; person: the token proving it; key: organizer key; pin: the token from unlocking its PIN; seen: for the home list. */
+export type BillField = 'me' | 'person' | 'key' | 'pin' | 'seen';
 
 export interface RecentBill {
   id: string;
