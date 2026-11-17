@@ -4,9 +4,8 @@ import { computed } from 'vue';
 import AvatarBadge from '../design/components/AvatarBadge.vue';
 import IconButton from '../design/components/IconButton.vue';
 import Overlay from '../design/components/Overlay.vue';
-import type { Adjustment, Receipt } from '../shared/api';
 import { formatMoney } from '../shared/money';
-import { findUnit, portion } from './claims';
+import { personReport } from './breakdown';
 import PaidButton from './PaidButton.vue';
 import { joinNames, owingFor, payees } from './payments';
 import { personName } from './summary';
@@ -24,39 +23,8 @@ const money = (minor: number) => formatMoney(minor, bill.value.currency);
 
 const kinds: Record<string, string> = { senior: 'Senior card', pwd: 'PWD card' };
 
-function headcount(r: Receipt) {
-  return r.participants.length || bill.value.people.length;
-}
-
-function how(r: Receipt, a: Adjustment): string {
-  if (a.scope?.people?.length) return a.kind === 'senior' || a.kind === 'pwd' || a.kind === 'vatExempt' ? 'card holder only' : 'chosen people only';
-  if (r.splitMode !== 'items') return '';
-  return a.split === 'equal' ? `split equally, ${money(a.amount)} ÷ ${headcount(r)}` : 'by what you ordered';
-}
-
-const sections = computed(() => {
-  const id = who.value;
-  if (!id || !breakdown.value) return [];
-  return bill.value.receipts.map((r) => {
-    const rb = breakdown.value!.receipts.find((b) => b.receiptId === r.id);
-    const share = rb?.people.find((p) => p.personId === id);
-    const items = (rb?.items ?? [])
-      .filter((i) => i.personId === id)
-      .map((i) => {
-        const found = findUnit(bill.value, i.unitId)!;
-        const n = found.line.units.findIndex((u) => u.id === i.unitId) + 1;
-        const part = portion(found.unit, id);
-        const name = found.line.quantity > 1 ? `${found.line.name} #${n}` : found.line.name;
-        return { key: i.unitId, label: part ? `${name}, ${part} of ${money(found.line.unitPrice)}` : name, amount: i.amount };
-      });
-    const adjustments = r.adjustments
-      .filter((a) => !a.includedInPrices && (share?.adjustments[a.id] ?? 0) !== 0)
-      .map((a) => ({ key: a.id, label: a.label, how: how(r, a), amount: share!.adjustments[a.id] }));
-    const paid = r.payers.find((p) => p.personId === id)?.amount ?? 0;
-    const equalNote = r.splitMode === 'equal' ? `${money(r.confirmedTotal)} ÷ ${headcount(r)}` : r.splitMode === 'shares' ? 'by shares' : '';
-    return { receipt: r, share, items, adjustments, paid, equalNote, inReceipt: !!share && (share.total !== 0 || items.length > 0) };
-  });
-});
+const report = computed(() => (who.value && breakdown.value ? personReport(bill.value, breakdown.value, who.value) : null));
+const sections = computed(() => report.value?.receipts ?? []);
 
 const balance = computed(() => (who.value ? breakdown.value?.people.find((p) => p.personId === who.value) ?? null : null));
 const owing = computed(() => (who.value ? owingFor(bill.value, breakdown.value, who.value) : { pays: [], gets: [] }));

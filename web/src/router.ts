@@ -3,6 +3,7 @@ import BillShell from './bill/BillShell.vue';
 import ItemsView from './bill/ItemsView.vue';
 import PeopleView from './bill/PeopleView.vue';
 import ReceiptsView from './bill/ReceiptsView.vue';
+import ReportView from './bill/ReportView.vue';
 import SettleView from './bill/SettleView.vue';
 import ReceiptEditor from './bill/edit/ReceiptEditor.vue';
 import ShareView from './bill/edit/ShareView.vue';
@@ -30,6 +31,7 @@ export function createAppRouter(history: RouterHistory = createWebHistory()) {
           { path: 'receipts', name: 'receipts', component: ReceiptsView },
           { path: 'receipts/:receiptId', name: 'receipt', component: ReceiptEditor, props: true },
           { path: 'settle', name: 'settle', component: SettleView },
+          { path: 'report', name: 'report', component: ReportView },
           { path: 'share', name: 'share', component: ShareView },
         ],
       },
