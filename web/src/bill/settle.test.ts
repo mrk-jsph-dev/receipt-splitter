@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { BillResponse } from '../shared/api';
 import two from '../../scripts/fixtures/two-receipts.json';
-import { creditors, paidBy, summaryText, transferRows } from './settle';
+import { creditors, paidBy, summaryText, transferRows, waitingPayments } from './settle';
 
 const { bill, breakdown } = two as unknown as BillResponse;
 
@@ -26,5 +26,22 @@ describe('settle up', () => {
     expect(text).toContain('(sent, waiting to confirm)');
     expect(text).toMatch(/Paid: .*Carla/);
     expect(text.endsWith('https://example.test/b/x')).toBe(true);
+  });
+});
+
+describe('payments to confirm', () => {
+  it('lists everyone who said they paid, with what they owe', () => {
+    expect(waitingPayments(bill, breakdown)).toEqual([{ personId: 'fUauvoqp', name: 'Dan', owes: 63274 }]);
+  });
+
+  it('shows them before the bill can settle, even with nothing worked out yet', () => {
+    const notYet = { ...breakdown!, canSettle: false, transfers: [] };
+    expect(waitingPayments(bill, notYet).map((w) => w.name)).toEqual(['Dan']);
+    expect(waitingPayments(bill, null)).toEqual([{ personId: 'fUauvoqp', name: 'Dan', owes: null }]);
+  });
+
+  it('leaves out confirmed payments', () => {
+    const allConfirmed = { ...bill, payments: bill.payments.map((p) => ({ ...p, status: 'confirmed' as const })) };
+    expect(waitingPayments(allConfirmed, breakdown)).toEqual([]);
   });
 });

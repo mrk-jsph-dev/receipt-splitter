@@ -9,7 +9,7 @@ import { deleteBill, organizerAction } from '../shared/api';
 import { formatMoney } from '../shared/money';
 import { forgetBill } from '../shared/storage';
 import ActivityList from './ActivityList.vue';
-import { creditors, paidBy, summaryText, transferRows } from './settle';
+import { creditors, paidBy, summaryText, transferRows, waitingPayments } from './settle';
 import { useBill } from './useBill';
 
 // Settle up: who still sends what to whom (fewest transfers, worked out by the server), payments
@@ -24,7 +24,8 @@ const money = (minor: number) => formatMoney(minor, bill.value.currency);
 const locked = computed(() => bill.value.status === 'locked');
 const rows = computed(() => (breakdown.value?.canSettle ? transferRows(bill.value, breakdown.value) : []));
 const progress = computed(() => breakdown.value?.progress ?? null);
-const waiting = computed(() => rows.value.filter((r) => r.status === 'waiting'));
+// From the payments themselves, so a payment can be confirmed before everything is claimed.
+const waiting = computed(() => waitingPayments(bill.value, breakdown.value));
 // With several payers, everyone but the main one gets a note: they send nothing and are paid back.
 const getsBack = computed(() =>
   breakdown.value?.canSettle ? [...creditors(bill.value, breakdown.value)].sort((a, b) => b.net - a.net).slice(1) : [],
@@ -104,13 +105,14 @@ async function remove() {
 
       <section v-if="isOrganizer && waiting.length && !locked" class="card callout needs" aria-labelledby="needs-h">
         <h2 id="needs-h" class="h">Needs you</h2>
-        <div v-for="r in waiting" :key="r.from" class="need">
-          <span class="who"><AvatarBadge :name="r.fromName" /><span>{{ r.fromName }} marked {{ money(r.amount) }} paid</span></span>
+        <div v-for="w in waiting" :key="w.personId" class="need">
+          <span class="who"><AvatarBadge :name="w.name" /><span>{{ w.owes !== null ? `${w.name} marked ${money(w.owes)} paid` : `${w.name} says they've paid` }}</span></span>
           <span class="acts">
-            <AppButton sm variant="primary" :busy="busy === r.from" @click="act('confirm', r.from, r.fromName)">Confirm</AppButton>
-            <AppButton sm :disabled="busy === r.from" @click="act('decline', r.from, r.fromName)">Not yet</AppButton>
+            <AppButton sm variant="primary" :busy="busy === w.personId" @click="act('confirm', w.personId, w.name)">Confirm</AppButton>
+            <AppButton sm :disabled="busy === w.personId" @click="act('decline', w.personId, w.name)">Not yet</AppButton>
           </span>
         </div>
+        <p v-if="!breakdown?.canSettle" class="sm muted">Amounts can still change until every receipt matches its total and every item is claimed. Confirm once the money has arrived.</p>
       </section>
 
       <section v-for="c in getsBack" :key="c.id" class="card callout note">
