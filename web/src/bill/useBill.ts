@@ -36,6 +36,10 @@ export interface BillState {
   say: (message: string) => void;
   /** When the screen last matched the server. */
   syncedAt: Ref<number | null>;
+  /** Polling stopped because nobody has used the page for 10 minutes. */
+  paused: Ref<boolean>;
+  /** Fetches the latest bill now and starts polling again. */
+  refresh: () => Promise<void>;
   /**
    * Sends one op. `optimistic` changes a copy of the bill on screen straight away; totals wait
    * for the server. On a 409 the latest bill is shown and `onConflict` says what happened.
@@ -118,7 +122,8 @@ export function provideBill(id: string): BillState {
     }
   }
 
-  const polling = usePolling(load);
+  // A locked bill can't change except by the organizer reopening or deleting it, so it isn't polled.
+  const polling = usePolling(load, () => data.value?.bill.status !== 'locked');
 
   // A PIN was added, changed, or this device never had it: drop the old token and ask.
   function lockOut() {
@@ -265,6 +270,8 @@ export function provideBill(id: string): BillState {
     notice,
     say,
     syncedAt,
+    paused: polling.paused,
+    refresh: polling.refresh,
     run,
     write,
     organize,
