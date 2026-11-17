@@ -9,7 +9,7 @@ import { welcomeSkipped } from './welcome/welcome';
 const id = 'AAAAAAAAAAAAAAAAAAAAAA';
 const key = 'KKKKKKKKKKKKKKKKKKKKKK';
 const billResponse = {
-  bill: { id, version: 1, title: 'Ramen Nagi', currency: { code: 'PHP', digits: 2 }, status: 'draft', people: [], receipts: [] },
+  bill: { id, version: 1, title: 'Ramen Nagi', currency: { code: 'PHP', digits: 2 }, status: 'draft', people: [], receipts: [], payments: [], activity: [] },
   breakdown: null,
 };
 const billWithBreakdown = {

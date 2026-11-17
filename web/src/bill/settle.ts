@@ -25,6 +25,20 @@ export function transferRows(bill: Bill, breakdown: Breakdown): TransferRow[] {
   }));
 }
 
+/**
+ * Everyone who tapped "I've paid" and is waiting for the organizer. Straight from the bill's
+ * payments, so it shows as soon as someone marks paid, before every item is claimed or every
+ * total matches. What they owe comes from the server's breakdown, or null when there is none yet.
+ */
+export function waitingPayments(bill: Bill, breakdown: Breakdown | null): { personId: string; name: string; owes: number | null }[] {
+  return bill.payments
+    .filter((p) => p.status === 'waiting')
+    .map((p) => {
+      const net = breakdown?.people.find((x) => x.personId === p.personId)?.net;
+      return { personId: p.personId, name: personName(bill, p.personId), owes: net !== undefined && net < 0 ? -net : null };
+    });
+}
+
 /** "Ana paid ₱5,255.80 · Ben paid ₱600.00", from the server's per-person paid amounts. */
 export function paidBy(bill: Bill, breakdown: Breakdown): string {
   return breakdown.people
