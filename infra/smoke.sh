@@ -30,7 +30,11 @@ person=$(jq -r '.bill.people[0].id' <<<"$before")
 unclaimed_before=$(jq '.breakdown.receipts[0].unclaimed.subtotal' <<<"$before")
 [[ "$unit" != null && -n "$price" ]] || fail "the sample bill has no unclaimed unit"
 
-after=$(curl -fsS -X PATCH "$api/api/bills/$id" -H 'content-type: application/json' \
+# As a friend: pick a name, then claim with the person token that comes back in a header.
+token=$(curl -fsS -o /dev/null -D - -X PATCH "$api/api/bills/$id" -H 'content-type: application/json' \
+  -d "{\"op\":\"pick\",\"personId\":\"$person\"}" | tr -d '\r' | awk -F': ' 'tolower($1) == "x-person-token" { print $2 }')
+[[ -n "$token" ]] || fail "picking a name gave no person token"
+after=$(curl -fsS -X PATCH "$api/api/bills/$id" -H 'content-type: application/json' -H "X-Person-Token: $token" \
   -d "{\"op\":\"claim\",\"unitId\":\"$unit\",\"personId\":\"$person\",\"from\":[]}")
 
 jq -e --argjson expected "$((unclaimed_before - price))" \
