@@ -6,7 +6,7 @@ namespace ReceiptSplitter.Api.Infrastructure.Scanning;
 /// <summary>Scan limits from the "Scans" config section. The free tier reads a fixed number of pages a month.</summary>
 public sealed class ScanOptions
 {
-    /// <summary>Scans per day across everyone. 15 a day stays inside the F0 monthly pages [VERIFY F0 monthly allowance].</summary>
+    /// <summary>Scans per day across everyone. 15 a day keeps a 31-day month at 465, inside F0's 500 free pages.</summary>
     public int DailyCap { get; set; } = 15;
 
     public int PerIpPerHour { get; set; } = 3;
