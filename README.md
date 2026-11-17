@@ -111,6 +111,7 @@ gh workflow run ci-cd.yml -f target=test    # tests only, any branch
 gh workflow run ci-cd.yml -f target=infra   # Bicep: storage, Document Intelligence, Container App, Static Web App, roles, budget
 gh workflow run ci-cd.yml -f target=api     # build and push the API image, release it, wait for /healthz
 gh workflow run ci-cd.yml -f target=web     # build and upload the Vue app
+gh workflow run ci-cd.yml -f target=api-web # api, then web; skips infra (use when infra/ has not changed)
 gh workflow run ci-cd.yml -f target=all     # infra, then api, then web
 ```
 
