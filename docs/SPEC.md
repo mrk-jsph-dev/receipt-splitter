@@ -399,6 +399,7 @@ JSON over HTTPS. No accounts. The bill id in the link grants claim access. The o
 | `POST /api/bills/{id}/share` · `/lock`          | organizer | Move status. Share fails with `422` unless the invariant holds.                                                                                                                                                                                                                                                                                                                         |
 | `POST /api/bills/{id}/confirm` · `/undo`        | organizer | Confirm a payment, or undo a claim by activity entry.                                                                                                                                                                                                                                                                                                                                   |
 | `DELETE /api/bills/{id}`                        | organizer | Delete now.                                                                                                                                                                                                                                                                                                                                                                             |
+| `POST /api/bills/{id}/reopen`                   | organizer | Undoes a lock: back to shared, or draft if a receipt no longer matches. |
 | `PUT /api/bills/{id}/pin`                       | organizer | Body `{ pin: "4826" | null }`. Adds, changes or removes the optional PIN. 4 to 6 ASCII digits. |
 | `POST /api/bills/{id}/pin/unlock`               | anyone    | Body `{ pin }`. Returns `{ token }`, `401 { error: "pin-wrong", triesLeft }`, or `429 { reason: "pin-locked" }` with `Retry-After`. |
 
@@ -406,7 +407,7 @@ Details settled while building the API (module 2):
 
 - All money on the wire is integer minor units. Responses are `{ bill, breakdown }`; `breakdown` is null until the bill has at least one person.
 - Organizer calls send the key in `X-Organizer-Key` only. A missing or wrong key is `403`. Receipt replace and delete and settings need `If-Match`: missing is `428`, stale is `412` with the latest bill.
-- `from` mismatches and other "the bill moved on" refusals are `409` with the latest bill. Bad input, including an id from another bill, is `400` and writes nothing. A locked bill refuses every write except delete.
+- `from` mismatches and other "the bill moved on" refusals are `409` with the latest bill. Bad input, including an id from another bill, is `400` and writes nothing. A locked bill refuses every write except delete and the organizer's reopen.
 - A receipt replace keeps claims on lines sent with their `id`, up to the new quantity. Claims on units that went away are removed with a notice in the activity list. An organizer edit that leaves a shared bill not matching its totals moves it back to draft.
 - `confirm` also works without "I've paid" first, for cash. `POST /decline` ("Not yet") sends a payment back to unpaid. `undo` takes `{ activityId }` of a claim entry.
 - `setCard` (PATCH) marks a senior or PWD card holder. Sharing is refused with `empty-receipt` while any receipt has no lines.
@@ -513,8 +514,10 @@ Anyone can use the app for any number of bills. Each bill is sealed off: a perso
 
 ### 3 · Two levels of access
 
-- **Claim link** (`/b/{id}`): view, join, claim, add people, say "I've paid".
-- **Organizer key**: a second 128-bit secret, sent once on create, kept in the organizer's browser, stored only as a SHA-256 hash and compared in constant time. Needed to edit the receipt, confirm payments, undo claims, lock or delete.
+- **Claim link** (`/b/{id}`): view, join or pick your name, and change **your own part only**: your claims (including sharing an item, which adds only you), "I've paid", your name and your card.
+- **Person token**: joining (`join`) or picking a free name (`pick`) returns a 128-bit token once, in the `X-Person-Token` response header. It is stored only as a SHA-256 hash on that person, kept on the phone as `bill:{id}:person`, and sent back in the same header. Ops for a person (`claim`, `unclaim`, `setWeight`, `markPaid`, `unmarkPaid`, `rename`, `setCard`, `release`) need that person's token or the organizer key; otherwise `403 { reason: "not-yours" }` with the latest bill. `addPerson` and `removePerson` are organizer only (`403 organizer-only`).
+- **One phone per name**: a held name can't be picked by another phone (`409 name-held`); the bill shows each person's `held` flag, never the hash. The holder can let go of it ("Change"), and the organizer can free it (`release`) when someone changes phones or picked the wrong name; the old token stops working. The organizer's own name is held from the start, since the organizer acts with the key.
+- **Organizer key**: a second 128-bit secret, sent once on create, kept in the organizer's browser, stored only as a SHA-256 hash and compared in constant time. Needed to edit the receipt, add or remove people, act for anyone, confirm payments, undo claims, free a name, lock, reopen or delete.
 - **Organizer link** (`/b/{id}#key`): the key travels after `#`, which browsers never send to servers or put in referrers. The app offers "Save organizer link" for moving to another phone.
 - Responses never include the key hash or any server field. The client gets exactly what its access level allows.
 - **Bill PIN** (optional, off by default): the organizer can add a 4 to 6 digit PIN on the Share page, and change or remove it. It guards the bill's contents if the link is forwarded outside the group; nobody can guess the link itself.

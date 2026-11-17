@@ -57,6 +57,7 @@ DeleteReceipt.Map(app);
 UpdateSettings.Map(app);
 ShareBill.Map(app);
 LockBill.Map(app);
+ReopenBill.Map(app);
 ConfirmPayment.Map(app);
 DeclinePayment.Map(app);
 UndoClaim.Map(app);
