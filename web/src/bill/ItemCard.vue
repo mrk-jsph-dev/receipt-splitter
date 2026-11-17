@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Check, GripVertical, Plus } from 'lucide-vue-next';
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import AppButton from '../design/components/AppButton.vue';
 import AvatarBadge from '../design/components/AvatarBadge.vue';
 import type { Bill, Line } from '../shared/api';
@@ -8,7 +8,8 @@ import { formatMoney } from '../shared/money';
 import { claimedCount, freeUnits, myUnits } from './claims';
 import { personName } from './summary';
 
-// One printed line. "Mine" takes a free unit, "Share" picks who had a unit, "Not mine" lets one go.
+// One printed line. Its buttons are all secondary, so a long list isn't a wall of teal; the card
+// turns teal once something on it is yours. "Mine" takes a free unit, "Share" picks who had a unit, "Not mine" lets one go.
 // On laptops with a mouse the card can also be dragged onto a person.
 
 const props = defineProps<{ bill: Bill; line: Line; me: string; canDrag: boolean; disabled: boolean }>();
@@ -16,6 +17,11 @@ const emit = defineEmits<{ mine: []; share: []; letGo: [] }>();
 
 const mine = computed(() => myUnits(props.line, props.me));
 const free = computed(() => freeUnits(props.line));
+// A short pulse when something here just became yours, not on every page load.
+const pulse = ref(false);
+watch(() => mine.value.length, (now, before) => {
+  if (now > before) pulse.value = true;
+});
 const claimed = computed(() => claimedCount(props.line));
 const people = computed(() => [...new Set(props.line.units.flatMap((u) => u.claims.map((c) => c.personId)))]);
 const sharedWith = computed(() => {
@@ -34,10 +40,11 @@ function dragStart(event: DragEvent) {
 <template>
   <article
     class="card item"
-    :class="{ mine: mine.length > 0, draggable: canDrag && free.length > 0 }"
+    :class="{ mine: mine.length > 0, pulse, draggable: canDrag && free.length > 0 }"
     :draggable="canDrag && free.length > 0 && !disabled ? 'true' : undefined"
     :aria-label="line.name"
     @dragstart="dragStart"
+    @animationend="pulse = false"
   >
     <div class="row">
       <span class="name">
@@ -64,7 +71,7 @@ function dragStart(event: DragEvent) {
 
       <span class="btns">
         <AppButton v-if="mine.length" sm :disabled="disabled" @click="emit('letGo')">Not mine</AppButton>
-        <AppButton v-if="free.length" sm :variant="mine.length ? 'plain' : 'primary'" :disabled="disabled" @click="emit('mine')">
+        <AppButton v-if="free.length" sm :disabled="disabled" @click="emit('mine')">
           <template v-if="mine.length"><Plus />Another</template><template v-else>Mine</template>
         </AppButton>
         <AppButton sm :disabled="disabled" @click="emit('share')">Share</AppButton>
@@ -75,7 +82,11 @@ function dragStart(event: DragEvent) {
 
 <style scoped>
 .item { gap: 10px; padding: 14px; }
-.item.mine { border-color: var(--accent); }
+.item.mine { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+@media (prefers-reduced-motion: no-preference) {
+  .item.pulse { animation: claimed .35s ease-out; }
+  @keyframes claimed { 40% { transform: scale(1.015); background: var(--accent-soft); } }
+}
 .name { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .qty { flex: 0 0 auto; }
 .grip { color: var(--muted); }

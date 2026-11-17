@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { FileText, Loader, Trash2 } from 'lucide-vue-next';
+import { CircleAlert, CircleCheck, FileText, Trash2 } from 'lucide-vue-next';
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import AppButton from '../design/components/AppButton.vue';
@@ -21,6 +21,15 @@ const code = ref('PHP');
 const billCurrency = ref<Currency | null>(null);
 const remaining = ref<number | null>(null);
 const reading = ref(false);
+// What the screen says while it works: which photo is being read, then saving the receipts.
+const step = ref<{ kind: 'reading'; photo: number } | { kind: 'saving' } | null>(null);
+const done = computed(() => items.value.filter((i) => i.status === 'read' || i.status === 'failed').length);
+const title = computed(() => {
+  const s = step.value;
+  if (!s) return 'Check the photos';
+  if (s.kind === 'saving') return 'Setting up your receipt…';
+  return items.value.length === 1 ? 'Reading your receipt…' : `Reading photo ${s.photo} of ${items.value.length}…`;
+});
 const problem = ref('');
 const urls = new Map<number, string>();
 // Photos the browser can't draw (some HEIC files) show a file icon instead.
@@ -71,6 +80,7 @@ async function readAll() {
   const drafts: ReceiptDraft[] = [];
   for (const [n, item] of items.value.entries()) {
     item.status = 'reading';
+    step.value = { kind: 'reading', photo: n + 1 };
     const prepared = await prepare(item.file);
     if (!prepared.ok) {
       item.status = 'failed';
@@ -94,9 +104,11 @@ async function readAll() {
 
   if (drafts.length === 0) {
     reading.value = false;
+    step.value = null;
     problem.value = 'Nothing could be read. Fix the marked photos, or type the receipt in.';
     return;
   }
+  step.value = { kind: 'saving' };
   try {
     await router.push(await save(drafts, cur));
     clearTray();
@@ -104,6 +116,7 @@ async function readAll() {
     problem.value = "The receipts were read but couldn't be saved. Check your connection and try again.";
   } finally {
     reading.value = false;
+    step.value = null;
   }
 }
 
@@ -152,7 +165,10 @@ onBeforeUnmount(() => urls.forEach((url) => URL.revokeObjectURL(url)));
   <AppHeader />
   <main class="page scan">
     <header class="hero">
-      <h1>{{ reading ? 'Reading your receipt…' : 'Check the photos' }}</h1>
+      <h1 aria-live="polite">{{ title }}</h1>
+      <div v-if="reading" class="progress" role="progressbar" :aria-valuenow="done" aria-valuemin="0" :aria-valuemax="items.length" :aria-label="title">
+        <i :style="{ width: `${step?.kind === 'saving' ? 100 : Math.max(8, (done / items.length) * 100)}%` }" />
+      </div>
       <p class="muted">
         {{ items.length }} {{ items.length === 1 ? 'photo' : 'photos' }} · {{ receipts }} {{ receipts === 1 ? 'receipt' : 'receipts' }}.
         Each photo is read once and never saved.
@@ -167,11 +183,13 @@ onBeforeUnmount(() => urls.forEach((url) => URL.revokeObjectURL(url)));
     </label>
 
     <ol class="tray">
-      <li v-for="(item, n) in items" :key="item.key" class="card shot" :class="item.status">
+      <li v-for="(item, n) in items" :key="item.key" class="card shot" :class="[item.status, { callout: item.status === 'reading' }]">
         <div class="thumb">
           <img v-if="preview(item) && !broken.has(item.key)" :src="preview(item)!" alt="" @error="broken.add(item.key)" />
           <FileText v-else />
-          <span v-if="item.status === 'reading'" class="busy" aria-hidden="true"><Loader class="spin" /></span>
+          <span v-if="item.status === 'reading'" class="scanline" aria-hidden="true" />
+          <span v-else-if="item.status === 'read'" class="badge ok" aria-hidden="true"><CircleCheck /></span>
+          <span v-else-if="item.status === 'failed'" class="badge bad" aria-hidden="true"><CircleAlert /></span>
         </div>
         <div class="info">
           <div class="row">
@@ -223,10 +241,17 @@ onBeforeUnmount(() => urls.forEach((url) => URL.revokeObjectURL(url)));
   display: grid; place-items: center; color: var(--muted);
 }
 .thumb img { width: 100%; height: 100%; object-fit: cover; }
-.busy { position: absolute; inset: 0; display: grid; place-items: center; background: var(--scrim); color: #fff; }
-.spin { animation: spin 1s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+.progress { height: 6px; border-radius: 99px; background: var(--soft); overflow: hidden; margin-top: 10px; }
+.progress i { display: block; height: 100%; background: var(--accent); border-radius: 99px; transition: width .3s; }
+/* A line sweeping down the photo while it's read. Without motion, a steady tint says the same. */
+.scanline { position: absolute; inset: 0; background: color-mix(in srgb, var(--accent) 18%, transparent); }
+@media (prefers-reduced-motion: no-preference) {
+  .scanline { background: linear-gradient(to bottom, transparent 0 42%, color-mix(in srgb, var(--accent) 55%, transparent) 50%, transparent 58% 100%); background-size: 100% 220%; animation: sweep 1.4s ease-in-out infinite alternate; }
+  @keyframes sweep { from { background-position: 0 100%; } to { background-position: 0 0; } }
+}
+.badge { position: absolute; right: 4px; bottom: 4px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--surface); }
+.badge.ok { color: var(--ok); }
+.badge.bad { color: var(--warn); }
 .info { display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1; }
 .ask { display: flex; flex-direction: column; gap: 6px; }
 .warn { color: var(--warn); }

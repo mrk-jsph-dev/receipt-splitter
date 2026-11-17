@@ -31,7 +31,7 @@ function headcount(r: Receipt) {
 function how(r: Receipt, a: Adjustment): string {
   if (a.scope?.people?.length) return a.kind === 'senior' || a.kind === 'pwd' || a.kind === 'vatExempt' ? 'card holder only' : 'chosen people only';
   if (r.splitMode !== 'items') return '';
-  return a.split === 'equal' ? `${money(a.amount)} ÷ ${headcount(r)}` : 'by what you ordered';
+  return a.split === 'equal' ? `split equally, ${money(a.amount)} ÷ ${headcount(r)}` : 'by what you ordered';
 }
 
 const sections = computed(() => {
@@ -105,7 +105,7 @@ async function copyNote() {
         <li v-for="g in owing.gets" :key="`g-${g.from}`" class="row"><span>{{ g.name }} pays {{ you ? 'you' : personName(bill, who) }}</span><span class="amt">{{ money(g.amount) }}</span></li>
       </ul>
 
-      <div v-if="bill.paymentNote && balance.net < 0" class="card note">
+      <div v-if="bill.paymentNote && balance.net < 0" class="card callout note">
         <div class="row"><span class="sm muted">Pay {{ payee || 'the organizer' }} by</span><IconButton label="Copy payment details" @click="copyNote"><Copy class="s" /></IconButton></div>
         <p class="pre">{{ bill.paymentNote }}</p>
       </div>
@@ -121,7 +121,7 @@ async function copyNote() {
 .tot { padding-top: 4px; }
 .big-amt { font-size: 20px; font-weight: 700; }
 .ok { color: var(--ok); }
-.note { background: var(--soft); border: 0; gap: 4px; padding: 12px 14px; }
+.note { gap: 4px; padding: 12px 14px; }
 .pre { white-space: pre-wrap; overflow-wrap: anywhere; font-weight: 550; }
 .list { display: flex; flex-direction: column; gap: 6px; }
 </style>

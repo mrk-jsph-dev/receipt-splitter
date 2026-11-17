@@ -1,16 +1,17 @@
 <script setup lang="ts">
-import { ArrowLeft, Check, Plus } from 'lucide-vue-next';
+import { ArrowLeft, Check, Plus, UserPlus } from 'lucide-vue-next';
 import { computed, reactive, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import AppButton from '../../design/components/AppButton.vue';
 import Overlay from '../../design/components/Overlay.vue';
+import SegmentedControl from '../../design/components/SegmentedControl.vue';
 import TextField from '../../design/components/TextField.vue';
 import { deleteReceipt, replaceReceipt, updateSettings, type SplitMode } from '../../shared/api';
 import { formatMoney, moneyText } from '../../shared/money';
 import { useBill } from '../useBill';
 import AdjustmentSheet from './AdjustmentSheet.vue';
 import LineSheet from './LineSheet.vue';
-import { fromReceipt, kinds, newAdjustment, newLine, toDraft, type ReceiptForm } from './receiptForm';
+import { fromReceipt, kinds, newAdjustment, newLine, quickSplit, spreadText, toDraft, type ReceiptForm } from './receiptForm';
 import { useCheck } from './useCheck';
 
 // Check what was read, or type a receipt in: lines, fees and discounts, how to split it, who paid
@@ -69,6 +70,12 @@ const units = computed(() =>
 );
 const kindLabel = (kind: string) => kinds.find((k) => k.value === kind)?.label ?? kind;
 const splitLabel = (split: string) => (split === 'equal' ? 'split equally' : 'by what you ordered');
+const splits = [
+  { value: 'equal' as const, label: 'Everyone equally' },
+  { value: 'proportional' as const, label: 'By what each ordered' },
+];
+const canQuickSplit = (i: number) => quickSplit(form.adjustments[i], form.splitMode);
+const spread = (i: number) => (checkDraft.value ? spreadText(check.value?.spread?.[i], money) : '');
 
 // Line and adjustment sheets edit a row of the form directly.
 const lineAt = ref<number | null>(null);
@@ -228,7 +235,7 @@ const problem = (rowKey: string) => result.value.problems[rowKey];
       <section class="card" aria-labelledby="adj-h">
         <div class="row"><h3 id="adj-h" class="h">Fees and discounts</h3></div>
         <ul v-if="form.adjustments.length" class="list">
-          <li v-for="(a, i) in form.adjustments" :key="a.key">
+          <li v-for="(a, i) in form.adjustments" :key="a.key" class="adj">
             <button type="button" class="li line" :class="{ bad: problem(a.key) }" @click="editAdjustment(i)">
               <span class="grow">
                 <span class="nm truncate">{{ a.label || kindLabel(a.kind) }}</span>
@@ -236,13 +243,17 @@ const problem = (rowKey: string) => result.value.problems[rowKey];
                   <span v-if="a.fromScan" class="chip flag">Read as {{ kindLabel(a.kind).toLowerCase() }}. Right?</span>
                   <span v-else class="chip">{{ kindLabel(a.kind) }}</span>
                   <span v-if="a.appliesTo === 'people'" class="chip">{{ a.people.map((id) => bill.people.find((p) => p.id === id)?.name).join(', ') || 'pick people' }} only</span>
-                  <span v-else class="chip">{{ splitLabel(a.split) }}</span>
+                  <span v-else-if="!canQuickSplit(i)" class="chip">{{ splitLabel(a.split) }}</span>
                   <span v-if="a.included" class="chip">in prices</span>
                 </span>
                 <span v-if="problem(a.key)" class="sm err">{{ problem(a.key) }}</span>
               </span>
               <span class="amt">{{ a.amount || '—' }}</span>
             </button>
+            <div v-if="canQuickSplit(i)" class="quick-split">
+              <SegmentedControl v-model="a.split" :options="splits" :label="`Split ${a.label || kindLabel(a.kind)}`" stretch />
+              <span v-if="spread(i)" class="sm muted" aria-live="polite">{{ spread(i) }}<template v-if="a.split === 'equal'">, added for everyone who was there. Nobody claims it.</template></span>
+            </div>
           </li>
         </ul>
         <p v-else class="sm muted">Service charge, tax, tip or a discount printed on the receipt.</p>
@@ -315,7 +326,7 @@ const problem = (rowKey: string) => result.value.problems[rowKey];
           </li>
         </ul>
         <p v-if="result.problems.participants" class="sm err">{{ result.problems.participants }}</p>
-        <RouterLink :to="{ name: 'people', params: { id: state.id } }" class="link-btn sm">Add people</RouterLink>
+        <AppButton sm @click="router.push({ name: 'people', params: { id: state.id } })"><UserPlus class="s" /> Add people</AppButton>
       </section>
     </div>
 
@@ -386,6 +397,11 @@ const problem = (rowKey: string) => result.value.problems[rowKey];
 .line .grow { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .line.bad .nm { color: var(--warn); }
 .nm { font-weight: 550; }
+.adj { border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+.adj:last-child { border-bottom: 0; }
+.adj .li { border-bottom: 0; }
+.quick-split { display: flex; flex-direction: column; gap: 6px; }
+.card > :deep(.btn) { align-self: flex-start; }
 .err { color: var(--warn); }
 .chips { display: flex; gap: 6px; flex-wrap: wrap; }
 .wrap { flex-wrap: wrap; }

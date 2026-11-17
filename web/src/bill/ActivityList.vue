@@ -35,8 +35,10 @@ async function undo(activityId: string) {
     <ul v-if="entries.length" class="list">
       <li v-for="e in entries.slice(0, shown)" :key="e.id" class="li act">
         <span class="grow">{{ e.text }}</span>
-        <span class="sm muted">{{ time(e.at) }}</span>
-        <AppButton v-if="isOrganizer && undoable(e)" sm variant="quiet" :busy="busy === e.id" :aria-label="`Undo: ${e.text}`" @click="undo(e.id)">Undo</AppButton>
+        <span class="sm muted at">{{ time(e.at) }}</span>
+        <span v-if="isOrganizer" class="undo">
+          <AppButton v-if="undoable(e)" sm variant="quiet" :busy="busy === e.id" :aria-label="`Undo: ${e.text}`" @click="undo(e.id)">Undo</AppButton>
+        </span>
       </li>
     </ul>
     <p v-else class="sm muted">Nothing yet.</p>
@@ -48,4 +50,7 @@ async function undo(activityId: string) {
 .card { display: flex; flex-direction: column; gap: 8px; }
 .act { gap: 10px; font-size: 14px; }
 .act .grow { min-width: 0; overflow-wrap: anywhere; }
+/* Times line up in one column whether or not a row can be undone. */
+.at { flex: 0 0 auto; min-width: 64px; text-align: right; }
+.undo { flex: 0 0 72px; display: flex; justify-content: flex-end; }
 </style>
