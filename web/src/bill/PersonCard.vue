@@ -40,7 +40,7 @@ function drop(event: DragEvent) {
 <template>
   <button
     type="button"
-    class="card person"
+    class="card person press"
     :class="{ you, over }"
     :aria-label="`${person.name}${you ? ' (you)' : ''}: see breakdown`"
     @click="emit('open')"

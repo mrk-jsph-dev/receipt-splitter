@@ -69,6 +69,17 @@ export const reduces = (kind: AdjustmentKind) => kind === 'discount' || kind ===
 /** Senior, PWD and VAT exemption go to their card holders, so they start as "Some people". */
 export const personScoped = (kind: AdjustmentKind) => kind === 'senior' || kind === 'pwd' || kind === 'vatExempt';
 
+/** A fee for the whole table on a receipt split by item can switch between equal and by-order right on its row. */
+export const quickSplit = (row: Pick<AdjustmentRow, 'kind' | 'appliesTo'>, mode: SplitMode) =>
+  mode === 'items' && row.appliesTo !== 'people' && !personScoped(row.kind);
+
+/** "₱56.73 each · 12 people", from the server's check. Equal shares can differ by one centavo. */
+export function spreadText(spread: { people: number; low: number; high: number } | undefined, money: (minor: number) => string): string {
+  if (!spread || spread.people === 0) return '';
+  const each = spread.low === spread.high ? money(spread.low) : `${money(spread.low)} to ${money(spread.high)}`;
+  return `${each} each · ${spread.people} ${spread.people === 1 ? 'person' : 'people'}`;
+}
+
 export function fromReceipt(receipt: Receipt, people: string[], digits: number): ReceiptForm {
   return {
     label: receipt.label,
