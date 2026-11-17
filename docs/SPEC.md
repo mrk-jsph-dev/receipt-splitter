@@ -399,6 +399,8 @@ JSON over HTTPS. No accounts. The bill id in the link grants claim access. The o
 | `POST /api/bills/{id}/share` · `/lock`          | organizer | Move status. Share fails with `422` unless the invariant holds.                                                                                                                                                                                                                                                                                                                         |
 | `POST /api/bills/{id}/confirm` · `/undo`        | organizer | Confirm a payment, or undo a claim by activity entry.                                                                                                                                                                                                                                                                                                                                   |
 | `DELETE /api/bills/{id}`                        | organizer | Delete now.                                                                                                                                                                                                                                                                                                                                                                             |
+| `PUT /api/bills/{id}/pin`                       | organizer | Body `{ pin: "4826" | null }`. Adds, changes or removes the optional PIN. 4 to 6 ASCII digits. |
+| `POST /api/bills/{id}/pin/unlock`               | anyone    | Body `{ pin }`. Returns `{ token }`, `401 { error: "pin-wrong", triesLeft }`, or `429 { reason: "pin-locked" }` with `Retry-After`. |
 
 Details settled while building the API (module 2):
 
@@ -515,6 +517,11 @@ Anyone can use the app for any number of bills. Each bill is sealed off: a perso
 - **Organizer key**: a second 128-bit secret, sent once on create, kept in the organizer's browser, stored only as a SHA-256 hash and compared in constant time. Needed to edit the receipt, confirm payments, undo claims, lock or delete.
 - **Organizer link** (`/b/{id}#key`): the key travels after `#`, which browsers never send to servers or put in referrers. The app offers "Save organizer link" for moving to another phone.
 - Responses never include the key hash or any server field. The client gets exactly what its access level allows.
+- **Bill PIN** (optional, off by default): the organizer can add a 4 to 6 digit PIN on the Share page, and change or remove it. It guards the bill's contents if the link is forwarded outside the group; nobody can guess the link itself.
+  - Stored only as a salted PBKDF2-SHA256 hash (600,000 iterations). Never in logs, URLs, the activity list or the group-chat summary; the activity list says only "A PIN was added", "changed" or "removed".
+  - A friend types it once: `POST /api/bills/{id}/pin/unlock` returns a token (an HMAC of the bill id keyed by the stored hash), kept as `bill:{id}:pin` and sent in the `X-Bill-Pin` header on reads and link-holder writes. A new or removed PIN ends every old token. The organizer key always gets in without the PIN.
+  - Without a valid token, reads and link-holder writes answer `401 { error: "pin-required" }`. Unknown, deleted and expired bills still get the one identical `404`, so the 401 tells only someone who already has the 128-bit link.
+  - Wrong tries are counted per bill (salted hash of the id, under `limits/`), from any network: 5 in a 15-minute window, or 20 in a UTC day, lock unlocking with `429 { reason: "pin-locked" }` and `Retry-After`. The organizer is never locked out. Someone holding the link could lock friends out on purpose for a while; that is the price of making a short PIN safe.
 
 ### 4 · Nothing carries over on the device
 

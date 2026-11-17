@@ -8,7 +8,8 @@ const profileFriends = 'profile:friends';
 const maxFriends = 30;
 const billPrefix = 'bill:';
 
-export type BillField = 'me' | 'key' | 'seen';
+/** me: who you are in the bill; key: organizer key; pin: the token from unlocking its PIN; seen: for the home list. */
+export type BillField = 'me' | 'key' | 'pin' | 'seen';
 
 export interface RecentBill {
   id: string;
@@ -94,7 +95,7 @@ export function recentBills(): RecentBill[] {
   return bills.sort((a, b) => b.openedAt.localeCompare(a.openedAt));
 }
 
-/** "Forget this device": the saved name, friends, recent bills, who you are in each bill and organizer keys. */
+/** "Forget this device": the saved name, friends, recent bills, who you are in each bill, organizer keys and PIN tokens. */
 export function forgetDevice() {
   for (const key of keys()) if (key.startsWith('profile:') || key.startsWith(billPrefix)) write(key, null);
 }

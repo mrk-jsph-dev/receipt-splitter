@@ -17,7 +17,7 @@ public enum PaymentStatus { Waiting, Confirmed }
 public enum ActivityKind
 {
     AddPerson, Join, Rename, RemovePerson, Claim, Unclaim, SetWeight, MarkPaid, UnmarkPaid,
-    AddReceipt, EditReceipt, RemoveReceipt, ClaimRemoved, Settings, Share, Lock, Confirm, Undo, SetCard, Decline,
+    AddReceipt, EditReceipt, RemoveReceipt, ClaimRemoved, Settings, Share, Lock, Confirm, Undo, SetCard, Decline, Pin,
 }
 
 public sealed record CurrencyInfo(string Code, int Digits)
@@ -44,6 +44,9 @@ public sealed class BillDocument
     public List<ActivityDoc> Activity { get; set; } = [];
     public DateTimeOffset? LockedAt { get; set; }
     public required string OrganizerKeyHash { get; set; }
+
+    /// <summary>The optional PIN as a salted hash (see BillPin). Null when the bill has none.</summary>
+    public string? PinHash { get; set; }
 
     public PersonDoc? FindPerson(string id) => People.Find(p => p.Id == id);
 
