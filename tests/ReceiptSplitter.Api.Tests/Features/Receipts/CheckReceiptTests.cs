@@ -61,6 +61,21 @@ public class CheckReceiptTests(ApiFactory factory) : IClassFixture<ApiFactory>
     }
 
     [Fact]
+    public async Task An_equal_service_charge_is_spread_over_everyone_there_before_anyone_claims()
+    {
+        using var client = factory.NewClient();
+        var (created, url) = await ManualBillAsync(client, "Ana", "Ben", "Carla");
+
+        var check = await (await client.OrganizerAsync(HttpMethod.Post, url, created.OrganizerKey, new { draft = RamenDraft(19500) })).ReadAsync<ReceiptCheck>();
+
+        // 680.80 over 3 people by largest remainder: 226.94, 226.93, 226.93. Nothing is claimed yet,
+        // so the discount, split by what each ordered, has nobody to land on.
+        Assert.Equal(2, check!.Spread.Count);
+        Assert.Equal(new AdjustmentSpread(3, 22693, 22694), check.Spread[0]);
+        Assert.Equal(new AdjustmentSpread(0, 0, 0), check.Spread[1]);
+    }
+
+    [Fact]
     public async Task The_senior_lunch_gives_400_and_three_times_560()
     {
         using var client = factory.NewClient();

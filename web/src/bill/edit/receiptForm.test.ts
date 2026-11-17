@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Receipt } from '../../shared/api';
-import { fromReceipt, newAdjustment, newLine, toDraft } from './receiptForm';
+import { fromReceipt, newAdjustment, newLine, quickSplit, spreadText, toDraft } from './receiptForm';
 
 const people = ['ana', 'ben', 'lola'];
 
@@ -80,5 +80,26 @@ describe('percent suggestions', () => {
     form.adjustments.push(discount);
     expect(toDraft(form, 2, people).draft).toBeNull();
     expect(toDraft(form, 2, people, true).draft!.adjustments[0]).toMatchObject({ amount: 0, rate: 4000 });
+  });
+});
+
+describe('quick split on a fee row', () => {
+  it('offers the toggle for a table-wide fee on a receipt split by item', () => {
+    const service = { ...newAdjustment(), kind: 'service' as const };
+    expect(quickSplit(service, 'items')).toBe(true);
+  });
+
+  it("leaves card discounts, fees for chosen people and equal or shares receipts to the sheet", () => {
+    expect(quickSplit({ ...newAdjustment(), kind: 'senior' as const }, 'items')).toBe(false);
+    expect(quickSplit({ ...newAdjustment(), kind: 'service' as const, appliesTo: 'people' as const }, 'items')).toBe(false);
+    expect(quickSplit({ ...newAdjustment(), kind: 'service' as const }, 'equal')).toBe(false);
+  });
+
+  it("says what each person gets, from the server's numbers", () => {
+    const money = (minor: number) => `₱${(minor / 100).toFixed(2)}`;
+    expect(spreadText({ people: 12, low: 5673, high: 5674 }, money)).toBe('₱56.73 to ₱56.74 each · 12 people');
+    expect(spreadText({ people: 2, low: 34040, high: 34040 }, money)).toBe('₱340.40 each · 2 people');
+    expect(spreadText({ people: 0, low: 0, high: 0 }, money)).toBe('');
+    expect(spreadText(undefined, money)).toBe('');
   });
 });

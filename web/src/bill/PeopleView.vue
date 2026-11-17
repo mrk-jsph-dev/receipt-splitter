@@ -50,7 +50,7 @@ async function add(raw: string) {
     <form v-if="!locked" class="card add" @submit.prevent="add(name)">
       <div class="add-row">
         <TextField v-model="name" label="Add a person" :maxlength="40" placeholder="Type a name" autocomplete="off" class="grow" />
-        <AppButton type="submit" variant="primary" :busy="adding" :disabled="name.trim() === ''"><Plus class="s" /> Add</AppButton>
+        <AppButton type="submit" :busy="adding" :disabled="name.trim() === ''"><Plus class="s" /> Add</AppButton>
       </div>
       <div v-if="suggestions.length" class="friends">
         <span class="sm muted">Friends from earlier bills on this device</span>

@@ -31,8 +31,8 @@ const applies: { value: AppliesTo; label: string }[] = [
   { value: 'people', label: 'Some people' },
 ];
 const splits = [
+  { value: 'equal' as const, label: 'Everyone equally' },
   { value: 'proportional' as const, label: 'By what each ordered' },
-  { value: 'equal' as const, label: 'Equally' },
 ];
 const cardLine = computed(() => personScoped(row.value.kind));
 

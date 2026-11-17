@@ -299,6 +299,8 @@ export interface ReceiptCheck {
   matches: boolean;
   /** Per adjustment: what its percent comes to, or null without a percent. */
   suggested: (number | null)[];
+  /** Per adjustment: how many people it lands on and the smallest and largest share. */
+  spread: { people: number; low: number; high: number }[];
   breakdown: ReceiptBreakdown | null;
 }
 

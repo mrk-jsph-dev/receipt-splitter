@@ -1,5 +1,8 @@
 <script setup lang="ts">
+import { LoaderCircle } from 'lucide-vue-next';
+
 // Flat button. Every size keeps a 44 px tap target; "sm" looks smaller but its hit area is padded out.
+// While busy it keeps its label and shows a spinner, so it's clear the tap was taken.
 withDefaults(
   defineProps<{
     variant?: 'primary' | 'plain' | 'quiet' | 'danger';
@@ -15,6 +18,7 @@ withDefaults(
 
 <template>
   <button :type="type" class="btn" :class="[variant, { sm, block }]" :disabled="disabled || busy" :aria-busy="busy || undefined">
+    <LoaderCircle v-if="busy" class="spin" aria-hidden="true" />
     <slot />
   </button>
 </template>
@@ -43,6 +47,8 @@ withDefaults(
 .sm { min-height: 36px; padding: 0 12px; font-size: 13px; border-radius: 9px; }
 .sm::after { content: ""; position: absolute; inset: -4px 0; }
 .btn:disabled { opacity: .5; cursor: default; }
+.btn[aria-busy] { opacity: .8; cursor: progress; }
+.btn[aria-busy] :slotted(svg:not(.spin)) { display: none; }
 @media (hover: hover) {
   .btn:not(:disabled):hover { border-color: var(--muted); }
   .primary:not(:disabled):hover { background: var(--accent-hover); border-color: var(--accent-hover); }

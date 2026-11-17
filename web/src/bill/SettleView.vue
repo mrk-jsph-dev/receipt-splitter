@@ -80,7 +80,7 @@ async function remove() {
   <div class="settle">
     <div class="main">
       <section class="card hero" aria-labelledby="settle-h">
-        <p id="settle-h" class="eyebrow">Settle up<template v-if="breakdown"> · {{ paidBy(bill, breakdown) }}</template></p>
+        <h2 id="settle-h" class="h">Settle up</h2>
         <template v-if="locked">
           <p class="big">{{ allPaid ? 'All settled' : 'Locked' }}</p>
           <p class="muted sm"><template v-if="progress">{{ money(progress.collected) }} collected from {{ progress.confirmed }} {{ progress.confirmed === 1 ? 'person' : 'people' }} · </template>Locked, view only</p>
@@ -91,9 +91,10 @@ async function remove() {
           <div class="bar" role="img" :aria-label="`${progress.paidPercent}% paid`"><i :style="{ width: `${progress.paidPercent}%` }" /></div>
         </template>
         <p v-else class="muted">Transfers show here once every item is claimed.</p>
+        <p v-if="breakdown" class="sm muted paid-by">{{ paidBy(bill, breakdown) }}</p>
       </section>
 
-      <section v-if="isOrganizer && waiting.length && !locked" class="card needs" aria-labelledby="needs-h">
+      <section v-if="isOrganizer && waiting.length && !locked" class="card callout needs" aria-labelledby="needs-h">
         <h2 id="needs-h" class="h">Needs you</h2>
         <div v-for="r in waiting" :key="r.from" class="need">
           <span class="who"><AvatarBadge :name="r.fromName" /><span>{{ r.fromName }} marked {{ money(r.amount) }} paid</span></span>
@@ -104,7 +105,7 @@ async function remove() {
         </div>
       </section>
 
-      <section v-for="c in getsBack" :key="c.id" class="card note">
+      <section v-for="c in getsBack" :key="c.id" class="card callout note">
         <b>{{ c.name }} sends nothing</b>
         <span class="sm muted">{{ c.name }} paid more than their share, so {{ money(c.net) }} comes back to them in the list below.</span>
       </section>
@@ -172,11 +173,11 @@ async function remove() {
 .big { font-size: 28px; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
 .bar { height: 8px; border-radius: 99px; background: var(--soft); overflow: hidden; }
 .bar i { display: block; height: 100%; background: var(--accent); border-radius: 99px; }
-.needs { border: 1.5px solid var(--accent); }
 .need { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
 .who { display: inline-flex; align-items: center; gap: 10px; min-width: 0; }
 .acts { display: inline-flex; gap: 8px; }
-.note { background: var(--accent-soft); border-color: transparent; gap: 4px; }
+.note { gap: 4px; }
+.paid-by { border-top: 1px solid var(--line); padding-top: 8px; }
 .tr { gap: 10px; }
 .toggle {
   width: 46px; height: 28px; border-radius: 99px; border: 0; background: var(--line); position: relative; cursor: pointer; flex: 0 0 auto;

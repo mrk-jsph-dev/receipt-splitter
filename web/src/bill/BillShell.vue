@@ -7,6 +7,7 @@ import ReceiptPeso from '../design/icons/ReceiptPeso.vue';
 import { formatMoney } from '../shared/money';
 import { recentBills } from '../shared/storage';
 import BreakdownSheet from './BreakdownSheet.vue';
+import { shareBlocker } from './sharing';
 import { claimableUnits, personName, unclaimedUnits } from './summary';
 import { provideBill } from './useBill';
 
@@ -20,6 +21,8 @@ const { data, missing, problem, waking, me, notice, breakdownFor, isOrganizer } 
 const myBalance = computed(() => (me.value ? data.value?.breakdown?.people.find((p) => p.personId === me.value) ?? null : null));
 
 const bill = computed(() => data.value?.bill ?? null);
+// Only drafts show the banner: what still stops sharing, or that it's ready. Shared bills show nothing.
+const blocker = computed(() => (bill.value ? shareBlocker(bill.value, data.value?.breakdown ?? null) : null));
 const others = recentBills().filter((b) => b.id !== props.id).slice(0, 5);
 
 const sections = computed(() => {
@@ -99,12 +102,25 @@ onMounted(state.load);
         </div>
       </header>
       <p v-if="problem" class="problem sm" role="status">{{ problem }}</p>
-      <div v-if="bill && isOrganizer && bill.status === 'draft' && $route.name !== 'share'" class="draft sm">
-        <span>Not shared yet. Check each receipt and add people, then share the link.</span>
-        <RouterLink :to="{ name: 'share', params: { id } }" class="link-btn">Ready to share</RouterLink>
+      <div v-if="bill && isOrganizer && bill.status === 'draft' && $route.name !== 'share'" class="draft sm" :class="{ ready: !blocker }">
+        <template v-if="blocker">
+          <span><b>Not shared yet.</b> {{ blocker.text }}</span>
+          <RouterLink v-if="blocker.receiptId && $route.name !== 'receipt'" :to="{ name: 'receipt', params: { id, receiptId: blocker.receiptId } }" class="link-btn">Fix it</RouterLink>
+        </template>
+        <template v-else>
+          <span><b>Ready to share.</b> Every receipt matches its printed total.</span>
+          <RouterLink :to="{ name: 'share', params: { id } }" class="link-btn">Share the link</RouterLink>
+        </template>
       </div>
       <main class="content">
         <RouterView v-if="bill" />
+        <div v-else class="loading" role="status" aria-live="polite">
+          <p class="sm muted">{{ waking ? 'Waking up the server. The first open after a quiet spell takes a few seconds.' : 'Opening the bill…' }}</p>
+          <div v-for="n in 3" :key="n" class="card" aria-hidden="true">
+            <div class="row"><span class="skeleton" style="width: 45%" /><span class="skeleton" style="width: 22%" /></div>
+            <span class="skeleton" style="width: 70%" />
+          </div>
+        </div>
       </main>
     </div>
 
@@ -148,10 +164,12 @@ onMounted(state.load);
 .t { font-weight: 650; font-size: 16px; letter-spacing: -.01em; }
 .sub { font-size: 12px; color: var(--muted); }
 .problem { color: var(--warn); padding: 8px 16px 0; }
+.loading { display: flex; flex-direction: column; gap: 12px; max-width: 720px; }
 .draft {
   margin: 12px 16px 0; padding: 10px 14px; border-radius: 12px; background: var(--amber-soft); color: var(--ink);
   display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; justify-content: space-between;
 }
+.draft.ready { background: var(--accent-soft); }
 .share-btn {
   display: inline-flex; align-items: center; gap: 6px; min-height: 44px; min-width: 44px; justify-content: center; padding: 0 12px;
   border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-size: 14px; font-weight: 550;
