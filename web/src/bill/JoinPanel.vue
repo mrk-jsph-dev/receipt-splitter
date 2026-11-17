@@ -4,7 +4,7 @@ import { computed, ref } from 'vue';
 import AppButton from '../design/components/AppButton.vue';
 import AvatarBadge from '../design/components/AvatarBadge.vue';
 import { formatMoney } from '../shared/money';
-import { getProfileName, rememberFriend } from '../shared/storage';
+import { adoptProfileName, getProfileName, rememberFriend } from '../shared/storage';
 import { payerNames } from './summary';
 import { useBill } from './useBill';
 
@@ -44,7 +44,10 @@ async function choose(personId: string) {
     picked.value = null;
     return;
   }
-  if (person) rememberFriend(person.name);
+  if (person) {
+    rememberFriend(person.name);
+    adoptProfileName(person.name);
+  }
 }
 
 async function join() {
@@ -61,6 +64,7 @@ async function join() {
   if (person) {
     setMe(person.id);
     rememberFriend(person.name);
+    adoptProfileName(person.name);
     say(`You joined as ${person.name}.`);
   }
 }
