@@ -8,6 +8,7 @@ import { formatMoney } from '../shared/money';
 import { recentBills } from '../shared/storage';
 import BreakdownSheet from './BreakdownSheet.vue';
 import PinGate from './PinGate.vue';
+import { waitingPayments } from './settle';
 import { shareBlocker } from './sharing';
 import { claimableUnits, personName, unclaimedUnits } from './summary';
 import { provideBill } from './useBill';
@@ -24,6 +25,8 @@ const myBalance = computed(() => (me.value ? data.value?.breakdown?.people.find(
 const bill = computed(() => data.value?.bill ?? null);
 // Only drafts show the banner: what still stops sharing, or that it's ready. Shared bills show nothing.
 const blocker = computed(() => (bill.value ? shareBlocker(bill.value, data.value?.breakdown ?? null) : null));
+// The organizer hears about "I've paid" on every tab, not only on Settle.
+const toConfirm = computed(() => (bill.value && isOrganizer.value && bill.value.status !== 'locked' ? waitingPayments(bill.value, data.value?.breakdown ?? null) : []));
 const others = recentBills().filter((b) => b.id !== props.id).slice(0, 5);
 
 const sections = computed(() => {
@@ -34,7 +37,7 @@ const sections = computed(() => {
     { name: 'items', label: 'Items', icon: ListChecks, count: b && claimableUnits(b) > 0 ? (left === 0 ? 'All claimed' : `${left} left`) : '' },
     { name: 'people', label: 'People', icon: Users, count: b ? String(b.people.length) : '' },
     { name: 'receipts', label: 'Receipts', icon: ReceiptText, count: b ? String(b.receipts.length) : '' },
-    { name: 'settle', label: 'Settle', icon: ArrowLeftRight, count: progress && progress.owing > 0 ? `${progress.confirmed} of ${progress.owing}` : '' },
+    { name: 'settle', label: 'Settle', icon: ArrowLeftRight, count: toConfirm.value.length > 0 ? `${toConfirm.value.length} to confirm` : progress && progress.owing > 0 ? `${progress.confirmed} of ${progress.owing}` : '', alert: toConfirm.value.length > 0 },
   ];
 });
 
@@ -113,6 +116,10 @@ onMounted(state.load);
           <RouterLink :to="{ name: 'share', params: { id } }" class="link-btn">Share the link</RouterLink>
         </template>
       </div>
+      <div v-if="toConfirm.length && $route.name !== 'settle'" class="draft sm ready" role="status">
+        <span><b>{{ toConfirm.length === 1 ? `${toConfirm[0].name} says they've paid.` : `${toConfirm.length} people say they've paid.` }}</b> Confirm once the money arrives.</span>
+        <RouterLink :to="{ name: 'settle', params: { id } }" class="link-btn">Confirm</RouterLink>
+      </div>
       <main class="content">
         <RouterView v-if="bill" />
         <PinGate v-else-if="needsPin" />
@@ -138,7 +145,8 @@ onMounted(state.load);
 
     <nav class="tabbar" aria-label="Bill sections">
       <RouterLink v-for="s in sections" :key="s.name" :to="{ name: s.name, params: { id } }" class="tab">
-        <component :is="s.icon" /><span>{{ s.label }}</span>
+        <span class="ico"><component :is="s.icon" /><i v-if="s.alert" class="dot" /></span><span>{{ s.label }}</span>
+        <span v-if="s.alert" class="visually-hidden">, {{ s.count }}</span>
       </RouterLink>
     </nav>
   </div>
@@ -192,6 +200,8 @@ onMounted(state.load);
   font-size: 11px; font-weight: 500; color: var(--muted); border-radius: 10px;
 }
 .tab.router-link-exact-active { color: var(--accent); }
+.ico { position: relative; display: inline-flex; }
+.dot { position: absolute; top: -2px; right: -4px; width: 8px; height: 8px; border-radius: 50%; background: var(--amber); box-shadow: 0 0 0 2px var(--surface); }
 
 .you { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; border-radius: 8px; }
 .you:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
