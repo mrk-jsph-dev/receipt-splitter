@@ -4,7 +4,7 @@
 @description('Region for everything except the Static Web App.')
 param location string = resourceGroup().location
 
-@description('Static Web Apps Free is offered in fewer regions. [VERIFY] Southeast Asia is not one of them.')
+@description('Static Web Apps is offered only in centralus, eastus2, westus2, westeurope and eastasia (checked November 2026).')
 param webLocation string = 'eastasia'
 
 @description('Prefix for resource names.')
