@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  adoptProfileName,
+  forgetBill,
   forgetDevice,
   friends,
   rememberFriend,
@@ -27,6 +29,27 @@ describe('profile name', () => {
     setProfileName('Ana');
     setProfileName('   ');
     expect(getProfileName()).toBeNull();
+  });
+});
+
+describe('adopting a name from a bill', () => {
+  it('saves the name you picked in a bill when none is saved yet', () => {
+    adoptProfileName('Ana');
+    expect(getProfileName()).toBe('Ana');
+  });
+
+  it('never replaces a name you saved yourself', () => {
+    setProfileName('Mark');
+    adoptProfileName('Ana');
+    expect(getProfileName()).toBe('Mark');
+  });
+
+  it('keeps the name after the bill it came from is deleted', () => {
+    setBillValue(billA, 'me', 'p1');
+    adoptProfileName('Ana');
+    forgetBill(billA);
+    expect(getProfileName()).toBe('Ana');
+    expect(getBillValue(billA, 'me')).toBeNull();
   });
 });
 
