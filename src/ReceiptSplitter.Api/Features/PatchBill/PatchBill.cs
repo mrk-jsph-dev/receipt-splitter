@@ -6,8 +6,9 @@ using ReceiptSplitter.Core.Shared;
 namespace ReceiptSplitter.Api.Features.PatchBill;
 
 /// <summary>
-/// Anyone with the link. Every id in an op is looked up in this bill only, so an id from another
-/// bill is refused and nothing is written.
+/// Anyone with the link, for their own part only. Every id in an op is looked up in this bill
+/// only, so an id from another bill is refused and nothing is written. Who may send each op is
+/// decided in <see cref="Authorize"/>; the organizer key may send all of them.
 /// </summary>
 public static class PatchBill
 {
@@ -17,7 +18,54 @@ public static class PatchBill
         app.MapPatch("/api/bills/{id}", Handle).RequireRateLimiting(RateLimitPolicies.Write);
 
     private static Task<IResult> Handle(string id, PatchOp op, HttpContext http, BillAccess access, TimeProvider clock) =>
-        access.UpdateAsync(http, id, op.GetType().Name, bill => Apply(bill, op, clock.GetUtcNow(), access.Limits));
+        access.UpdateAsync(http, id, op.GetType().Name, bill =>
+        {
+            if (Authorize(http, bill, op) is { } denied)
+                return denied;
+            var error = Apply(bill, op, clock.GetUtcNow(), access.Limits);
+            if (error is null && op is JoinOp or PickOp)
+                Hold(http, op is PickOp pick ? bill.FindPerson(pick.PersonId)! : bill.People[^1]);
+            return error;
+        });
+
+    /// <summary>
+    /// The organizer key may do anything. Others may join, pick a free name, and change only the
+    /// person whose token they hold. Unknown people fall through to Apply's own 400.
+    /// </summary>
+    private static OpError? Authorize(HttpContext http, BillDocument bill, PatchOp op)
+    {
+        if (BillAccess.IsOrganizer(http, bill))
+            return null;
+        string? personId = op switch
+        {
+            JoinOp or PickOp => null,
+            AddPersonOp or RemovePersonOp => "",
+            RenameOp o => o.PersonId,
+            ClaimOp o => o.PersonId,
+            UnclaimOp o => o.PersonId,
+            SetWeightOp o => o.PersonId,
+            MarkPaidOp o => o.PersonId,
+            UnmarkPaidOp o => o.PersonId,
+            SetCardOp o => o.PersonId,
+            ReleaseOp o => o.PersonId,
+            _ => null, // Not a known op: Apply answers 400.
+        };
+        if (personId is null)
+            return null;
+        if (personId == "")
+            return OpError.Forbidden("organizer-only");
+        var person = bill.FindPerson(personId);
+        return person is null || BillAccess.HoldsPerson(http, person) ? null : OpError.Forbidden("not-yours");
+    }
+
+    // The token goes back once, in a header; only its hash is kept. On a storage retry the op runs
+    // again and a fresh token replaces this one, so the header always matches what was saved.
+    private static void Hold(HttpContext http, PersonDoc person)
+    {
+        var (token, hash) = PersonToken.New();
+        person.HoldHash = hash;
+        http.Response.Headers[PersonToken.Header] = token;
+    }
 
     /// <summary>Checks first, then changes the bill. Returns why it was refused, or null when applied.</summary>
     public static OpError? Apply(BillDocument bill, PatchOp op, DateTimeOffset now, BillLimits limits) => op switch
@@ -32,6 +80,8 @@ public static class PatchBill
         MarkPaidOp markPaid => MarkPaid(bill, markPaid, now),
         UnmarkPaidOp unmarkPaid => UnmarkPaid(bill, unmarkPaid, now),
         SetCardOp setCard => SetCard(bill, setCard, now),
+        PickOp pick => Pick(bill, pick, now),
+        ReleaseOp release => Release(bill, release, now),
         _ => OpError.Invalid("op"),
     };
 
@@ -48,6 +98,31 @@ public static class PatchBill
         var person = new PersonDoc { Id = SecureIds.NewShort(), Name = name };
         bill.People.Add(person);
         bill.Log(now, kind, kind == ActivityKind.Join ? $"{name} joined" : $"{name} was added", person.Id);
+        return null;
+    }
+
+    private static OpError? Pick(BillDocument bill, PickOp op, DateTimeOffset now)
+    {
+        var person = bill.FindPerson(op.PersonId);
+        if (person is null)
+            return OpError.Invalid("unknown-person");
+        if (person.HoldHash is not null)
+            return OpError.Conflict("name-held");
+
+        bill.Log(now, ActivityKind.Pick, $"{person.Name} opened the bill on a phone", person.Id);
+        return null;
+    }
+
+    private static OpError? Release(BillDocument bill, ReleaseOp op, DateTimeOffset now)
+    {
+        var person = bill.FindPerson(op.PersonId);
+        if (person is null)
+            return OpError.Invalid("unknown-person");
+        if (person.HoldHash is null)
+            return null;
+
+        person.HoldHash = null;
+        bill.Log(now, ActivityKind.Release, $"{person.Name} can be picked on another phone", person.Id);
         return null;
     }
 

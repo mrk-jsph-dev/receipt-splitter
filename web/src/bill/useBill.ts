@@ -27,6 +27,10 @@ export interface BillState {
   /** Shows a response from a write: new data and its ETag. Also nudges polling back to 10 s. */
   accept: (data: BillResponse, etag: string | null) => void;
   setMe: (personId: string | null) => void;
+  /** "That's me": takes a name for this phone. The organizer just picks; a friend asks the server, which hands out a person token. */
+  pickMe: (personId: string) => Promise<boolean>;
+  /** "Change who you are": frees the name for other phones, then forgets it here. */
+  leaveMe: () => Promise<void>;
   /** A short message about the last change, read out by screen readers. Clears itself. */
   notice: Ref<string>;
   say: (message: string) => void;
@@ -61,9 +65,10 @@ export function provideBill(id: string): BillState {
   const waking = ref(false);
   const organizerKey = ref(getBillValue(id, 'key'));
   const pinToken = ref(getBillValue(id, 'pin'));
+  const personToken = ref(getBillValue(id, 'person'));
   const needsPin = ref(false);
   // Sent in headers on every read and claim. The organizer key also opens a bill with a PIN.
-  const access = () => ({ pin: pinToken.value, key: organizerKey.value });
+  const access = () => ({ pin: pinToken.value, key: organizerKey.value, person: personToken.value });
   const me = ref(getBillValue(id, 'me'));
   const notice = ref('');
   const syncedAt = ref<number | null>(null);
@@ -142,6 +147,31 @@ export function provideBill(id: string): BillState {
     setBillValue(id, 'me', personId);
   }
 
+  function keepPersonToken(token: string | null) {
+    personToken.value = token;
+    setBillValue(id, 'person', token);
+  }
+
+  async function pickMe(personId: string) {
+    if (organizerKey.value) {
+      setMe(personId);
+      return true;
+    }
+    const name = data.value?.bill.people.find((p) => p.id === personId)?.name ?? 'That name';
+    const ok = await run({ op: 'pick', personId }, {
+      onConflict: (_latest, reason) => (reason === 'name-held' ? `${name} is already in use on another phone. Pick another, or ask the organizer to free it.` : 'The bill changed. Try again.'),
+    });
+    if (ok) setMe(personId);
+    return ok;
+  }
+
+  async function leaveMe() {
+    const personId = me.value;
+    if (personId && personToken.value && !organizerKey.value) await run({ op: 'release', personId });
+    keepPersonToken(null);
+    setMe(null);
+  }
+
   function say(message: string) {
     notice.value = message;
     clearTimeout(noticeTimer);
@@ -151,6 +181,7 @@ export function provideBill(id: string): BillState {
   async function write(call: () => Promise<Written>, onConflict?: (latest: BillResponse, reason: string) => string): Promise<boolean> {
     try {
       const result = await call();
+      if (result.personToken) keepPersonToken(result.personToken);
       accept(result.data, result.etag);
       syncedAt.value = Date.now();
       return true;
@@ -160,6 +191,16 @@ export function provideBill(id: string): BillState {
         // No ETag comes with a refusal, so the next poll fetches in full.
         accept(latest, null);
         if (e.reason === 'locked') say('This bill is locked, so it can only be viewed.');
+        else if (e.status === 403 && e.reason === 'organizer-only') say('Only the organizer can do that.');
+        else if (e.status === 403) {
+          // A friend's screens only change their own part, so this phone's hold on its name is gone:
+          // freed by the organizer, or a phone from before names were held. Pick again.
+          if (!organizerKey.value && me.value) {
+            keepPersonToken(null);
+            setMe(null);
+            say('Pick your name again on this phone.');
+          } else say("That's someone else's part. Only they or the organizer can change it.");
+        }
         else say(onConflict?.(latest, e.reason ?? '') ?? 'Someone changed this a moment ago. Here is the latest.');
       } else {
         if (e instanceof ApiError && e.status === 401) {
@@ -219,6 +260,8 @@ export function provideBill(id: string): BillState {
     load,
     accept,
     setMe,
+    pickMe,
+    leaveMe,
     notice,
     say,
     syncedAt,

@@ -61,7 +61,7 @@ public class BillPinTests(ApiFactory factory) : IClassFixture<ApiFactory>
         var bill = (await asOrganizer.ReadAsync<BillResponse>())!.Bill;
 
         var read = await GetWithTokenAsync(client, created.Id, null);
-        var claim = await client.PatchAsync(created.Id, new { op = "claim", unitId = bill.UnitId("Tamago"), personId = bill.PersonId("Ana"), weight = 1, from = Array.Empty<object>() });
+        var claim = await client.FriendPatchAsync(created.Id, new { op = "claim", unitId = bill.UnitId("Tamago"), personId = bill.PersonId("Ana"), weight = 1, from = Array.Empty<object>() }, null);
 
         Assert.Equal(HttpStatusCode.Unauthorized, read.StatusCode);
         Assert.Equal("pin-required", (await read.ReadAsync<PinRefusal>())!.Error);
@@ -83,12 +83,17 @@ public class BillPinTests(ApiFactory factory) : IClassFixture<ApiFactory>
         var read = await GetWithTokenAsync(client, created.Id, token);
         var bill = (await read.ReadAsync<BillResponse>())!.Bill;
 
-        var request = new HttpRequestMessage(HttpMethod.Patch, $"/api/bills/{created.Id}")
+        HttpRequestMessage Patch(object op, string? personToken = null)
         {
-            Content = JsonContent.Create(new { op = "claim", unitId = bill.UnitId("Tamago"), personId = bill.PersonId("Ana"), weight = 1, from = Array.Empty<object>() }, options: ApiJson.Options),
-        };
-        request.Headers.Add(BillPin.Header, token);
-        var claim = await client.SendAsync(request);
+            var request = new HttpRequestMessage(HttpMethod.Patch, $"/api/bills/{created.Id}") { Content = JsonContent.Create(op, options: ApiJson.Options) };
+            request.Headers.Add(BillPin.Header, token);
+            if (personToken is not null)
+                request.Headers.Add(PersonToken.Header, personToken);
+            return request;
+        }
+        var pick = await client.SendAsync(Patch(new { op = "pick", personId = bill.PersonId("Ana") }));
+        var ana = pick.Headers.GetValues(PersonToken.Header).Single();
+        var claim = await client.SendAsync(Patch(new { op = "claim", unitId = bill.UnitId("Tamago"), personId = bill.PersonId("Ana"), weight = 1, from = Array.Empty<object>() }, ana));
 
         Assert.Equal(HttpStatusCode.OK, unlocked.StatusCode);
         Assert.DoesNotContain(Pin, token);
