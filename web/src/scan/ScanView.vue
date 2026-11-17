@@ -6,9 +6,10 @@ import AppButton from '../design/components/AppButton.vue';
 import AppHeader from '../design/components/AppHeader.vue';
 import IconButton from '../design/components/IconButton.vue';
 import SegmentedControl from '../design/components/SegmentedControl.vue';
+import TextField from '../design/components/TextField.vue';
 import { addReceipt, ApiError, createManualBill, getBill, scanQuota, scanReceipt, type Currency, type ReceiptDraft } from '../shared/api';
 import { currencies, currency } from '../shared/currencies';
-import { getBillValue, getProfileName, setBillValue } from '../shared/storage';
+import { getBillValue, getProfileName, setBillValue, setProfileName } from '../shared/storage';
 import { prepare } from './resize';
 import { clearTray, tray, type TrayItem } from './tray';
 
@@ -21,6 +22,9 @@ const code = ref('PHP');
 const billCurrency = ref<Currency | null>(null);
 const remaining = ref<number | null>(null);
 const reading = ref(false);
+// A new bill from a scan starts with you on it, so ask for a name here if this browser has none.
+const askName = !tray.billId && getProfileName() === null;
+const typedName = ref('');
 // What the screen says while it works: which photo is being read, then saving the receipts.
 const step = ref<{ kind: 'reading'; photo: number } | { kind: 'saving' } | null>(null);
 const done = computed(() => items.value.filter((i) => i.status === 'read' || i.status === 'failed').length);
@@ -136,6 +140,7 @@ async function save(drafts: ReceiptDraft[], cur: Currency): Promise<string> {
     return added ? `/b/${billId}/receipts/${added.id}` : `/b/${billId}/receipts`;
   }
 
+  if (askName && typedName.value.trim() !== '') setProfileName(typedName.value);
   const name = getProfileName();
   const [first, ...rest] = labelled(drafts, 0);
   const { id, organizerKey } = await createManualBill(name, cur, first, 'scan');
@@ -175,6 +180,14 @@ onBeforeUnmount(() => urls.forEach((url) => URL.revokeObjectURL(url)));
       </p>
     </header>
 
+    <TextField
+      v-if="askName"
+      v-model="typedName"
+      label="Your name"
+      :maxlength="40"
+      autocomplete="given-name"
+      hint="Friends see it on the bill, and you're added as the one who paid. Saved in this browser only."
+    />
     <label v-if="!tray.billId" class="cur">
       <span class="sm">Currency on the receipt</span>
       <select v-model="code" class="select" :disabled="reading">
