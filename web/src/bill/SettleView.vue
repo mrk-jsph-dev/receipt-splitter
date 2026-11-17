@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Copy, Lock, Trash2 } from 'lucide-vue-next';
+import { Copy, Lock, LockOpen, Trash2 } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import AppButton from '../design/components/AppButton.vue';
@@ -57,6 +57,14 @@ async function lock() {
   confirmLock.value = false;
   const ok = await state.organize((k) => organizerAction(state.id, k, 'lock'));
   if (ok) state.say('Locked. Everyone can still view it until it deletes.');
+}
+
+const reopening = ref(false);
+async function reopen() {
+  reopening.value = true;
+  const ok = await state.organize((k) => organizerAction(state.id, k, 'reopen'));
+  reopening.value = false;
+  if (ok) state.say('Reopened. People can claim and pay again.');
 }
 
 const confirmDelete = ref(false);
@@ -142,6 +150,7 @@ async function remove() {
         <p class="sm muted">30 days after the last change. Names, items and the payment note go with it.</p>
         <template v-if="isOrganizer">
           <AppButton v-if="!locked" :variant="allPaid ? 'primary' : 'plain'" @click="confirmLock = true"><Lock class="s" /> Lock the bill</AppButton>
+          <AppButton v-else :busy="reopening" @click="reopen"><LockOpen class="s" /> Reopen the bill</AppButton>
           <AppButton variant="danger" @click="confirmDelete = true"><Trash2 class="s" /> Delete this bill now</AppButton>
         </template>
       </section>
@@ -149,7 +158,7 @@ async function remove() {
     </div>
 
     <Overlay :open="confirmLock" title="Lock this bill?" @close="confirmLock = false">
-      <p>Nobody can claim, pay or edit after this. Everyone can still view it until it deletes on {{ deletesOn }}.</p>
+      <p>Nobody can claim, pay or edit after this. Everyone can still view it until it deletes on {{ deletesOn }}. You can reopen it later.</p>
       <p v-if="!allPaid" class="sm muted">Not everyone is confirmed as paid yet.</p>
       <template #actions>
         <AppButton @click="confirmLock = false">Not now</AppButton>

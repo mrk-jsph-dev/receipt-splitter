@@ -69,9 +69,9 @@ purge it with `az cognitiveservices account purge` before deploying again.
 
 **`modules/staticwebapp.bicep`** creates a Free-plan Static Web App with no link to the repo. The
 workflow builds `web/` itself and uploads the result with a deploy token that it reads from Azure at
-run time, so the token is never saved in GitHub. Free isn't offered in every region, so it runs in
-East Asia while everything else runs in the resource group's region. [VERIFY] the current
-region list.
+run time, so the token is never saved in GitHub. Static Web Apps is offered only in Central US, East US 2, West US 2, West Europe and East Asia
+(checked November 2026 with `az provider show -n Microsoft.Web`), so it runs in East Asia while
+everything else runs in the resource group's region.
 
 **`modules/roles.bicep`** grants the API's managed identity exactly two roles:
 - **Storage Blob Data Contributor** on this one storage account

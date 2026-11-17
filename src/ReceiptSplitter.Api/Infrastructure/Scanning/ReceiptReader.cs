@@ -35,15 +35,31 @@ public sealed class ScanUnavailableException(string message, Exception? inner = 
 /// </summary>
 public sealed class DocumentIntelligenceReader(DocumentIntelligenceClient client) : IReceiptReader
 {
+    private const string Model = "prebuilt-receipt";
+
     public static DocumentIntelligenceReader For(Uri endpoint) => new(new DocumentIntelligenceClient(endpoint, new DefaultAzureCredential()));
+
+    // The service keeps the photo and its result for 24 hours unless asked to delete them. A failed
+    // delete doesn't cost the user their scan: the service still drops both after those 24 hours.
+    private async Task DeleteFromServiceAsync(string resultId, CancellationToken ct)
+    {
+        try
+        {
+            await client.DeleteAnalyzeResultAsync(Model, resultId, new RequestContext { CancellationToken = ct });
+        }
+        catch (RequestFailedException)
+        {
+        }
+    }
 
     public async Task<ScannedReceipt> ReadAsync(BinaryData file, CancellationToken ct)
     {
         AnalyzeResult result;
         try
         {
-            var operation = await client.AnalyzeDocumentAsync(WaitUntil.Completed, new AnalyzeDocumentOptions("prebuilt-receipt", file), ct);
+            var operation = await client.AnalyzeDocumentAsync(WaitUntil.Completed, new AnalyzeDocumentOptions(Model, file), ct);
             result = operation.Value;
+            await DeleteFromServiceAsync(operation.Id, ct);
         }
         catch (RequestFailedException e)
         {

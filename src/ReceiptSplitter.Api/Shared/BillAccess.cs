@@ -22,6 +22,7 @@ public sealed record OpError(int Status, string Reason)
     public static OpError Invalid(string reason) => new(StatusCodes.Status400BadRequest, reason);
     public static OpError Conflict(string reason) => new(StatusCodes.Status409Conflict, reason);
     public static OpError Unprocessable(string reason) => new(StatusCodes.Status422UnprocessableEntity, reason);
+    public static OpError Forbidden(string reason) => new(StatusCodes.Status403Forbidden, reason);
 }
 
 public sealed record ErrorBody(string Error, string? Reason = null);
@@ -39,6 +40,9 @@ public static class ApiResults
     public static IResult TooMany(string reason) => Results.Json(new ErrorBody("rate-limited", reason), statusCode: StatusCodes.Status429TooManyRequests);
 
     public static IResult Invalid(string reason) => Results.Json(new ErrorBody("invalid", reason), statusCode: StatusCodes.Status400BadRequest);
+
+    /// <summary>The bill has a PIN and this request carries neither its token nor the organizer key.</summary>
+    public static IResult PinRequired() => Results.Json(new ErrorBody("pin-required"), statusCode: StatusCodes.Status401Unauthorized);
 
     public static IResult Forbidden() => Results.Json(new ErrorBody("forbidden"), statusCode: StatusCodes.Status403Forbidden);
 
@@ -58,6 +62,7 @@ public static class ApiResults
         {
             StatusCodes.Status412PreconditionFailed => "precondition-failed",
             StatusCodes.Status422UnprocessableEntity => "cannot-share",
+            StatusCodes.Status403Forbidden => "forbidden",
             _ => "conflict",
         };
         var response = BillResponse.From(bill, retentionDays);
@@ -116,6 +121,35 @@ public sealed class BillAccess(
             : ApiResults.Refused(bill, new OpError(StatusCodes.Status412PreconditionFailed, "changed"), Limits.RetentionDays);
     }
 
+    /// <summary>
+    /// A link holder on a bill with a PIN needs the token from unlocking it (X-Bill-Pin), or the
+    /// organizer key. Checked after the bill is found, so unknown bills still get the one 404.
+    /// </summary>
+    public IResult? AuthorizeLinkHolder(HttpContext http, BillDocument bill)
+    {
+        if (bill.PinHash is null)
+            return null;
+        var keys = http.Request.Headers[OrganizerKey.Header];
+        if (keys.Count == 1 && OrganizerKey.Matches(keys[0], bill.OrganizerKeyHash))
+            return null;
+        var tokens = http.Request.Headers[BillPin.Header];
+        return tokens.Count == 1 && BillPin.TokenMatches(tokens[0], bill.PinHash, bill.Id) ? null : ApiResults.PinRequired();
+    }
+
+    /// <summary>The request carries this bill's organizer key.</summary>
+    public static bool IsOrganizer(HttpContext http, BillDocument bill)
+    {
+        var keys = http.Request.Headers[OrganizerKey.Header];
+        return keys.Count == 1 && OrganizerKey.Matches(keys[0], bill.OrganizerKeyHash);
+    }
+
+    /// <summary>The request carries the person token of the phone holding this person's name.</summary>
+    public static bool HoldsPerson(HttpContext http, PersonDoc person)
+    {
+        var tokens = http.Request.Headers[PersonToken.Header];
+        return person.HoldHash is not null && tokens.Count == 1 && OrganizerKey.Matches(tokens[0], person.HoldHash);
+    }
+
     /// <summary>A link holder's op. See <see cref="WriteAsync"/>.</summary>
     public Task<IResult> UpdateAsync(HttpContext http, string id, string operation, Func<BillDocument, OpError?> apply) =>
         WriteAsync(http, id, operation, organizer: false, requireIfMatch: false, apply);
@@ -124,15 +158,15 @@ public sealed class BillAccess(
     /// An organizer's op. If it leaves a shared bill with a receipt that no longer matches its
     /// total, the bill goes back to draft until it matches again.
     /// </summary>
-    public Task<IResult> OrganizerUpdateAsync(HttpContext http, string id, string operation, bool requireIfMatch, Func<BillDocument, OpError?> apply) =>
-        WriteAsync(http, id, operation, organizer: true, requireIfMatch, apply);
+    public Task<IResult> OrganizerUpdateAsync(HttpContext http, string id, string operation, bool requireIfMatch, Func<BillDocument, OpError?> apply, bool allowLocked = false) =>
+        WriteAsync(http, id, operation, organizer: true, requireIfMatch, apply, allowLocked);
 
     /// <summary>
     /// Applies one op and saves it. <paramref name="apply"/> must check everything before it changes
     /// the bill, so a refused op leaves the bill as it was read. A storage clash is retried here with
     /// fresh data; the client only sees 409 when its own <c>from</c> no longer holds.
     /// </summary>
-    private async Task<IResult> WriteAsync(HttpContext http, string id, string operation, bool organizer, bool requireIfMatch, Func<BillDocument, OpError?> apply)
+    private async Task<IResult> WriteAsync(HttpContext http, string id, string operation, bool organizer, bool requireIfMatch, Func<BillDocument, OpError?> apply, bool allowLocked = false)
     {
         for (var attempt = 1; ; attempt++)
         {
@@ -143,7 +177,9 @@ public sealed class BillAccess(
             var bill = stored!.Bill;
             if (organizer && AuthorizeOrganizer(http, bill, requireIfMatch) is { } denied)
                 return denied;
-            if (bill.Status == BillStatus.Locked)
+            if (!organizer && AuthorizeLinkHolder(http, bill) is { } locked)
+                return locked;
+            if (bill.Status == BillStatus.Locked && !allowLocked)
                 return ApiResults.Conflict(bill, "locked", Limits.RetentionDays);
 
             var opError = apply(bill);

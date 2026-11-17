@@ -17,13 +17,20 @@ public sealed record BillView(
     string Title,
     CurrencyInfo Currency,
     BillStatus Status,
-    IReadOnlyList<PersonDoc> People,
+    IReadOnlyList<PersonView> People,
     IReadOnlyList<ReceiptDoc> Receipts,
     IReadOnlyList<PaymentDoc> Payments,
     IReadOnlyList<ActivityDoc> Activity,
     int? HeadcountHint = null,
     string? PaymentNote = null,
-    DateTimeOffset? LockedAt = null);
+    DateTimeOffset? LockedAt = null,
+    bool HasPin = false);
+
+/// <param name="Held">Some phone holds this name, so it can't be picked by another.</param>
+public sealed record PersonView(string Id, string Name, Card Card, bool Held)
+{
+    public static PersonView From(PersonDoc p) => new(p.Id, p.Name, p.Card, p.HoldHash is not null);
+}
 
 /// <summary>
 /// The server's maths, straight from Core. The browser shows these numbers and never works out money.
@@ -67,8 +74,8 @@ public sealed record BillResponse(BillView Bill, BreakdownView? Breakdown = null
     {
         var view = new BillView(
             doc.Id, doc.Version, doc.CreatedAt, doc.UpdatedAt, doc.UpdatedAt.AddDays(retentionDays),
-            doc.Title, doc.Currency, doc.Status, doc.People, doc.Receipts, doc.Payments, doc.Activity,
-            doc.HeadcountHint, doc.PaymentNote, doc.LockedAt);
+            doc.Title, doc.Currency, doc.Status, doc.People.Select(PersonView.From).ToList(), doc.Receipts, doc.Payments, doc.Activity,
+            doc.HeadcountHint, doc.PaymentNote, doc.LockedAt, doc.PinHash is not null);
         return new BillResponse(view, Calculate(doc));
     }
 

@@ -9,12 +9,12 @@ import PersonCard from './PersonCard.vue';
 import PersonSheet from './PersonSheet.vue';
 import { useBill } from './useBill';
 
-// Everyone on the bill with what they owe so far. Tap a person for their breakdown. Anyone with
-// the link can add a friend (one without a phone, say); names from earlier bills come from this
-// browser only and reach the server only when tapped.
+// Everyone on the bill with what they owe so far. Tap a person for their breakdown. The organizer
+// adds friends (one without a phone, say) and edits anyone; a friend edits only themselves. Names
+// from earlier bills come from this browser only and reach the server only when tapped.
 
 const state = useBill();
-const { data, me, breakdownFor } = state;
+const { data, me, breakdownFor, isOrganizer } = state;
 const bill = computed(() => data.value!.bill);
 const locked = computed(() => bill.value.status === 'locked');
 
@@ -47,7 +47,7 @@ async function add(raw: string) {
       <span class="sm muted">{{ bill.people.length }}<template v-if="bill.headcountHint"> of {{ bill.headcountHint }} · the receipt says {{ bill.headcountHint }}</template></span>
     </div>
 
-    <form v-if="!locked" class="card add" @submit.prevent="add(name)">
+    <form v-if="!locked && isOrganizer" class="card add" @submit.prevent="add(name)">
       <div class="add-row">
         <TextField v-model="name" label="Add a person" :maxlength="40" placeholder="Type a name" autocomplete="off" class="grow" />
         <AppButton type="submit" :busy="adding" :disabled="name.trim() === ''"><Plus class="s" /> Add</AppButton>
@@ -64,7 +64,7 @@ async function add(raw: string) {
     <div class="people">
       <div v-for="p in bill.people" :key="p.id" class="slot">
         <PersonCard :bill="bill" :breakdown="data!.breakdown" :person="p" :me="me" :can-drop="false" @open="breakdownFor = p.id" />
-        <button v-if="!locked" type="button" class="edit" :aria-label="`Edit ${p.name}`" @click="editing = p"><Pencil class="s" /></button>
+        <button v-if="!locked && (isOrganizer || p.id === me)" type="button" class="edit" :aria-label="`Edit ${p.name}`" @click="editing = p"><Pencil class="s" /></button>
       </div>
     </div>
     <PersonSheet :person="editing" @close="editing = null" />

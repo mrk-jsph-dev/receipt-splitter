@@ -84,7 +84,9 @@ public static class CreateBill
             var name = Text.Clean(request.OrganizerName, Text.MaxPersonName);
             if (name is null)
                 return (null, OpError.Invalid("name"));
-            people.Add(new PersonDoc { Id = SecureIds.NewShort(), Name = name });
+            // The organizer acts with the key, so nobody needs this hold's token; it only keeps
+            // another phone from picking the organizer's name.
+            people.Add(new PersonDoc { Id = SecureIds.NewShort(), Name = name, HoldHash = PersonToken.New().Hash });
         }
 
         ReceiptDoc? receipt = null;

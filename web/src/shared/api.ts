@@ -17,6 +17,8 @@ export interface Person {
   id: string;
   name: string;
   card?: Card;
+  /** Another phone already holds this name. */
+  held?: boolean;
 }
 
 export interface ClaimDoc {
@@ -97,6 +99,8 @@ export interface Bill {
   headcountHint?: number | null;
   paymentNote?: string | null;
   lockedAt?: string | null;
+  /** The bill asks for a PIN before friends can open it. */
+  hasPin?: boolean;
 }
 
 /** One person's part of one receipt, or the Unclaimed bucket when personId is null. */
@@ -179,9 +183,34 @@ export class ApiError extends Error {
     readonly error: string,
     readonly reason?: string,
     readonly body?: unknown,
+    /** Seconds from Retry-After, when the server sent one. */
+    readonly retryAfter?: number,
   ) {
     super(`${status} ${error}${reason ? ` (${reason})` : ''}`);
   }
+
+  /** Wrong PIN tries left before the PIN locks. */
+  get triesLeft(): number | undefined {
+    return (this.body as { triesLeft?: number } | undefined)?.triesLeft;
+  }
+}
+
+/**
+ * What this device holds for one bill: the PIN token after unlocking, the organizer key, and the
+ * person token that proves which person this phone is. Sent in headers only.
+ */
+export interface BillAccess {
+  pin?: string | null;
+  key?: string | null;
+  person?: string | null;
+}
+
+function accessHeaders(access: BillAccess = {}): Record<string, string> {
+  return {
+    ...(access.pin ? { 'X-Bill-Pin': access.pin } : {}),
+    ...(access.key ? { 'X-Organizer-Key': access.key } : {}),
+    ...(access.person ? { 'X-Person-Token': access.person } : {}),
+  };
 }
 
 // Same origin through the dev proxy and Static Web Apps; the deploy sets the API's own address.
@@ -203,12 +232,13 @@ async function send(path: string, init: RequestInit = {}): Promise<Response> {
   } catch {
     body = undefined;
   }
-  throw new ApiError(response.status, body?.error ?? 'unknown', body?.reason, body);
+  const retry = Number(response.headers.get('Retry-After'));
+  throw new ApiError(response.status, body?.error ?? 'unknown', body?.reason, body, Number.isFinite(retry) && retry > 0 ? retry : undefined);
 }
 
-export async function getBill(id: string, etag?: string | null): Promise<GetBillResult> {
+export async function getBill(id: string, etag?: string | null, access?: BillAccess): Promise<GetBillResult> {
   if (!isBillId(id)) throw new ApiError(404, 'not-found');
-  const response = await send(`/api/bills/${id}`, { headers: etag ? { 'If-None-Match': etag } : {} });
+  const response = await send(`/api/bills/${id}`, { headers: { ...(etag ? { 'If-None-Match': etag } : {}), ...accessHeaders(access) } });
   if (response.status === 304) return { changed: false, etag: response.headers.get('ETag') ?? etag! };
   return { changed: true, etag: response.headers.get('ETag'), data: (await response.json()) as BillResponse };
 }
@@ -218,10 +248,11 @@ export async function createSampleBill(): Promise<Created> {
   return (await response.json()) as Created;
 }
 
-/** A write's answer: the bill as it is now, with its new ETag. */
+/** A write's answer: the bill as it is now, with its new ETag. Join and pick also hand out a person token. */
 export interface Written {
   data: BillResponse;
   etag: string | null;
+  personToken?: string | null;
 }
 
 /** The latest bill that comes with a 409, 412 or 422, so the screen can show what changed. */
@@ -232,7 +263,7 @@ export function latestFrom(error: unknown): BillResponse | null {
 }
 
 async function written(response: Response): Promise<Written> {
-  return { data: (await response.json()) as BillResponse, etag: response.headers.get('ETag') };
+  return { data: (await response.json()) as BillResponse, etag: response.headers.get('ETag'), personToken: response.headers.get('X-Person-Token') };
 }
 
 export type Op =
@@ -245,11 +276,19 @@ export type Op =
   | { op: 'setWeight'; unitId: string; personId: string; weight: number; from: ClaimDoc[] }
   | { op: 'markPaid'; personId: string; from: PaymentStatus | null }
   | { op: 'unmarkPaid'; personId: string; from: PaymentStatus | null }
-  | { op: 'setCard'; personId: string; card: Card; from: Card };
+  | { op: 'setCard'; personId: string; card: Card; from: Card }
+  | { op: 'pick'; personId: string }
+  | { op: 'release'; personId: string };
 
 /** Anyone with the link: one op. A 409 means the bill moved on; its body has the latest bill. */
-export async function patchBill(id: string, op: Op): Promise<Written> {
-  return written(await send(`/api/bills/${id}`, { method: 'PATCH', body: JSON.stringify(op) }));
+export async function patchBill(id: string, op: Op, access?: BillAccess): Promise<Written> {
+  return written(await send(`/api/bills/${id}`, { method: 'PATCH', body: JSON.stringify(op), headers: accessHeaders(access) }));
+}
+
+/** A friend types the bill's PIN once; the token that comes back is kept for this bill only. */
+export async function unlockPin(id: string, pin: string): Promise<string> {
+  const response = await send(`/api/bills/${id}/pin/unlock`, { method: 'POST', body: JSON.stringify({ pin }) });
+  return ((await response.json()) as { token: string }).token;
 }
 
 // Organizer calls. The key goes in a header only, never in the address.
@@ -344,6 +383,11 @@ export async function checkReceipt(id: string, key: string, draft: ReceiptDraft,
   return (await response.json()) as ReceiptCheck;
 }
 
+/** Organizer: adds, changes or removes (null) the bill's PIN. Old tokens stop working. */
+export async function setPin(id: string, key: string, pin: string | null): Promise<Written> {
+  return written(await send(`/api/bills/${id}/pin`, { method: 'PUT', headers: organizer(key), body: JSON.stringify({ pin }) }));
+}
+
 export async function updateSettings(
   id: string,
   key: string,
@@ -357,7 +401,7 @@ export async function updateSettings(
 export async function organizerAction(
   id: string,
   key: string,
-  action: 'share' | 'lock' | 'confirm' | 'decline' | 'undo',
+  action: 'share' | 'lock' | 'reopen' | 'confirm' | 'decline' | 'undo',
   body?: { personId: string } | { activityId: string },
 ): Promise<Written> {
   return written(

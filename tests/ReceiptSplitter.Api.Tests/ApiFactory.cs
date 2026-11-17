@@ -50,7 +50,7 @@ public class ApiFactory : WebApplicationFactory<Program>
     /// <summary>A client with its own IP, so per-IP counters in one test don't spill into another.</summary>
     public HttpClient NewClient(string? ip = null)
     {
-        var client = CreateClient();
+        var client = CreateDefaultClient(new OrganizerKeys());
         client.DefaultRequestHeaders.Add("X-Forwarded-For", ip ?? $"10.{Random.Shared.Next(256)}.{Random.Shared.Next(256)}.{Random.Shared.Next(1, 255)}");
         return client;
     }
@@ -86,6 +86,29 @@ public sealed class LogSink : ILoggerProvider
 
 public sealed record Created(string Id, string OrganizerKey);
 
+/// <summary>
+/// Remembers each new bill's organizer key, so <see cref="Api.PatchAsync"/> can act as the
+/// organizer in tests about what an op does. What friends may do is tested with
+/// <see cref="Api.FriendPatchAsync"/> and a person token.
+/// </summary>
+public sealed class OrganizerKeys : DelegatingHandler
+{
+    public static readonly ConcurrentDictionary<string, string> ByBill = new();
+
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
+    {
+        var response = await base.SendAsync(request, ct);
+        if (request.Method == HttpMethod.Post && request.RequestUri?.AbsolutePath == "/api/bills" && response.IsSuccessStatusCode)
+        {
+            await response.Content.LoadIntoBufferAsync(ct);
+            var created = JsonSerializer.Deserialize<Created>(await response.Content.ReadAsStringAsync(ct), ApiJson.Options);
+            if (created is not null)
+                ByBill[created.Id] = created.OrganizerKey;
+        }
+        return response;
+    }
+}
+
 internal static class Api
 {
     public static async Task<Created> CreateSampleAsync(this HttpClient client)
@@ -102,8 +125,23 @@ internal static class Api
         return (await response.ReadAsync<BillResponse>())!;
     }
 
-    public static Task<HttpResponseMessage> PatchAsync(this HttpClient client, string id, object op) =>
-        client.PatchAsJsonAsync($"/api/bills/{id}", op, ApiJson.Options);
+    /// <summary>One op as the organizer. See <see cref="OrganizerKeys"/>.</summary>
+    public static Task<HttpResponseMessage> PatchAsync(this HttpClient client, string id, object op)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Patch, $"/api/bills/{id}") { Content = JsonContent.Create(op, options: ApiJson.Options) };
+        if (OrganizerKeys.ByBill.TryGetValue(id, out var key))
+            request.Headers.Add("X-Organizer-Key", key);
+        return client.SendAsync(request);
+    }
+
+    /// <summary>One op as a friend: the person token from joining or picking a name, or nothing.</summary>
+    public static Task<HttpResponseMessage> FriendPatchAsync(this HttpClient client, string id, object op, string? personToken)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Patch, $"/api/bills/{id}") { Content = JsonContent.Create(op, options: ApiJson.Options) };
+        if (personToken is not null)
+            request.Headers.Add("X-Person-Token", personToken);
+        return client.SendAsync(request);
+    }
 
     public static async Task<T?> ReadAsync<T>(this HttpResponseMessage response) =>
         JsonSerializer.Deserialize<T>(await response.Content.ReadAsStringAsync(), ApiJson.Options);
