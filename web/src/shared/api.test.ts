@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ApiError, createSampleBill, getBill } from './api';
+import { ApiError, createSampleBill, getBill, patchBill, setPin, unlockPin } from './api';
 
 const id = 'AAAAAAAAAAAAAAAAAAAAAA';
 const bill = { bill: { id, version: 3, title: 'Ramen Nagi' }, breakdown: null };
@@ -64,5 +64,48 @@ describe('createSampleBill', () => {
     const fetchMock = mockFetch(json({ id, organizerKey: 'secretsecretsecretsec1' }, { status: 201 }));
     await createSampleBill();
     for (const [url] of fetchMock.mock.calls) expect(String(url)).not.toContain('secret');
+  });
+});
+
+describe('bill PIN', () => {
+  it('sends the PIN token and the organizer key in headers, never in the address', async () => {
+    const fetchMock = mockFetch(json(bill));
+    await getBill(id, null, { pin: 'tok', key: 'KKKKKKKKKKKKKKKKKKKKKK' });
+    const [url, init] = fetchMock.mock.calls[0];
+    const headers = new Headers(init?.headers);
+    expect(headers.get('X-Bill-Pin')).toBe('tok');
+    expect(headers.get('X-Organizer-Key')).toBe('KKKKKKKKKKKKKKKKKKKKKK');
+    expect(String(url)).not.toContain('tok');
+  });
+
+  it('sends the PIN token with a claim', async () => {
+    const fetchMock = mockFetch(json(bill));
+    await patchBill(id, { op: 'join', name: 'Ana' }, { pin: 'tok' });
+    expect(new Headers(fetchMock.mock.calls[0][1]?.headers).get('X-Bill-Pin')).toBe('tok');
+  });
+
+  it('trades the PIN for a token', async () => {
+    const fetchMock = mockFetch(json({ token: 'tok' }));
+    expect(await unlockPin(id, '4826')).toBe('tok');
+    expect(fetchMock.mock.calls[0][1]?.body).toBe(JSON.stringify({ pin: '4826' }));
+  });
+
+  it('says how many tries are left after a wrong PIN', async () => {
+    mockFetch(json({ error: 'pin-wrong', triesLeft: 3 }, { status: 401 }));
+    await expect(unlockPin(id, '0000')).rejects.toMatchObject({ status: 401, error: 'pin-wrong', triesLeft: 3 });
+  });
+
+  it('says how long a locked PIN waits', async () => {
+    mockFetch(json({ error: 'rate-limited', reason: 'pin-locked' }, { status: 429, headers: { 'Retry-After': '540' } }));
+    await expect(unlockPin(id, '4826')).rejects.toMatchObject({ status: 429, reason: 'pin-locked', retryAfter: 540 });
+  });
+
+  it('sets or removes the PIN with the organizer key', async () => {
+    const fetchMock = mockFetch(json(bill));
+    await setPin(id, 'KKKKKKKKKKKKKKKKKKKKKK', null);
+    const init = fetchMock.mock.calls[0][1];
+    expect(init?.method).toBe('PUT');
+    expect(init?.body).toBe(JSON.stringify({ pin: null }));
+    expect(new Headers(init?.headers).get('X-Organizer-Key')).toBe('KKKKKKKKKKKKKKKKKKKKKK');
   });
 });

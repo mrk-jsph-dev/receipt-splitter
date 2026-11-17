@@ -23,7 +23,8 @@ public sealed record BillView(
     IReadOnlyList<ActivityDoc> Activity,
     int? HeadcountHint = null,
     string? PaymentNote = null,
-    DateTimeOffset? LockedAt = null);
+    DateTimeOffset? LockedAt = null,
+    bool HasPin = false);
 
 /// <summary>
 /// The server's maths, straight from Core. The browser shows these numbers and never works out money.
@@ -68,7 +69,7 @@ public sealed record BillResponse(BillView Bill, BreakdownView? Breakdown = null
         var view = new BillView(
             doc.Id, doc.Version, doc.CreatedAt, doc.UpdatedAt, doc.UpdatedAt.AddDays(retentionDays),
             doc.Title, doc.Currency, doc.Status, doc.People, doc.Receipts, doc.Payments, doc.Activity,
-            doc.HeadcountHint, doc.PaymentNote, doc.LockedAt);
+            doc.HeadcountHint, doc.PaymentNote, doc.LockedAt, doc.PinHash is not null);
         return new BillResponse(view, Calculate(doc));
     }
 

@@ -1,6 +1,6 @@
 import { computed, inject, provide, ref, watch, type InjectionKey, type Ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { ApiError, getBill, isBillId, latestFrom, patchBill, type Bill, type BillResponse, type Op, type Written } from '../shared/api';
+import { ApiError, getBill, isBillId, latestFrom, patchBill, unlockPin, type Bill, type BillResponse, type Op, type Written } from '../shared/api';
 import { getBillValue, rememberBill, setBillValue } from '../shared/storage';
 import { usePolling } from './usePolling';
 
@@ -12,6 +12,10 @@ export interface BillState {
   data: Ref<BillResponse | null>;
   etag: Ref<string | null>;
   missing: Ref<boolean>;
+  /** The bill has a PIN and this device hasn't unlocked it. */
+  needsPin: Ref<boolean>;
+  /** Trades the PIN for a token kept on this device, then loads the bill. Throws the API's refusal. */
+  unlock: (pin: string) => Promise<void>;
   problem: Ref<string>;
   waking: Ref<boolean>;
   /** Organizer key from this device, or null for a friend. */
@@ -56,6 +60,10 @@ export function provideBill(id: string): BillState {
   const problem = ref('');
   const waking = ref(false);
   const organizerKey = ref(getBillValue(id, 'key'));
+  const pinToken = ref(getBillValue(id, 'pin'));
+  const needsPin = ref(false);
+  // Sent in headers on every read and claim. The organizer key also opens a bill with a PIN.
+  const access = () => ({ pin: pinToken.value, key: organizerKey.value });
   const me = ref(getBillValue(id, 'me'));
   const notice = ref('');
   const syncedAt = ref<number | null>(null);
@@ -85,17 +93,18 @@ export function provideBill(id: string): BillState {
   }
 
   async function load() {
-    if (missing.value) return;
+    if (missing.value || needsPin.value) return;
     // The API scales to zero when idle. Say so if the first answer is slow.
     const slow = data.value === null ? setTimeout(() => (waking.value = true), 1500) : undefined;
     try {
-      const result = await getBill(id, etag.value);
+      const result = await getBill(id, etag.value, access());
       etag.value = result.etag;
       if (result.changed) show(result.data);
       problem.value = '';
       syncedAt.value = Date.now();
     } catch (e) {
       if (e instanceof ApiError && e.status === 404) missing.value = true;
+      else if (e instanceof ApiError && e.status === 401) lockOut();
       else if (e instanceof ApiError && e.status === 429) problem.value = 'Too many requests. Trying again shortly.';
       else problem.value = "Can't reach the server. Retrying.";
     } finally {
@@ -105,6 +114,22 @@ export function provideBill(id: string): BillState {
   }
 
   const polling = usePolling(load);
+
+  // A PIN was added, changed, or this device never had it: drop the old token and ask.
+  function lockOut() {
+    pinToken.value = null;
+    setBillValue(id, 'pin', null);
+    needsPin.value = true;
+  }
+
+  async function unlock(pin: string) {
+    const token = await unlockPin(id, pin);
+    pinToken.value = token;
+    setBillValue(id, 'pin', token);
+    needsPin.value = false;
+    etag.value = null;
+    await load();
+  }
 
   function accept(response: BillResponse, newEtag: string | null) {
     etag.value = newEtag;
@@ -137,6 +162,10 @@ export function provideBill(id: string): BillState {
         if (e.reason === 'locked') say('This bill is locked, so it can only be viewed.');
         else say(onConflict?.(latest, e.reason ?? '') ?? 'Someone changed this a moment ago. Here is the latest.');
       } else {
+        if (e instanceof ApiError && e.status === 401) {
+          lockOut();
+          return false;
+        }
         if (e instanceof ApiError && e.status === 429) say('Too many changes at once. Wait a moment and try again.');
         else if (e instanceof ApiError && e.status === 403) say('Only the organizer can change this. Open the organizer link on this device.');
         else if (e instanceof ApiError && e.status === 400) say("That didn't work. The bill may have changed; it has been reloaded.");
@@ -154,7 +183,7 @@ export function provideBill(id: string): BillState {
       options.optimistic(copy.bill);
       data.value = copy;
     }
-    return write(() => patchBill(id, op), options.onConflict);
+    return write(() => patchBill(id, op, access()), options.onConflict);
   }
 
   async function organize(call: (key: string, etag: string) => Promise<Written>, onConflict?: (latest: BillResponse, reason: string) => string) {
@@ -180,6 +209,8 @@ export function provideBill(id: string): BillState {
     data,
     etag,
     missing,
+    needsPin,
+    unlock,
     problem,
     waking,
     key: organizerKey,

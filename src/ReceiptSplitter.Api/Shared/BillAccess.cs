@@ -40,6 +40,9 @@ public static class ApiResults
 
     public static IResult Invalid(string reason) => Results.Json(new ErrorBody("invalid", reason), statusCode: StatusCodes.Status400BadRequest);
 
+    /// <summary>The bill has a PIN and this request carries neither its token nor the organizer key.</summary>
+    public static IResult PinRequired() => Results.Json(new ErrorBody("pin-required"), statusCode: StatusCodes.Status401Unauthorized);
+
     public static IResult Forbidden() => Results.Json(new ErrorBody("forbidden"), statusCode: StatusCodes.Status403Forbidden);
 
     public static IResult IfMatchRequired() => Results.Json(new ErrorBody("precondition-required", "if-match"), statusCode: StatusCodes.Status428PreconditionRequired);
@@ -116,6 +119,21 @@ public sealed class BillAccess(
             : ApiResults.Refused(bill, new OpError(StatusCodes.Status412PreconditionFailed, "changed"), Limits.RetentionDays);
     }
 
+    /// <summary>
+    /// A link holder on a bill with a PIN needs the token from unlocking it (X-Bill-Pin), or the
+    /// organizer key. Checked after the bill is found, so unknown bills still get the one 404.
+    /// </summary>
+    public IResult? AuthorizeLinkHolder(HttpContext http, BillDocument bill)
+    {
+        if (bill.PinHash is null)
+            return null;
+        var keys = http.Request.Headers[OrganizerKey.Header];
+        if (keys.Count == 1 && OrganizerKey.Matches(keys[0], bill.OrganizerKeyHash))
+            return null;
+        var tokens = http.Request.Headers[BillPin.Header];
+        return tokens.Count == 1 && BillPin.TokenMatches(tokens[0], bill.PinHash, bill.Id) ? null : ApiResults.PinRequired();
+    }
+
     /// <summary>A link holder's op. See <see cref="WriteAsync"/>.</summary>
     public Task<IResult> UpdateAsync(HttpContext http, string id, string operation, Func<BillDocument, OpError?> apply) =>
         WriteAsync(http, id, operation, organizer: false, requireIfMatch: false, apply);
@@ -143,6 +161,8 @@ public sealed class BillAccess(
             var bill = stored!.Bill;
             if (organizer && AuthorizeOrganizer(http, bill, requireIfMatch) is { } denied)
                 return denied;
+            if (!organizer && AuthorizeLinkHolder(http, bill) is { } locked)
+                return locked;
             if (bill.Status == BillStatus.Locked)
                 return ApiResults.Conflict(bill, "locked", Limits.RetentionDays);
 
