@@ -413,7 +413,7 @@ Details settled while building the API (module 2):
 - `setCard` (PATCH) marks a senior or PWD card holder. Sharing is refused with `empty-receipt` while any receipt has no lines.
 - Shares in "shares" mode accept up to 2 decimals (a kid as 0.5). Claim weights are whole numbers from 1 to 100.
 
-Polling: every 10 s while the tab is visible, stopped when hidden, slowed to 30 s after 5 minutes without local changes. Writes retry on ETag mismatch with jittered backoff, as today.
+**Sync is manual for now** (`VITE_AUTO_SYNC` off): a bill loads when opened, updates after your own changes (every write returns the latest bill), and otherwise syncs only with the Refresh button in the top bar, next to "Updated 8:42 PM". This keeps the API asleep unless someone acts. With `VITE_AUTO_SYNC=true`, polling: every 10 s while the tab is visible, stopped when hidden, slowed to 30 s after 5 minutes without local changes, and **paused after 10 minutes with no tap, scroll or key**, so a tab left open lets the API scale to zero ("Paused to save data · Updated 8:42 PM · Refresh"). Any interaction or return to the tab fetches at once and resumes. Locked bills are not polled. A Refresh button on every bill screen syncs on demand. Writes retry on ETag mismatch with jittered backoff, as today.
 
 ## Architecture, deployment, cost and privacy
 
@@ -439,7 +439,7 @@ With a .NET API there is one maths engine, in C#, using `long` minor units and `
 
 ### Cold starts
 
-After about 5 idle minutes the API scales to zero. The first request after that waits a few seconds while the container starts; the page shows "Waking up…". While anyone has a bill open, 10-second polling keeps it warm.
+After about 5 idle minutes the API scales to zero. The first request after that waits a few seconds while the container starts; the page shows "Waking up…". With manual sync, an open bill costs nothing while nobody taps anything; the API sleeps 5 minutes after the last request. With polling on, an idle tab stops after 10 minutes.
 
 ### Project layout
 
