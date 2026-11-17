@@ -30,6 +30,8 @@ const storage = {
   [`bill:${two}:key`]: 'OrganizerKey0000000001',
 };
 
+const { 'profile:name': _name, ...noName } = storage;
+
 /** name, path, and optional steps to run before the screenshot (open a sheet, and so on). */
 export const routes = [
   { name: 'welcome', path: '/welcome', storage: {} },
@@ -50,6 +52,14 @@ export const routes = [
       await page.locator('input[type=file]:not([capture])').setInputFiles([photo, { ...photo, name: 'receipt-page-2.jpg' }]);
       await page.waitForURL('**/scan');
       await page.getByRole('radio', { name: 'Next page' }).click();
+    },
+  },
+  // A browser with bills but no saved name, such as after trying the sample: home offers to add it.
+  { name: 'home-no-name', path: '/', storage: noName },
+  { name: 'type-in-no-name', path: '/', storage: noName, steps: async (page) => {
+      await page.getByRole('button', { name: /Type it in/ }).click();
+      await page.getByLabel('Your name').waitFor();
+      await page.waitForTimeout(400); // let the sheet finish sliding in
     },
   },
   { name: 'not-found', path: '/b/Missing000000000000001' },

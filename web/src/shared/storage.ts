@@ -50,6 +50,14 @@ export function setProfileName(name: string) {
   write(profileName, trimmed === '' ? null : trimmed);
 }
 
+/**
+ * The name you picked or added in a bill becomes this browser's name too, unless one is saved
+ * already. Otherwise deleting that bill would leave the browser with no name and nothing asking.
+ */
+export function adoptProfileName(name: string) {
+  if (getProfileName() === null) setProfileName(name);
+}
+
 /** Names used on bills on this device, newest first. Suggestions only; never sent unless tapped. */
 export function friends(): string[] {
   try {

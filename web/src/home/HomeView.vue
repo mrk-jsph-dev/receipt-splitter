@@ -7,12 +7,13 @@ import AppHeader from '../design/components/AppHeader.vue';
 import Overlay from '../design/components/Overlay.vue';
 import PaidRing from '../design/components/PaidRing.vue';
 import SegmentedControl from '../design/components/SegmentedControl.vue';
+import TextField from '../design/components/TextField.vue';
 import { startError, startManual, startSample } from '../bill/startSample';
 import { currencies, currency } from '../shared/currencies';
 import { scanQuota } from '../shared/api';
 import { fillTray } from '../scan/tray';
 import { formatMoney } from '../shared/money';
-import { forgetDevice, getProfileName } from '../shared/storage';
+import { forgetDevice, getProfileName, setProfileName } from '../shared/storage';
 import { isSettled, useDeviceBills, type DeviceBill } from './deviceBills';
 import ScanCard from './ScanCard.vue';
 
@@ -62,7 +63,13 @@ async function sample() {
 
 const typing = ref(false);
 const code = ref('PHP');
+// Without a saved name, the type-in sheet asks for one, so the new bill starts with you on it.
+const typedName = ref('');
 async function typeIn() {
+  if (!name.value && typedName.value.trim() !== '') {
+    setProfileName(typedName.value);
+    name.value = getProfileName();
+  }
   busy.value = true;
   error.value = '';
   try {
@@ -149,6 +156,7 @@ onMounted(load);
           <p>
             These links are saved in this browser only. Bills delete 30 days after the last change.
             <template v-if="name">New bills use the name {{ name }}. <RouterLink to="/name" class="inline">Change</RouterLink>. </template>
+            <template v-else>No name saved yet. <RouterLink to="/name" class="inline">Add your name</RouterLink>, so new bills start with you on them. </template>
             <button type="button" class="inline" @click="forgetting = true">Forget this device</button>
           </p>
         </div>
@@ -163,6 +171,14 @@ onMounted(load);
         <option v-for="c in currencies" :key="c.code" :value="c.code">{{ c.code }} · {{ c.name }}</option>
       </select>
     </label>
+    <TextField
+      v-if="!name"
+      v-model="typedName"
+      label="Your name"
+      :maxlength="40"
+      autocomplete="given-name"
+      hint="Friends see it on the bill, and you're added as the one who paid. Saved in this browser only."
+    />
     <p class="sm muted">You'll add the lines, fees and the printed total next. Then share the link.</p>
     <template #actions>
       <AppButton @click="typing = false">Cancel</AppButton>
