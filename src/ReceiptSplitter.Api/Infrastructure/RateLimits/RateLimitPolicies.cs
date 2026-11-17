@@ -13,7 +13,7 @@ public sealed class RateLimitOptions
     /// <summary>Bill reads. Polling every 10 seconds is 6 a minute, so this leaves room for several tabs.</summary>
     public int ReadsPerMinute { get; set; } = 120;
 
-    /// <summary>New bills across all clients, so many IPs together still can't fill storage. [VERIFY] the number.</summary>
+    /// <summary>New bills across all clients, so many IPs together still can't fill storage.</summary>
     public int CreatePerDay { get; set; } = 500;
 }
 
