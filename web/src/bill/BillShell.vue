@@ -119,9 +119,9 @@ onMounted(state.load);
         </div>
       </header>
       <p v-if="problem" class="problem sm" role="status">{{ problem }}</p>
-      <p v-else-if="paused && bill" class="paused sm" role="status">
-        <span>Paused to save data<template v-if="updatedAt"> · Updated {{ updatedAt }}</template></span>
-        <button type="button" class="link-btn" @click="refresh">Refresh</button>
+      <p v-else-if="(paused || !state.autoSync) && bill" class="paused sm" role="status">
+        <span><template v-if="paused">Paused to save data · </template>Updated {{ updatedAt || 'just now' }}</span>
+        <button v-if="paused" type="button" class="link-btn" @click="refresh">Refresh</button>
       </p>
       <div v-if="bill && isOrganizer && bill.status === 'draft' && $route.name !== 'share'" class="draft sm" :class="{ ready: !blocker }">
         <template v-if="blocker">
@@ -191,7 +191,7 @@ onMounted(state.load);
 .t { font-weight: 650; font-size: 16px; letter-spacing: -.01em; }
 .sub { font-size: 12px; color: var(--muted); }
 .problem { color: var(--warn); padding: 8px 16px 0; }
-.paused { display: flex; flex-wrap: wrap; align-items: center; gap: 0 12px; color: var(--muted); padding: 2px 16px 0; }
+.paused { display: flex; flex-wrap: wrap; align-items: center; gap: 0 12px; min-height: 28px; color: var(--muted); padding: 6px 16px 0; }
 button.share-btn { font: inherit; cursor: pointer; }
 .loading { display: flex; flex-direction: column; gap: 12px; max-width: 720px; }
 .draft {

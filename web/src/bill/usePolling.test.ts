@@ -20,9 +20,9 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-function start(poll: () => Promise<void>, active?: () => boolean) {
+function start(poll: () => Promise<void>, active?: () => boolean, auto = true) {
   const scope = effectScope();
-  const polling = scope.run(() => usePolling(poll, active))!;
+  const polling = scope.run(() => usePolling(poll, active, auto))!;
   return { polling, stop: () => scope.stop() };
 }
 
@@ -144,6 +144,23 @@ describe('usePolling', () => {
     expect(poll).toHaveBeenCalledTimes(1);
     await vi.advanceTimersByTimeAsync(2_000);
     expect(poll).toHaveBeenCalledTimes(2);
+    stop();
+  });
+
+  it('with automatic sync off, fetches only when asked', async () => {
+    const poll = vi.fn().mockResolvedValue(undefined);
+    const { polling, stop } = start(poll, undefined, false);
+    await vi.advanceTimersByTimeAsync(5 * 60_000);
+    setVisibility('hidden');
+    setVisibility('visible');
+    window.dispatchEvent(new Event('pointerdown'));
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(poll).not.toHaveBeenCalled();
+    expect(polling.paused.value).toBe(false);
+
+    await polling.refresh();
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(poll).toHaveBeenCalledTimes(1);
     stop();
   });
 });

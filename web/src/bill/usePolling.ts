@@ -9,13 +9,20 @@ const idleAfter = 10 * 60_000;
 const activity = ['pointerdown', 'keydown', 'scroll', 'touchstart'] as const;
 
 /**
+ * Automatic sync is off for now: bills load when opened, update after your own changes, and
+ * otherwise only on Refresh. Build with VITE_AUTO_SYNC=true to turn polling back on.
+ */
+export const autoSync = import.meta.env.VITE_AUTO_SYNC === 'true';
+
+/**
  * Calls poll every 10 s while the tab is visible and someone is using it, slows to 30 s after 5
  * minutes without a local change, and pauses after 10 minutes with no interaction. Hidden tabs
  * stop; any tap, key, scroll or return to the tab fetches at once and starts again. With
  * active() false (a locked bill) it only fetches on return to the tab or a manual refresh.
+ * With auto false it never fetches on its own; only refresh() does.
  * Call touch() after the user changes something.
  */
-export function usePolling(poll: () => Promise<void>, active: () => boolean = () => true) {
+export function usePolling(poll: () => Promise<void>, active: () => boolean = () => true, auto = true) {
   let timer: ReturnType<typeof setTimeout> | undefined;
   let lastTouch = Date.now();
   let lastActivity = Date.now();
@@ -27,7 +34,7 @@ export function usePolling(poll: () => Promise<void>, active: () => boolean = ()
 
   function schedule() {
     clearTimeout(timer);
-    if (stopped || !visible() || !active()) return;
+    if (stopped || !auto || !visible() || !active()) return;
     if (Date.now() - lastActivity >= idleAfter) {
       paused.value = true;
       return;
@@ -67,8 +74,10 @@ export function usePolling(poll: () => Promise<void>, active: () => boolean = ()
     else clearTimeout(timer);
   }
 
-  document.addEventListener('visibilitychange', onVisibility);
-  for (const name of activity) window.addEventListener(name, onActivity, { passive: true });
+  if (auto) {
+    document.addEventListener('visibilitychange', onVisibility);
+    for (const name of activity) window.addEventListener(name, onActivity, { passive: true });
+  }
   schedule();
 
   onScopeDispose(() => {

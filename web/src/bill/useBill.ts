@@ -2,7 +2,7 @@ import { computed, inject, provide, ref, watch, type InjectionKey, type Ref } fr
 import { useRoute, useRouter } from 'vue-router';
 import { ApiError, getBill, isBillId, latestFrom, patchBill, unlockPin, type Bill, type BillResponse, type Op, type Written } from '../shared/api';
 import { getBillValue, rememberBill, setBillValue } from '../shared/storage';
-import { usePolling } from './usePolling';
+import { autoSync, usePolling } from './usePolling';
 
 // One bill's state, owned by BillShell and shared with its sections through provide/inject.
 // Everything shown comes from the API's last response; the browser never works out money.
@@ -38,6 +38,8 @@ export interface BillState {
   syncedAt: Ref<number | null>;
   /** Polling stopped because nobody has used the page for 10 minutes. */
   paused: Ref<boolean>;
+  /** Polling is switched on for this build; otherwise only Refresh syncs. */
+  autoSync: boolean;
   /** Fetches the latest bill now and starts polling again. */
   refresh: () => Promise<void>;
   /**
@@ -123,7 +125,7 @@ export function provideBill(id: string): BillState {
   }
 
   // A locked bill can't change except by the organizer reopening or deleting it, so it isn't polled.
-  const polling = usePolling(load, () => data.value?.bill.status !== 'locked');
+  const polling = usePolling(load, () => data.value?.bill.status !== 'locked', autoSync);
 
   // A PIN was added, changed, or this device never had it: drop the old token and ask.
   function lockOut() {
@@ -271,6 +273,7 @@ export function provideBill(id: string): BillState {
     say,
     syncedAt,
     paused: polling.paused,
+    autoSync,
     refresh: polling.refresh,
     run,
     write,
