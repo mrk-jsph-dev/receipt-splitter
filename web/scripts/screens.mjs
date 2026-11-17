@@ -62,6 +62,9 @@ export const routes = [
       await page.waitForTimeout(400); // let the sheet finish sliding in
     },
   },
+  { name: 'bill-report', path: `/b/${two}/report` },
+  // What Save as PDF prints: no app frame, white page.
+  { name: 'report-print', path: `/b/${two}/report`, steps: async (page) => page.emulateMedia({ media: 'print' }) },
   { name: 'not-found', path: '/b/Missing000000000000001' },
 ];
 
