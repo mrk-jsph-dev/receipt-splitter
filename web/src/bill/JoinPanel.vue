@@ -8,13 +8,16 @@ import { getProfileName, rememberFriend } from '../shared/storage';
 import { payerNames } from './summary';
 import { useBill } from './useBill';
 
-// "Who are you?" Pick your name or add yourself. The choice is kept on this device for this
-// bill only (bill:{id}:me). With a name saved on this device, ask "Are you Ben?" first.
+// "Who are you?" Pick your name or add yourself. The server gives this phone a token for that
+// name, so only this phone (or the organizer) can change that person's part. Kept for this bill
+// only (bill:{id}:me and :person). With a name saved on this device, ask "Are you Ben?" first.
 
-const { data, run, setMe, say } = useBill();
+const { data, run, setMe, pickMe, say, isOrganizer } = useBill();
 const bill = computed(() => data.value!.bill);
 const profile = getProfileName();
-const match = computed(() => (profile ? bill.value.people.find((p) => p.name.toLowerCase() === profile.toLowerCase()) ?? null : null));
+// A name another phone holds is out of reach for a friend; the organizer can take any name.
+const taken = (p: { held?: boolean }) => !!p.held && !isOrganizer.value;
+const match = computed(() => (profile ? bill.value.people.find((p) => p.name.toLowerCase() === profile.toLowerCase() && !taken(p)) ?? null : null));
 
 const picked = ref<string | null>(null);
 const asking = ref(match.value !== null);
@@ -30,9 +33,17 @@ const meta = computed(() => {
     .join(' · ');
 });
 
-function choose(personId: string) {
+const choosing = ref(false);
+async function choose(personId: string) {
   const person = bill.value.people.find((p) => p.id === personId);
-  setMe(personId);
+  choosing.value = true;
+  const ok = await pickMe(personId);
+  choosing.value = false;
+  if (!ok) {
+    asking.value = false;
+    picked.value = null;
+    return;
+  }
   if (person) rememberFriend(person.name);
 }
 
@@ -46,8 +57,10 @@ async function join() {
   busy.value = false;
   if (!ok) return;
   const person = data.value!.bill.people.find((p) => p.name.toLowerCase() === name.toLowerCase());
+  // Joining already handed this phone the new person's token.
   if (person) {
-    choose(person.id);
+    setMe(person.id);
+    rememberFriend(person.name);
     say(`You joined as ${person.name}.`);
   }
 }
@@ -65,7 +78,7 @@ async function join() {
       <b>Are you {{ match.name }}?</b>
       <span class="sm muted">This device used that name before.</span>
       <div class="row-btns">
-        <AppButton variant="primary" @click="choose(match.id)">Yes, I'm {{ match.name }}</AppButton>
+        <AppButton variant="primary" :busy="choosing" @click="choose(match.id)">Yes, I'm {{ match.name }}</AppButton>
         <AppButton @click="asking = false">No, pick another</AppButton>
       </div>
     </div>
@@ -80,12 +93,14 @@ async function join() {
           role="radio"
           class="p"
           :aria-checked="picked === p.id"
+          :disabled="taken(p)"
           @click="picked = p.id"
         >
           <AvatarBadge :name="p.name" :you="picked === p.id" /><span class="truncate">{{ p.name }}</span>
+          <span v-if="taken(p)" class="sm muted held">In use</span>
         </button>
       </div>
-      <AppButton variant="primary" :disabled="picked === null" @click="picked && choose(picked)">
+      <AppButton variant="primary" :busy="choosing" :disabled="picked === null" @click="picked && choose(picked)">
         {{ picked ? `I'm ${bill.people.find((p) => p.id === picked)?.name}` : 'Pick your name' }}
       </AppButton>
 
@@ -96,7 +111,7 @@ async function join() {
           <AppButton type="submit" :busy="busy" :disabled="newName.trim() === ''"><Plus class="s" />Add me</AppButton>
         </div>
       </form>
-      <p class="sm muted">Saved on this device for this bill only.</p>
+      <p class="sm muted">Saved on this device for this bill only. "In use" means another phone picked that name; the organizer can free it.</p>
     </template>
   </section>
 </template>
@@ -113,6 +128,8 @@ h2 { font-size: 24px; font-weight: 700; }
   padding: 8px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; min-width: 0;
 }
 .p[aria-checked="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.p:disabled { cursor: default; opacity: .55; }
+.held { margin-left: auto; }
 .p:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .add { display: flex; flex-direction: column; gap: 6px; }
 .add-row { display: flex; gap: 8px; }

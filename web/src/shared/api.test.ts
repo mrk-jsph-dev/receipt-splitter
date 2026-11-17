@@ -109,3 +109,12 @@ describe('bill PIN', () => {
     expect(new Headers(init?.headers).get('X-Organizer-Key')).toBe('KKKKKKKKKKKKKKKKKKKKKK');
   });
 });
+
+describe('person token', () => {
+  it('sends it in a header and reads a new one back from join or pick', async () => {
+    const fetchMock = mockFetch(json(bill, { headers: { 'X-Person-Token': 'person-tok' } }));
+    const result = await patchBill(id, { op: 'pick', personId: 'p1' }, { person: 'old' });
+    expect(new Headers(fetchMock.mock.calls[0][1]?.headers).get('X-Person-Token')).toBe('old');
+    expect(result.personToken).toBe('person-tok');
+  });
+});

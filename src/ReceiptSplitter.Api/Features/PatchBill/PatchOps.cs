@@ -19,18 +19,20 @@ namespace ReceiptSplitter.Api.Features.PatchBill;
 [JsonDerivedType(typeof(MarkPaidOp), "markPaid")]
 [JsonDerivedType(typeof(UnmarkPaidOp), "unmarkPaid")]
 [JsonDerivedType(typeof(SetCardOp), "setCard")]
+[JsonDerivedType(typeof(PickOp), "pick")]
+[JsonDerivedType(typeof(ReleaseOp), "release")]
 public record PatchOp;
 
-/// <summary>Adds a friend, for example one without a phone. Two people can't share a name.</summary>
+/// <summary>Organizer: adds a friend, for example one without a phone. Two people can't share a name.</summary>
 public sealed record AddPersonOp(string Name) : PatchOp;
 
-/// <summary>Adds yourself. The browser remembers which person you are.</summary>
+/// <summary>Adds yourself. The response's X-Person-Token header is this phone's proof that it's you.</summary>
 public sealed record JoinOp(string Name) : PatchOp;
 
 /// <param name="From">The name as the client saw it.</param>
 public sealed record RenameOp(string PersonId, string Name, string From) : PatchOp;
 
-/// <summary>Only for someone the bill doesn't refer to anywhere yet: no claims, no payments, not a payer.</summary>
+/// <summary>Organizer: only for someone the bill doesn't refer to anywhere yet: no claims, no payments, not a payer.</summary>
 public sealed record RemovePersonOp(string PersonId, string From) : PatchOp;
 
 /// <param name="From">The unit's claims as the client saw them. Order does not matter.</param>
@@ -52,3 +54,9 @@ public sealed record UnmarkPaidOp(string PersonId, PaymentStatus? From) : PatchO
 /// <summary>Marks a senior or PWD card holder, so everyone sees why their discount stays with them.</summary>
 /// <param name="From">The card as the client saw it.</param>
 public sealed record SetCardOp(string PersonId, Card Card, Card From) : PatchOp;
+
+/// <summary>"That's me": takes a name nobody holds yet, such as one the organizer added. Returns a person token like join.</summary>
+public sealed record PickOp(string PersonId) : PatchOp;
+
+/// <summary>Frees a name so another phone can pick it: the holder letting go, or the organizer resetting it.</summary>
+public sealed record ReleaseOp(string PersonId) : PatchOp;

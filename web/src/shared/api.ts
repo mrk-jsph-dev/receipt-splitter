@@ -17,6 +17,8 @@ export interface Person {
   id: string;
   name: string;
   card?: Card;
+  /** Another phone already holds this name. */
+  held?: boolean;
 }
 
 export interface ClaimDoc {
@@ -193,14 +195,22 @@ export class ApiError extends Error {
   }
 }
 
-/** What this device holds for one bill: the PIN token after unlocking, and the organizer key. Sent in headers only. */
+/**
+ * What this device holds for one bill: the PIN token after unlocking, the organizer key, and the
+ * person token that proves which person this phone is. Sent in headers only.
+ */
 export interface BillAccess {
   pin?: string | null;
   key?: string | null;
+  person?: string | null;
 }
 
 function accessHeaders(access: BillAccess = {}): Record<string, string> {
-  return { ...(access.pin ? { 'X-Bill-Pin': access.pin } : {}), ...(access.key ? { 'X-Organizer-Key': access.key } : {}) };
+  return {
+    ...(access.pin ? { 'X-Bill-Pin': access.pin } : {}),
+    ...(access.key ? { 'X-Organizer-Key': access.key } : {}),
+    ...(access.person ? { 'X-Person-Token': access.person } : {}),
+  };
 }
 
 // Same origin through the dev proxy and Static Web Apps; the deploy sets the API's own address.
@@ -238,10 +248,11 @@ export async function createSampleBill(): Promise<Created> {
   return (await response.json()) as Created;
 }
 
-/** A write's answer: the bill as it is now, with its new ETag. */
+/** A write's answer: the bill as it is now, with its new ETag. Join and pick also hand out a person token. */
 export interface Written {
   data: BillResponse;
   etag: string | null;
+  personToken?: string | null;
 }
 
 /** The latest bill that comes with a 409, 412 or 422, so the screen can show what changed. */
@@ -252,7 +263,7 @@ export function latestFrom(error: unknown): BillResponse | null {
 }
 
 async function written(response: Response): Promise<Written> {
-  return { data: (await response.json()) as BillResponse, etag: response.headers.get('ETag') };
+  return { data: (await response.json()) as BillResponse, etag: response.headers.get('ETag'), personToken: response.headers.get('X-Person-Token') };
 }
 
 export type Op =
@@ -265,7 +276,9 @@ export type Op =
   | { op: 'setWeight'; unitId: string; personId: string; weight: number; from: ClaimDoc[] }
   | { op: 'markPaid'; personId: string; from: PaymentStatus | null }
   | { op: 'unmarkPaid'; personId: string; from: PaymentStatus | null }
-  | { op: 'setCard'; personId: string; card: Card; from: Card };
+  | { op: 'setCard'; personId: string; card: Card; from: Card }
+  | { op: 'pick'; personId: string }
+  | { op: 'release'; personId: string };
 
 /** Anyone with the link: one op. A 409 means the bill moved on; its body has the latest bill. */
 export async function patchBill(id: string, op: Op, access?: BillAccess): Promise<Written> {
@@ -386,7 +399,7 @@ export async function updateSettings(
 export async function organizerAction(
   id: string,
   key: string,
-  action: 'share' | 'lock' | 'confirm' | 'decline' | 'undo',
+  action: 'share' | 'lock' | 'reopen' | 'confirm' | 'decline' | 'undo',
   body?: { personId: string } | { activityId: string },
 ): Promise<Written> {
   return written(

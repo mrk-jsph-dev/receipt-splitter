@@ -94,7 +94,7 @@ onMounted(state.load);
           <RouterLink v-if="bill" :to="{ name: 'share', params: { id } }" class="share-btn" aria-label="Share this bill">
             <Share2 class="s" /><span class="medium-up">Share</span>
           </RouterLink>
-          <button v-if="bill && me" type="button" class="you" :aria-label="`You're ${personName(bill, me)}. Change who you are`" @click="state.setMe(null)">
+          <button v-if="bill && me" type="button" class="you" :aria-label="`You're ${personName(bill, me)}. Change who you are`" @click="state.leaveMe()">
             <span class="chip me">You're {{ personName(bill, me) }}</span><span class="change medium-up">Change</span>
           </button>
         </div>

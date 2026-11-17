@@ -9,8 +9,9 @@ import { formatMoney } from '../shared/money';
 
 // "Who had this?" Tick everyone who shared one unit; it is split equally between them. Also the
 // click alternative to dragging an item onto someone. Amounts shown are the server's current split.
+// A friend can tick only themselves; the others on it stay as they are. The organizer can tick anyone.
 
-const props = defineProps<{ open: boolean; bill: Bill; line: Line | null; unit: Unit | null; me: string; breakdown: ReceiptBreakdown | null }>();
+const props = defineProps<{ open: boolean; bill: Bill; line: Line | null; unit: Unit | null; me: string; onlyMe?: boolean; breakdown: ReceiptBreakdown | null }>();
 const emit = defineEmits<{ close: []; save: [people: string[]] }>();
 
 const chosen = ref<string[]>([]);
@@ -45,7 +46,7 @@ function toggle(id: string) {
     <div v-if="line" class="row"><span class="muted sm">{{ line.quantity > 1 ? 'One of them' : 'Price' }}</span><span class="amt">{{ formatMoney(line.unitPrice, bill.currency) }}</span></div>
     <ul class="people" role="group" aria-label="Who shared it">
       <li v-for="p in eligible" :key="p.id">
-        <button type="button" class="person" role="checkbox" :aria-checked="chosen.includes(p.id)" @click="toggle(p.id)">
+        <button type="button" class="person" role="checkbox" :aria-checked="chosen.includes(p.id)" :disabled="onlyMe && p.id !== me" @click="toggle(p.id)">
           <AvatarBadge :name="p.name" :you="p.id === me" />
           <span class="grow truncate">{{ p.name }}<template v-if="p.id === me"> (you)</template></span>
           <span v-if="current(p.id) !== undefined" class="amt sm">{{ formatMoney(current(p.id)!, bill.currency) }}</span>
@@ -53,6 +54,7 @@ function toggle(id: string) {
         </button>
       </li>
     </ul>
+    <p v-if="onlyMe" class="sm muted">You can add or remove only yourself. Others tap Share on their own phone, or the organizer can add them.</p>
     <p class="sm muted">Split equally between everyone ticked. If it doesn't divide evenly, the extra centavo goes to whoever comes first in the bill's list.</p>
     <template #actions>
       <AppButton @click="emit('close')">Cancel</AppButton>
@@ -65,6 +67,7 @@ function toggle(id: string) {
 
 <style scoped>
 .people { display: flex; flex-direction: column; }
+.person:disabled { cursor: default; opacity: .6; }
 .person {
   all: unset; box-sizing: border-box; cursor: pointer; display: flex; align-items: center; gap: 12px; width: 100%;
   min-height: 52px; padding: 6px 4px; border-bottom: 1px solid var(--line);
