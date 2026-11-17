@@ -72,7 +72,7 @@ onMounted(state.load);
   </main>
 
   <div v-else class="shell">
-    <aside class="side" aria-label="Bill">
+    <aside class="side no-print" aria-label="Bill">
       <RouterLink to="/" class="brand" aria-label="Home">
         <span class="mark"><ReceiptPeso /></span><span class="full">Receipt Splitter</span>
       </RouterLink>
@@ -98,7 +98,7 @@ onMounted(state.load);
     </aside>
 
     <div class="main-col">
-      <header class="topbar">
+      <header class="topbar no-print">
         <div class="tb-l">
           <RouterLink to="/" class="back compact-only" aria-label="Home"><ArrowLeft /></RouterLink>
           <div class="titles">
@@ -118,12 +118,12 @@ onMounted(state.load);
           </button>
         </div>
       </header>
-      <p v-if="problem" class="problem sm" role="status">{{ problem }}</p>
-      <p v-else-if="(paused || !state.autoSync) && bill" class="paused sm" role="status">
+      <p v-if="problem" class="problem sm no-print" role="status">{{ problem }}</p>
+      <p v-else-if="(paused || !state.autoSync) && bill" class="paused sm no-print" role="status">
         <span><template v-if="paused">Paused to save data · </template>Updated {{ updatedAt || 'just now' }}</span>
         <button v-if="paused" type="button" class="link-btn" @click="refresh">Refresh</button>
       </p>
-      <div v-if="bill && isOrganizer && bill.status === 'draft' && $route.name !== 'share'" class="draft sm" :class="{ ready: !blocker }">
+      <div v-if="bill && isOrganizer && bill.status === 'draft' && $route.name !== 'share'" class="draft sm no-print" :class="{ ready: !blocker }">
         <template v-if="blocker">
           <span><b>Not shared yet.</b> {{ blocker.text }}</span>
           <RouterLink v-if="blocker.receiptId && $route.name !== 'receipt'" :to="{ name: 'receipt', params: { id, receiptId: blocker.receiptId } }" class="link-btn">Fix it</RouterLink>
@@ -133,7 +133,7 @@ onMounted(state.load);
           <RouterLink :to="{ name: 'share', params: { id } }" class="link-btn">Share the link</RouterLink>
         </template>
       </div>
-      <div v-if="toConfirm.length && $route.name !== 'settle'" class="draft sm ready" role="status">
+      <div v-if="toConfirm.length && $route.name !== 'settle'" class="draft sm ready no-print" role="status">
         <span><b>{{ toConfirm.length === 1 ? `${toConfirm[0].name} says they've paid.` : `${toConfirm.length} people say they've paid.` }}</b> Confirm once the money arrives.</span>
         <RouterLink :to="{ name: 'settle', params: { id } }" class="link-btn">Confirm</RouterLink>
       </div>
@@ -150,17 +150,17 @@ onMounted(state.load);
       </main>
     </div>
 
-    <div v-if="bill && me && myBalance" class="sharebar compact-only">
+    <div v-if="bill && me && myBalance" class="sharebar compact-only no-print">
       <div>
         <div class="cap2">{{ myBalance.net > 0 ? 'You get back' : 'Your share' }}</div>
         <div class="amt">{{ formatMoney(myBalance.net > 0 ? myBalance.net : myBalance.owed, bill.currency) }}</div>
       </div>
       <AppButton sm @click="breakdownFor = me">Breakdown</AppButton>
     </div>
-    <p class="toast" :class="{ shown: notice !== '' }" role="status" aria-live="polite">{{ notice }}</p>
+    <p class="toast no-print" :class="{ shown: notice !== '' }" role="status" aria-live="polite">{{ notice }}</p>
     <BreakdownSheet v-if="bill" />
 
-    <nav class="tabbar" aria-label="Bill sections">
+    <nav class="tabbar no-print" aria-label="Bill sections">
       <RouterLink v-for="s in sections" :key="s.name" :to="{ name: s.name, params: { id } }" class="tab">
         <span class="ico"><component :is="s.icon" /><i v-if="s.alert" class="dot" /></span><span>{{ s.label }}</span>
         <span v-if="s.alert" class="visually-hidden">, {{ s.count }}</span>
