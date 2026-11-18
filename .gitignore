@@ -12,6 +12,7 @@ web/dist/
 # Local settings and secrets: never commit
 .env
 .env.*
+!.env.example
 appsettings.*.local.json
 *.pfx
 *.p12
