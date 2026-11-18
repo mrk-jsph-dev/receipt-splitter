@@ -314,6 +314,125 @@ states the privacy rules.
 
 **Deploy:** `all`.
 
+---
+
+### Module 13: Go public safely (logs, image, repo settings)
+
+Run this before making the repository public. Once the repository is public, every past and future
+Actions log is public too. Today the deploy logs print `BUDGET_ALERT_EMAIL` in full, because the
+workflow reads it as a repository **variable** (`vars.BUDGET_ALERT_EMAIL`), and variables are not
+masked. They also print the Azure tenant, subscription and client ids. A secret with the same name
+doesn't help, because the workflow never reads it.
+
+**Prompt**
+
+> Implement module 13 from docs/EXECUTION_PLAN.md. Show me the plan first.
+>
+> 1. Logs. In `.github/workflows/ci-cd.yml`, read `BUDGET_ALERT_EMAIL`, `AZURE_CLIENT_ID`,
+>    `AZURE_TENANT_ID` and `AZURE_SUBSCRIPTION_ID` from `secrets.*` instead of `vars.*`, so the
+>    logs show `***`. Keep `AZURE_RESOURCE_GROUP` as a variable. Check that no step echoes them
+>    or prints the deployment's parameters. Update the `gh variable set` lines at the end of
+>    `infra/setup-oidc.sh` to `gh secret set`, and update `infra/README.md` setup step 3.
+> 2. Public API image. When the repository is public, the image holds nothing that the code
+>    doesn't already show, so make the `ghcr.io` image public. Then the Container App pulls it
+>    with no credential, and there's no `read:packages` token to keep or renew. Remove the
+>    registry credential from `infra/modules/containerapp.bicep`, the token carry-over and the
+>    "no registry credential" stop from `infra/deploy.sh`, and setup step 6 from
+>    `infra/README.md`. First confirm the Dockerfile and image hold no secrets or config values.
+>    List the GitHub UI step (Package settings > Change visibility > Public) for me, because the
+>    workflow token can't change package visibility.
+> 3. Demo script. `docs/DEMO.md` says claims show up on the other phone within about 10 seconds
+>    on their own. Auto sync is off (`VITE_AUTO_SYNC`), so add a **Refresh** tap on the organizer
+>    phone at 0:40 and remove the "about 10 seconds" note.
+> 4. License. Add a `LICENSE` file with [PLACEHOLDER: license Mark picks] and replace the
+>    "Private. All rights reserved" section of the README to match. Don't pick one for me.
+> 5. Write `docs/GO_PUBLIC.md`: the checklist below, in order, with the exact commands.
+>
+> Change no Azure resource sizes, tiers or limits in this module.
+
+**Checklist for `docs/GO_PUBLIC.md`** (you run these, in this order)
+1. `gh secret set` for the four values above. Keep the variables for now.
+2. Merge this module and run `target=all`. Open the new run's infra log and check that the email
+   and ids show as `***`. Then `gh variable delete` the same four.
+3. Make the `receipt-splitter-api` package public, then revoke the old `read:packages` token at
+   https://github.com/settings/tokens.
+4. Settings > Environments > `production`: you are a required reviewer, and deployment
+   branches are limited to `main`. GitHub Free enforces required reviewers only on public
+   repositories, so check this right after the switch.
+5. Delete every workflow run from before step 2, because their logs still hold the email:
+   `gh run list --limit 200 --json databaseId,createdAt` and `gh run delete <id>` for each.
+6. Optional: if you don't want your commit email in public history, set GitHub's noreply address
+   for future commits (Settings > Emails). The old commits keep the email they have.
+7. Make the repository public.
+8. Right after: turn on secret scanning, push protection and Dependabot alerts
+   (Settings > Code security). They are free on public repositories and use no Actions minutes.
+   Don't turn on CodeQL or Dependabot version updates.
+
+**Done when**
+- `dotnet test` and `cd web && npm test` pass.
+- A `target=all` run on `main` passes, and its logs show `***` for the email and the three ids.
+- The Container App runs the public image with no registry entry and no secret
+  (`az containerapp show -n receipt-splitter-api -g <rg> --query properties.configuration.registries`
+  returns `[]`).
+- `git grep -n "vars.BUDGET_ALERT_EMAIL\|vars.AZURE_CLIENT_ID\|vars.AZURE_TENANT_ID\|vars.AZURE_SUBSCRIPTION_ID"` finds nothing.
+
+**Cost:** none. Nothing is added to Azure, and public GHCR packages are free.
+
+**Deploy:** `all`.
+
+---
+
+### Module 14: Cost guard and kill switch
+
+The scan service (Document Intelligence F0) can't bill, and the new-bill and scan caps already
+hold against many IPs. The remaining risk is the API itself: per-IP limits reject extra requests,
+but Azure still counts each request against the Container Apps free allowance (2 million a
+month), and steady traffic keeps the container awake past the free compute allowance. The $1
+budget only sends an email, and budget data can lag by up to a day.
+
+This module adds a way to stop the API at once, by hand or automatically, using only pieces that
+cost nothing at this scale.
+
+**Prompt**
+
+> Implement module 14 from docs/EXECUTION_PLAN.md. Show me the plan first.
+>
+> Before you plan, check current Microsoft pricing pages for each piece below and quote the line
+> that shows it's free at our scale. Mark anything you can't confirm as [VERIFY]. If a piece isn't
+> free, stop and tell me instead of building it. Never add Azure Monitor metric alerts, Log
+> Analytics, Application Insights, Front Door, a WAF, an API Management instance, or any always-on
+> resource, because each of these costs money.
+>
+> 1. Manual kill switch. `infra/kill-switch.sh off|on|status` for the API Container App. `off`
+>    must stop all billable traffic and compute right away. Disabling ingress is the likely way;
+>    confirm that disabled ingress means requests don't reach the app or count as billed
+>    requests [VERIFY], and that `on` restores the same address, port and settings (or that
+>    `target=infra` does). The web app should show its normal "can't reach the server" state
+>    while the API is off. Test it against the live app: off, check, on, smoke test.
+> 2. Automatic stop. Add a second, hard budget threshold in `infra/modules/budget.bicep`: when
+>    **actual** spend passes the budget amount, an action group runs the same "off" step. Prefer
+>    the cheapest working option, likely an Azure Automation runbook with a managed identity that
+>    can only change this one Container App (custom role or the narrowest built-in role, scoped to
+>    the app, not the resource group). Confirm that the Automation account, the runbook's job
+>    minutes and the action group are free at a few runs a month [VERIFY]. Keep the existing
+>    80% email.
+> 3. README "Cost" section: a table of every resource and what could make it cost money, the kill
+>    switch commands, what the automatic stop does and its delay (budget data can lag by up to a
+>    day), and how to turn the API back on.
+> 4. Tests: a Bicep build (`az bicep build`) and a `what-if` run in the plan output, plus a
+>    shellcheck of the script.
+
+**Done when**
+- `infra/kill-switch.sh off` makes the API stop answering within a minute, and `on` brings it
+  back with the smoke test passing.
+- The budget has the automatic stop, and a test run of the runbook (started by hand) turns the API
+  off, then `on` restores it.
+- Every new Azure resource is listed in the README cost table with its price source, and none
+  costs anything at this scale.
+- `az consumption usage list` (or Cost Management) shows no new charges a day after deploying.
+
+**Deploy:** `infra`.
+
 ## Open items to settle before the module that needs them
 
 | Item | Needed by | Default if you say nothing |
@@ -322,4 +441,4 @@ states the privacy rules.
 | Budget alert amount | Module 3 | $1 |
 | Daily scan cap | Module 8 | 15 per day, 3 per IP per hour |
 | Custom domain | Module 9 | None, use the free default addresses |
-| License | Before making the repo public | [PLACEHOLDER] |
+| License | Module 13 | [PLACEHOLDER] |
