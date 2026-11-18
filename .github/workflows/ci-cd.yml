@@ -65,7 +65,8 @@ jobs:
         run: npm audit --audit-level=high
 
   # Deploy jobs. Each runs only from main, needs the tests, and waits for approval on the
-  # GitHub "production" environment. Azure sign-in is OIDC: no Azure secret is stored in GitHub.
+  # GitHub "production" environment. Azure sign-in is OIDC: no Azure password or key is stored in
+  # GitHub. The Azure ids and the alert email are repository secrets only so that logs mask them.
 
   infra:
     needs: test
@@ -84,15 +85,15 @@ jobs:
 
       - uses: azure/login@v2
         with:
-          client-id: ${{ vars.AZURE_CLIENT_ID }}
-          tenant-id: ${{ vars.AZURE_TENANT_ID }}
-          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      # Keeps the running image and the ghcr.io registry credential (see infra/deploy.sh).
+      # Keeps the running image (see infra/deploy.sh).
       - name: Deploy Bicep
         env:
           RG: ${{ vars.AZURE_RESOURCE_GROUP }}
-          BUDGET_ALERT_EMAIL: ${{ vars.BUDGET_ALERT_EMAIL }}
+          BUDGET_ALERT_EMAIL: ${{ secrets.BUDGET_ALERT_EMAIL }}
         run: infra/deploy.sh
 
   api:
@@ -130,17 +131,17 @@ jobs:
 
       - uses: azure/login@v2
         with:
-          client-id: ${{ vars.AZURE_CLIENT_ID }}
-          tenant-id: ${{ vars.AZURE_TENANT_ID }}
-          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       # The same Bicep as infra with the new image, so port, probes, settings and roles stay in one
-      # place. The image is private: the app pulls it with the registry credential that deploy.sh
-      # carries over. The new revision takes traffic only once its /healthz probe passes.
+      # place. The image is public, so the app pulls it with no credential. The new revision takes
+      # traffic only once its /healthz probe passes.
       - name: Release
         env:
           RG: ${{ vars.AZURE_RESOURCE_GROUP }}
-          BUDGET_ALERT_EMAIL: ${{ vars.BUDGET_ALERT_EMAIL }}
+          BUDGET_ALERT_EMAIL: ${{ secrets.BUDGET_ALERT_EMAIL }}
         run: infra/deploy.sh "$IMAGE"
 
       - name: Wait for /healthz
@@ -177,9 +178,9 @@ jobs:
 
       - uses: azure/login@v2
         with:
-          client-id: ${{ vars.AZURE_CLIENT_ID }}
-          tenant-id: ${{ vars.AZURE_TENANT_ID }}
-          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       # The deploy token is read at run time and masked, so it is never stored as a secret.
       - name: API address and deploy token
@@ -234,9 +235,9 @@ jobs:
 
       - uses: azure/login@v2
         with:
-          client-id: ${{ vars.AZURE_CLIENT_ID }}
-          tenant-id: ${{ vars.AZURE_TENANT_ID }}
-          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Create, claim, check totals, delete
         env:

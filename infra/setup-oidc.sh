@@ -86,12 +86,12 @@ az role assignment create --assignee-object-id "$principal_id" --assignee-princi
 
 cat <<EOF
 
-Done. Add these as GitHub repository variables (Settings > Secrets and variables > Actions >
-Variables). They are identifiers, not secrets.
+Done. Add these to GitHub (Settings > Secrets and variables > Actions). The ids and the email are
+secrets so that public workflow logs show them as ***; the resource group name is a variable.
 
-  gh variable set AZURE_CLIENT_ID       --body $client_id
-  gh variable set AZURE_TENANT_ID       --body $tenant
-  gh variable set AZURE_SUBSCRIPTION_ID --body $subscription
-  gh variable set AZURE_RESOURCE_GROUP  --body $group
-  gh variable set BUDGET_ALERT_EMAIL    --body <your email>
+  gh secret set AZURE_CLIENT_ID       --body $client_id
+  gh secret set AZURE_TENANT_ID       --body $tenant
+  gh secret set AZURE_SUBSCRIPTION_ID --body $subscription
+  gh secret set BUDGET_ALERT_EMAIL    --body <your email>
+  gh variable set AZURE_RESOURCE_GROUP --body $group
 EOF
