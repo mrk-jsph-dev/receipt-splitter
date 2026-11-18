@@ -44,8 +44,8 @@ Read before changing anything substantial:
 - Infra: Bicep in `infra/`. Deploy: one manual workflow, `.github/workflows/ci-cd.yml`.
 
 Do not add: databases (SQL, Cosmos), Redis, SignalR or WebSockets, accounts or login,
-Azure Container Registry (use GHCR: a private image, pulled with a `read:packages` token kept
-only as a Container App secret, see `infra/README.md`), Log Analytics workspaces, always-on compute,
+Azure Container Registry (use GHCR: a public image, pulled with no credential, see
+`infra/README.md`), Log Analytics workspaces, always-on compute,
 or extra third-party services. Keep it near $0/month.
 
 ## Money rules
