@@ -1,0 +1,127 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1380 760" width="1380" height="760" role="img" aria-label="Receipt Splitter architecture" font-family="ui-sans-serif, -apple-system, Segoe UI, Roboto, sans-serif">
+<defs>
+<pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.2" fill="#2a2f3a"/></pattern>
+<marker id="a-visitor" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#60a5fa"/></marker>
+<marker id="a-host" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2dd4bf"/></marker>
+<marker id="a-data" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#a78bfa"/></marker>
+<marker id="a-ai" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#fb923c"/></marker>
+<marker id="a-deploy" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#facc15"/></marker>
+<marker id="a-guard" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f87171"/></marker>
+</defs>
+<style>
+.edge{fill:none;stroke-width:2.5}
+.flow{fill:none;stroke-width:2.5;stroke-dasharray:6 10;animation:march 1.2s linear infinite;opacity:.9}
+@keyframes march{to{stroke-dashoffset:-32}}
+.mono{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace}
+@media (prefers-reduced-motion: reduce){.flow{animation:none}}
+</style>
+<rect x="0" y="0" width="1380" height="760" rx="18" fill="#12151b"/>
+<rect x="0" y="0" width="1380" height="760" rx="18" fill="url(#dots)"/>
+<text x="40" y="52" class="mono" font-size="20" fill="#c9ced8">How a bill moves through Receipt Splitter</text>
+<g class="e" id="e1" data-from="browser" data-to="swa">
+<path class="edge" d="M320,280 L435,280 L435,140 L550,140" stroke="#60a5fa" stroke-opacity=".55" marker-end="url(#a-visitor)"/>
+<path class="flow" d="M320,280 L435,280 L435,140 L550,140" stroke="#60a5fa"/>
+<circle r="5" fill="#60a5fa"><animateMotion dur="2.4s" repeatCount="indefinite" path="M320,280 L435,280 L435,140 L550,140"/></circle>
+<rect x="366" y="195" width="138" height="30" rx="15" fill="#12151b" stroke="#60a5fa" stroke-width="1.5"/>
+<text x="435" y="215" text-anchor="middle" class="mono" font-size="14" fill="#e6e9ef">loads the app</text>
+</g>
+<g class="e" id="e2" data-from="browser" data-to="api">
+<path class="edge" d="M320,320 L435,320 L435,380 L550,380" stroke="#60a5fa" stroke-opacity=".55" marker-end="url(#a-visitor)"/>
+<path class="flow" d="M320,320 L435,320 L435,380 L550,380" stroke="#60a5fa"/>
+<circle r="5" fill="#60a5fa"><animateMotion dur="2.4s" repeatCount="indefinite" path="M320,320 L435,320 L435,380 L550,380"/></circle>
+<rect x="358" y="335" width="155" height="30" rx="15" fill="#12151b" stroke="#60a5fa" stroke-width="1.5"/>
+<text x="435" y="355" text-anchor="middle" class="mono" font-size="14" fill="#e6e9ef">JSON over HTTPS</text>
+</g>
+<g class="e" id="e3" data-from="api" data-to="blob">
+<path class="edge" d="M830,350 L945,350 L945,220 L1060,220" stroke="#2dd4bf" stroke-opacity=".55" marker-end="url(#a-host)"/>
+<path class="flow" d="M830,350 L945,350 L945,220 L1060,220" stroke="#2dd4bf"/>
+<circle r="5" fill="#2dd4bf"><animateMotion dur="2.4s" repeatCount="indefinite" path="M830,350 L945,350 L945,220 L1060,220"/></circle>
+<rect x="855" y="270" width="181" height="30" rx="15" fill="#12151b" stroke="#2dd4bf" stroke-width="1.5"/>
+<text x="945" y="290" text-anchor="middle" class="mono" font-size="14" fill="#e6e9ef">bills, ETag checks</text>
+</g>
+<g class="e" id="e4" data-from="api" data-to="di">
+<path class="edge" d="M830,380 L1060,380" stroke="#2dd4bf" stroke-opacity=".55" marker-end="url(#a-host)"/>
+<path class="flow" d="M830,380 L1060,380" stroke="#2dd4bf"/>
+<circle r="5" fill="#2dd4bf"><animateMotion dur="2.4s" repeatCount="indefinite" path="M830,380 L1060,380"/></circle>
+<rect x="859" y="365" width="172" height="30" rx="15" fill="#12151b" stroke="#2dd4bf" stroke-width="1.5"/>
+<text x="945" y="385" text-anchor="middle" class="mono" font-size="14" fill="#e6e9ef">photo, not stored</text>
+</g>
+<g class="e" id="e5" data-from="actions" data-to="ghcr">
+<path class="edge" d="M320,610 L550,610" stroke="#facc15" stroke-opacity=".55" marker-end="url(#a-deploy)"/>
+<path class="flow" d="M320,610 L550,610" stroke="#facc15"/>
+<circle r="5" fill="#facc15"><animateMotion dur="2.4s" repeatCount="indefinite" path="M320,610 L550,610"/></circle>
+<rect x="379" y="595" width="112" height="30" rx="15" fill="#12151b" stroke="#facc15" stroke-width="1.5"/>
+<text x="435" y="615" text-anchor="middle" class="mono" font-size="14" fill="#e6e9ef">push image</text>
+</g>
+<g class="e" id="e6" data-from="ghcr" data-to="api">
+<path class="edge" d="M690,560 L690,430" stroke="#facc15" stroke-opacity=".55" marker-end="url(#a-deploy)"/>
+<path class="flow" d="M690,560 L690,430" stroke="#facc15"/>
+<circle r="5" fill="#facc15"><animateMotion dur="2.4s" repeatCount="indefinite" path="M690,560 L690,430"/></circle>
+<rect x="634" y="480" width="112" height="30" rx="15" fill="#12151b" stroke="#facc15" stroke-width="1.5"/>
+<text x="690" y="500" text-anchor="middle" class="mono" font-size="14" fill="#e6e9ef">pull image</text>
+</g>
+<g class="e" id="e7" data-from="kill" data-to="api">
+<path class="edge" d="M1060,570 L965,570 L965,410 L830,410" stroke="#f87171" stroke-opacity=".55" marker-end="url(#a-guard)"/>
+<path class="flow" d="M1060,570 L965,570 L965,410 L830,410" stroke="#f87171"/>
+<circle r="5" fill="#f87171"><animateMotion dur="2.4s" repeatCount="indefinite" path="M1060,570 L965,570 L965,410 L830,410"/></circle>
+<rect x="896" y="475" width="138" height="30" rx="15" fill="#12151b" stroke="#f87171" stroke-width="1.5"/>
+<text x="965" y="495" text-anchor="middle" class="mono" font-size="14" fill="#e6e9ef">stops at 100%</text>
+</g>
+<g class="n" id="n-browser" data-id="browser" tabindex="-1">
+<rect x="40" y="250" width="280" height="100" rx="12" fill="#1b1f27" stroke="#60a5fa" stroke-width="2.5"/>
+<circle cx="64" cy="277" r="5" fill="#60a5fa"/>
+<text x="78" y="282" class="mono" font-size="14" letter-spacing="1.5" fill="#60a5fa">VISITOR</text>
+<text x="60" y="312" font-size="22" font-weight="600" fill="#f3f5f8">Browser</text>
+<text x="60" y="336" font-size="16" fill="#aab1bd">phone, tablet, desktop</text>
+</g>
+<g class="n" id="n-swa" data-id="swa" tabindex="-1">
+<rect x="550" y="90" width="280" height="100" rx="12" fill="#1b1f27" stroke="#2dd4bf" stroke-width="2.5"/>
+<circle cx="574" cy="117" r="5" fill="#2dd4bf"/>
+<text x="588" y="122" class="mono" font-size="14" letter-spacing="1.5" fill="#2dd4bf">HOST</text>
+<text x="570" y="152" font-size="22" font-weight="600" fill="#f3f5f8">Static Web Apps</text>
+<text x="570" y="176" font-size="16" fill="#aab1bd">Vue 3 app, Free plan</text>
+</g>
+<g class="n" id="n-api" data-id="api" tabindex="-1">
+<rect x="550" y="330" width="280" height="100" rx="12" fill="#1b1f27" stroke="#2dd4bf" stroke-width="2.5"/>
+<circle cx="574" cy="357" r="5" fill="#2dd4bf"/>
+<text x="588" y="362" class="mono" font-size="14" letter-spacing="1.5" fill="#2dd4bf">API</text>
+<text x="570" y="392" font-size="22" font-weight="600" fill="#f3f5f8">Container Apps</text>
+<text x="570" y="416" font-size="16" fill="#aab1bd">.NET 10 minimal API</text>
+</g>
+<g class="n" id="n-blob" data-id="blob" tabindex="-1">
+<rect x="1060" y="170" width="280" height="100" rx="12" fill="#1b1f27" stroke="#a78bfa" stroke-width="2.5"/>
+<circle cx="1084" cy="197" r="5" fill="#a78bfa"/>
+<text x="1098" y="202" class="mono" font-size="14" letter-spacing="1.5" fill="#a78bfa">DATA</text>
+<text x="1080" y="232" font-size="22" font-weight="600" fill="#f3f5f8">Blob Storage</text>
+<text x="1080" y="256" font-size="16" fill="#aab1bd">one JSON blob per bill</text>
+</g>
+<g class="n" id="n-di" data-id="di" tabindex="-1">
+<rect x="1060" y="330" width="280" height="100" rx="12" fill="#1b1f27" stroke="#fb923c" stroke-width="2.5"/>
+<circle cx="1084" cy="357" r="5" fill="#fb923c"/>
+<text x="1098" y="362" class="mono" font-size="14" letter-spacing="1.5" fill="#fb923c">SCAN</text>
+<text x="1080" y="392" font-size="22" font-weight="600" fill="#f3f5f8">Document Intelligence</text>
+<text x="1080" y="416" font-size="16" fill="#aab1bd">receipt model, F0</text>
+</g>
+<g class="n" id="n-kill" data-id="kill" tabindex="-1">
+<rect x="1060" y="520" width="280" height="100" rx="12" fill="#1b1f27" stroke="#f87171" stroke-width="2.5"/>
+<circle cx="1084" cy="547" r="5" fill="#f87171"/>
+<text x="1098" y="552" class="mono" font-size="14" letter-spacing="1.5" fill="#f87171">COST GUARD</text>
+<text x="1080" y="582" font-size="22" font-weight="600" fill="#f3f5f8">Budget + kill switch</text>
+<text x="1080" y="606" font-size="16" fill="#aab1bd">$1 a month cap</text>
+</g>
+<g class="n" id="n-actions" data-id="actions" tabindex="-1">
+<rect x="40" y="560" width="280" height="100" rx="12" fill="#1b1f27" stroke="#facc15" stroke-width="2.5"/>
+<circle cx="64" cy="587" r="5" fill="#facc15"/>
+<text x="78" y="592" class="mono" font-size="14" letter-spacing="1.5" fill="#facc15">DEPLOY</text>
+<text x="60" y="622" font-size="22" font-weight="600" fill="#f3f5f8">GitHub Actions</text>
+<text x="60" y="646" font-size="16" fill="#aab1bd">tests, Bicep, web upload</text>
+</g>
+<g class="n" id="n-ghcr" data-id="ghcr" tabindex="-1">
+<rect x="550" y="560" width="280" height="100" rx="12" fill="#1b1f27" stroke="#facc15" stroke-width="2.5"/>
+<circle cx="574" cy="587" r="5" fill="#facc15"/>
+<text x="588" y="592" class="mono" font-size="14" letter-spacing="1.5" fill="#facc15">IMAGE</text>
+<text x="570" y="622" font-size="22" font-weight="600" fill="#f3f5f8">Container Registry</text>
+<text x="570" y="646" font-size="16" fill="#aab1bd">public API image</text>
+</g>
+<text x="40" y="730" font-size="17" fill="#aab1bd">Dashed lines show the direction of each call. The interactive version steps through the flow.</text>
+</svg>

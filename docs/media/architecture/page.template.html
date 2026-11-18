@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Receipt Splitter architecture</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; background: #0b0d11; color: #e6e9ef; font: 16px/1.5 ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1400px; margin: 0 auto; padding: 24px 16px 40px; }
+  .card { position: relative; border-radius: 18px; overflow: hidden; }
+  svg { display: block; width: 100%; height: auto; }
+  .controls { position: absolute; top: 2.2%; right: 2.4%; display: flex; gap: 10px; }
+  button { font: 15px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: #e6e9ef; background: #1b1f27; border: 1.5px solid #3a404c; border-radius: 8px; padding: 10px 16px; cursor: pointer; }
+  button:hover, button[aria-pressed="true"] { border-color: #2dd4bf; }
+  #caption { min-height: 3em; margin: 16px 4px 0; font-size: 18px; color: #c9ced8; }
+  .n { cursor: pointer; transition: opacity .3s; outline: none; }
+  .n:focus-visible rect { stroke-width: 4; }
+  .e { transition: opacity .3s; }
+  .dim { opacity: .15; }
+  .flow { animation-play-state: paused; opacity: 0; }
+  .live .flow { animation-play-state: running; opacity: .9; }
+  .live .dot { opacity: 1; }
+  @media (max-width: 640px) { .controls { position: static; justify-content: flex-end; margin-bottom: 10px; } }
+  @media (prefers-reduced-motion: reduce) { .live .dot { opacity: 0; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="card">
+    <div class="controls">
+      <button id="play" type="button">Play</button>
+      <button id="all" type="button">Show all</button>
+    </div>
+    %%SVG%%
+  </div>
+  <p id="caption" aria-live="polite">Press Play to follow a bill step by step, or tap a box.</p>
+</main>
+<script>
+const DATA = %%DATA%%;
+const svg = document.querySelector('svg');
+const nodes = [...svg.querySelectorAll('.n')];
+const edges = [...svg.querySelectorAll('.e')];
+const caption = document.getElementById('caption');
+const playBtn = document.getElementById('play');
+let timer = null;
+
+function focusOn(edgeIds, nodeIds, text) {
+  edges.forEach(e => { const on = edgeIds.includes(e.id); e.classList.toggle('dim', !on); e.classList.toggle('live', on); });
+  nodes.forEach(n => n.classList.toggle('dim', !nodeIds.includes(n.dataset.id)));
+  caption.textContent = text;
+}
+function showAll() {
+  stop();
+  edges.forEach(e => { e.classList.remove('dim'); e.classList.add('live'); });
+  nodes.forEach(n => n.classList.remove('dim'));
+  caption.textContent = 'Every part at once. Tap a box to see what it does.';
+}
+function stop() { clearTimeout(timer); timer = null; playBtn.textContent = 'Play'; playBtn.setAttribute('aria-pressed', 'false'); }
+function play(i = 0) {
+  playBtn.textContent = 'Pause'; playBtn.setAttribute('aria-pressed', 'true');
+  const s = DATA.steps[i];
+  focusOn(s.edges, s.nodes, s.text);
+  timer = setTimeout(() => i + 1 < DATA.steps.length ? play(i + 1) : (stop(), showAll()), 3200);
+}
+playBtn.addEventListener('click', () => timer ? stop() : play());
+document.getElementById('all').addEventListener('click', showAll);
+nodes.forEach(n => {
+  const pick = () => {
+    stop();
+    const id = n.dataset.id;
+    const linked = edges.filter(e => e.dataset.from === id || e.dataset.to === id);
+    const ids = new Set([id]); linked.forEach(e => { ids.add(e.dataset.from); ids.add(e.dataset.to); });
+    focusOn(linked.map(e => e.id), [...ids], DATA.nodes[id].title + ' · ' + DATA.nodes[id].detail);
+  };
+  n.addEventListener('click', pick);
+  n.addEventListener('keydown', ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); pick(); } });
+});
+showAll();
+caption.textContent = 'Press Play to follow a bill step by step, or tap a box.';
+</script>
+</body>
+</html>
