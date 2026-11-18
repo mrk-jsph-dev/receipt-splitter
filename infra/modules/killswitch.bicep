@@ -20,6 +20,10 @@ param runbookUri string
 @description('True only when the action group is missing (infra/deploy.sh checks). Azure shows a webhook\'s address only when it is created, so the webhook and the action group that holds it are created together and left alone after.')
 param createWebhook bool
 
+@secure()
+@description('The new webhook\'s address, from the generateUri action (infra/deploy.sh). Bicep can\'t read it back from the webhook, so it is set on both the webhook and the action group.')
+param webhookUri string = ''
+
 @description('How long the webhook works. Only used when it is created.')
 param webhookExpiry string = dateTimeAdd(utcNow(), 'P10Y')
 
@@ -67,6 +71,7 @@ resource webhook 'Microsoft.Automation/automationAccounts/webhooks@2015-10-31' =
   name: 'budget-stop'
   properties: {
     isEnabled: true
+    uri: webhookUri
     expiryTime: webhookExpiry
     runbook: { name: runbook.name }
   }
@@ -81,7 +86,7 @@ resource actionGroup 'Microsoft.Insights/actionGroups@2023-01-01' = if (createWe
     webhookReceivers: [
       {
         name: 'stop-api'
-        serviceUri: webhook!.properties.uri
+        serviceUri: webhookUri
         useCommonAlertSchema: false
       }
     ]
