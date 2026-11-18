@@ -100,9 +100,27 @@ jobs:
           npm test
           npm run build
 
+      # Fails on any high or critical advisory, except the ones listed in ALLOWED. Only allow an
+      # advisory with no patched version, in a build-time-only package, and remove it once a fix ships.
+      #   GHSA-fc5q-39xc-vjpf  picomatch ReDoS (2026-11-18): every version affected, no fix yet.
+      #                        Build-time only (vite, vitest, vue-tsc, vue-router's build plugin);
+      #                        not in web/dist.
       - name: Web audit
         working-directory: web
-        run: npm audit --audit-level=high
+        env:
+          ALLOWED: '["GHSA-fc5q-39xc-vjpf"]'
+        run: |
+          npm audit --json > audit.json || true
+          blocking=$(jq -r --argjson allowed "$ALLOWED" '
+            [.vulnerabilities[].via[] | objects | select(.severity == "high" or .severity == "critical")
+             | (.url | split("/") | last) as $id | select($allowed | index($id) | not)
+             | "\($id) \(.name): \(.title)"] | unique | .[]' audit.json)
+          if [ -n "$blocking" ]; then
+            echo "::error::High or critical npm advisories:"
+            echo "$blocking"
+            exit 1
+          fi
+          echo "No blocking npm advisories (allowed: $ALLOWED)."
 
   # Deploy jobs. Each runs only from main, needs the tests, and waits for approval on the
   # GitHub "production" environment. Azure sign-in is OIDC: no Azure password or key is stored in
