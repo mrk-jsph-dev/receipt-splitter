@@ -61,19 +61,49 @@ The full rules are in [`docs/SPEC.md`](docs/SPEC.md), sections "Privacy" and
 
 ## Cost
 
-Built to cost close to $0 a month, using free tiers and scale-to-zero:
+Built to cost close to $0 a month, using free tiers and scale-to-zero. Every resource, and what
+could make it cost money (prices checked November 2026):
 
-| Service | Plan | Free allowance |
-|---|---|---|
-| Static Web Apps | Free | Hosting at no charge |
-| Container Apps | Consumption, 0 to 1 replicas | 180,000 vCPU-seconds, 360,000 GiB-seconds and 2 million requests per subscription per month |
-| Document Intelligence | F0 | 500 pages a month. The app caps scans at 15 a day and 3 per IP per hour, so a 31-day month stays at 465 |
-| Blob Storage | Standard LRS | Not free, but small JSON files cost cents a month at most |
-| Container image | GitHub Container Registry, public | Free |
+| Resource | Plan | Free allowance | What could make it cost money | Source |
+|---|---|---|---|---|
+| Static Web App | Free | Hosting at no charge | Nothing on the Free plan | [Static Web Apps pricing](https://azure.microsoft.com/pricing/details/app-service/static/) |
+| Container App (API) | Consumption, 0 to 1 replicas | 180,000 vCPU-seconds, 360,000 GiB-seconds and 2 million requests per subscription per month | Steady traffic that keeps it awake past the compute allowance, or more than 2 million requests. Per-IP limits reject extra requests, but each one still counts. Health probes don't count. | [Billing in Container Apps](https://learn.microsoft.com/azure/container-apps/billing) |
+| Container Apps environment | Consumption only | No charge of its own, and no logs destination | Adding a Dedicated workload profile or Log Analytics | [Billing in Container Apps](https://learn.microsoft.com/azure/container-apps/billing) |
+| Document Intelligence | F0 | 500 pages a month | Nothing: F0 can't bill. The app caps scans at 15 a day and 3 per IP per hour, so a 31-day month stays at 465 | [Document Intelligence pricing](https://azure.microsoft.com/pricing/details/ai-document-intelligence/) |
+| Blob Storage | Standard LRS | None | Storage and operations, but small JSON files cost cents a month at most | [Blob Storage pricing](https://azure.microsoft.com/pricing/details/storage/blobs/) |
+| Automation account (kill switch) | Basic | No charge for the account; 500 job minutes a month | More than 500 job minutes in a month. One stop takes about a minute, and it runs only when the budget is passed or you test it | [Automation pricing](https://azure.microsoft.com/pricing/details/automation/) |
+| Action group (kill switch) | Webhook action | No charge for the group; 100,000 webhook calls a month | More than 100,000 calls. It is called once each time the budget is passed | [Azure Monitor pricing](https://azure.microsoft.com/pricing/details/monitor/) |
+| Budget, custom role, role assignments, webhook | | No charge | Nothing | |
+| Container image | GitHub Container Registry, public | Free | Nothing for a public package | |
 
-Prices and free tiers can change. A **budget alert** watches the resource group: $1 a month in
-your billing currency. It emails `BUDGET_ALERT_EMAIL` when actual spend passes 80% or the forecast
-passes 100%. It only alerts; it never stops anything. Change the amount in `infra/main.bicepparam`.
+Prices and free tiers can change.
+
+### Budget and kill switch
+
+A **budget** watches the resource group: $1 a month in your billing currency (change it in
+`infra/main.bicepparam`). It emails `BUDGET_ALERT_EMAIL` when actual spend passes 80% or the
+forecast passes 100%.
+
+When **actual** spend passes 100%, it also **stops the API**: the budget calls an action group,
+which calls a webhook that runs a runbook, which stops the Container App. Azure's cost data can be
+up to a day late and budgets are checked once a day, so the stop can come many hours after the
+spend. It limits the damage; it doesn't catch a spike as it happens.
+
+While the API is off, no replica runs and nothing reaches it. The web app shows "Can't reach the
+server", and deploys refuse to run, so nothing turns it back on by accident. The address and
+settings stay as they are.
+
+You can turn it off or on by hand at any time:
+
+```bash
+RG=<resource-group> infra/kill-switch.sh off      # stops answering within seconds
+RG=<resource-group> infra/kill-switch.sh status   # running status and what /healthz answers
+RG=<resource-group> infra/kill-switch.sh on       # starts it, then runs the smoke test
+```
+
+After an automatic stop, find out what spent the money first (Cost Management > Cost analysis on
+the resource group), then turn the API back on with `kill-switch.sh on`. It stays off, even into
+the next month, until you do.
 
 ## Run locally
 
