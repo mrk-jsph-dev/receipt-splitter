@@ -23,9 +23,14 @@ There are no accounts. Friends join by link. Bills delete themselves 30 days aft
 **Who it's for:** anyone splitting a bill with friends, and developers who want to see a small,
 near-$0 Azure app built with .NET 10 and Vue.
 
-<p align="center"><img src="docs/media/demo.gif" alt="Trying the sample receipt: pick a name, tap Mine on two items, open the breakdown, then Settle" width="320"></p>
+<p align="center"><img src="docs/media/demo-desktop.gif" alt="Trying the sample receipt on a laptop: pick a name, claim an item, drag two items onto friends, check your share, then Settle" width="900"></p>
 
-<p align="center"><em>The sample bill on a phone: pick your name, claim two items, check your share, then settle up.</em></p>
+<p align="center"><em>The sample bill on a laptop: pick your name, claim an item, drag items onto friends, check your share, then settle up.</em></p>
+
+<details>
+<summary>See it on a phone</summary>
+<p align="center"><img src="docs/media/demo-phone.gif" alt="The same sample bill on a phone, using Mine buttons instead of drag and drop" width="320"></p>
+</details>
 
 ### Try it in under a minute
 
