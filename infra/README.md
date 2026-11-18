@@ -13,7 +13,7 @@ modules/staticwebapp.bicep  Static Web App (Free) for the Vue app
 modules/roles.bicep      the API identity's two data roles
 modules/budget.bicep     monthly cost budget with email alerts
 setup-oidc.sh            one-time GitHub to Azure sign-in setup
-deploy.sh                deploys main.bicep, keeping the running image and registry credential
+deploy.sh                deploys main.bicep, keeping the running image
 smoke.sh                 post-deploy check against a running API
 ```
 
@@ -24,13 +24,13 @@ endpoint, the scan endpoint and the web origin go into the API's settings. The A
 into the role assignments. Storage and Document Intelligence names must be unique across Azure, so
 they get a suffix derived from the resource group id. That suffix stays the same on every deploy.
 If `apiImage` is empty, the Container App runs Microsoft's public quickstart image on port 80 with
-no probes. That only happens before the first release, so that the app exists and you can add the
-registry credential to it.
+no probes. That only happens before the first release, so that the app exists before the first
+image is pushed.
 
 **`main.bicepparam`** holds the values you might change: name prefix, Static Web App region, budget
-amount and budget start month. The image tag, the registry token and the alert email are read from
-environment variables that `deploy.sh` sets. Releases therefore don't edit this file, and neither
-the token nor your email is committed to the repo.
+amount and budget start month. The image tag and the alert email are read from environment
+variables that `deploy.sh` sets. Releases therefore don't edit this file, and your email is not
+committed to the repo.
 
 **`modules/storage.bicep`** creates a Standard LRS storage account with two private containers,
 `bills` and `limits`. Shared key access is off, so connection strings and account keys don't work;
@@ -58,14 +58,9 @@ purge it with `az cognitiveservices account purge` before deploying again.
   The app's settings are `Storage__BlobServiceUri`, `Cors__AllowedOrigins__0` (the Static Web App's
   address) and `DocumentIntelligence__Endpoint`. All are plain addresses, not secrets.
 
-  The image is **private** on GHCR. The app pulls it with a GitHub classic token that has only the
-  `read:packages` scope. The token is stored only as a Container App secret (`ghcr-token`), which
-  costs nothing. It is never in GitHub, the repo or Key Vault.
-
-  A deploy replaces the app's whole configuration, including its secrets. So `deploy.sh` reads the
-  token back from the app before each deploy and passes it in again as a `@secure()` parameter,
-  which Azure doesn't keep in deployment history. If the app runs a real image but has no token,
-  `deploy.sh` stops instead of deploying, so a deploy can't leave the app unable to pull.
+  The image is **public** on GHCR. It holds only what the public code already shows, so the app
+  pulls it with no credential, and the app has no secrets and no registry entry. There is no token
+  to keep or renew.
 
 **`modules/staticwebapp.bicep`** creates a Free-plan Static Web App with no link to the repo. The
 workflow builds `web/` itself and uploads the result with a deploy token that it reads from Azure at
@@ -96,23 +91,16 @@ changing the start date once the budget exists.
    - gives the app **Contributor** on the resource group;
    - gives the app **User Access Administrator** on the resource group, with a condition that it
      can only assign or remove the two roles above.
-3. Run the `gh variable set` lines it prints. They are repository **variables**, not secrets:
-   `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_RESOURCE_GROUP`,
-   `BUDGET_ALERT_EMAIL`.
+3. Run the `gh secret set` and `gh variable set` lines it prints. `AZURE_CLIENT_ID`,
+   `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID` and `BUDGET_ALERT_EMAIL` are repository **secrets**,
+   so the public workflow logs show them as `***`. `AZURE_RESOURCE_GROUP` is a **variable**.
 4. In GitHub, create an environment named `production` (Settings > Environments). Add yourself as
    a required reviewer and limit deployment branches to `main`.
 5. Run `target=infra` once (below). It creates the Container App with a placeholder image.
-6. Give the app its registry credential, once:
-   1. Create a GitHub **classic** token at https://github.com/settings/tokens/new with only the
-      `read:packages` scope. Use a new token, not one shared with another app, so revoking one doesn't break the
-      other. If you give it an expiry, note the date: a new image can't be pulled once it lapses.
-   2. Add it to the app. Leading the command with a space keeps it out of your shell history in
-      most setups:
-      ```bash
-       az containerapp registry set -n receipt-splitter-api -g <resource-group> \
-         --server ghcr.io --username <github-user> --password <token>
-      ```
-   3. To replace the token later, run the same command with the new one.
+6. After the first `target=api` run creates the `receipt-splitter-api` package, make it public:
+   GitHub > your profile > Packages > `receipt-splitter-api` > Package settings > Change
+   visibility > Public. The workflow token can't change package visibility, so this is a manual
+   step. Until then the app can't pull the image.
 
 ## Deploying
 
@@ -127,9 +115,6 @@ gh workflow run ci-cd.yml -f target=all     # infra, then api, then web
 Deploy jobs run only from `main` and wait for your approval on the `production` environment. After
 any deploy, the smoke job runs `smoke.sh` against the live API. You can also run it yourself with
 `infra/smoke.sh https://<api-host>`.
-
-If `target=api` stops with "no ghcr.io registry credential", do setup step 6, then run it again.
-The image stays private.
 
 ## Checking locally
 
