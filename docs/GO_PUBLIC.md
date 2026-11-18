@@ -94,12 +94,17 @@ az login
 infra/setup-oidc.sh <subscription-id> rg-receipt-splitter southeastasia
 ```
 
-**11. Deploy.**
+**11. Deploy the first release, `1.0.0`.**
 
 ```bash
-gh workflow run ci-cd.yml -f target=all --ref main
+gh workflow run ci-cd.yml -f target=all -f version=1.0.0 --ref main
 gh run watch
 ```
+
+Once everything passes, the run tags `v1.0.0` and publishes the GitHub Release (README, "Releases").
+Then protect release tags: Settings > **Rules** > **Rulesets** > **New tag ruleset**, target
+`v*`, Enforcement **Active**, and turn on **Restrict updates** and **Restrict deletions** (leave
+**Restrict creations** off, or the workflow can't tag the next release).
 
 Approve the `production` deployments when asked. Open the run's **infra** job log, the `azure/login`
 steps and **Deploy Bicep**, and check that the email and the three ids show as `***`. If any of

@@ -433,6 +433,25 @@ cost nothing at this scale.
 
 **Deploy:** `infra`.
 
+### Module 15: Releases and versions
+
+Semantic versioning (`MAJOR.MINOR.PATCH`) and GitHub Releases, without a second workflow or any
+push trigger. `ci-cd.yml` takes an optional `version` input. The test job checks it first (format,
+`main`, a deploy target, new, higher than the last `v*` tag). The API image is built with it
+(`-p:InformationalVersion`), tagged with it, and `/healthz` reports it. The web build gets it as
+`VITE_APP_VERSION` and shows it on the home screen. The smoke test checks `/healthz` reports this
+run's version. Once every deploy and the smoke test pass, a `release` job tags `vX.Y.Z` and runs
+`gh release create --generate-notes`. Without a version, builds show `<last release>+<commit>`.
+
+**Done when**
+- `/healthz` returns `{ "status": "ok", "version": ... }` (API test), and the home screen shows the
+  version (web test for the value).
+- A run with a bad, lower or reused version fails in the test job, before any deploy.
+- `target=all -f version=1.0.0` ends with tag `v1.0.0`, a GitHub Release, and image tag `1.0.0`.
+- README "Releases" lists what raises major, minor and patch.
+
+**Deploy:** `all` with `version=1.0.0` (`docs/GO_PUBLIC.md`, step 11).
+
 ## Open items to settle before the module that needs them
 
 | Item | Needed by | Default if you say nothing |

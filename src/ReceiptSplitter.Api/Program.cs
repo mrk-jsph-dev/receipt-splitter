@@ -40,8 +40,8 @@ var app = builder.Build();
 app.UseHttpHardening();
 app.UseRateLimiter();
 
-// Used by the Container Apps health probe and the deploy smoke test.
-app.MapGet("/healthz", () => Results.Ok(new { status = "ok" }));
+// Used by the Container Apps health probe and the deploy smoke test, which also checks the version.
+app.MapGet("/healthz", () => Results.Ok(new { status = "ok", version = AppVersion.Current }));
 CreateBill.Map(app);
 GetBill.Map(app);
 SetPin.Map(app);
