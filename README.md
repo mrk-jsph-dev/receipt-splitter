@@ -1,32 +1,58 @@
 # Receipt Splitter
 
-Split a restaurant or grocery bill with friends. Snap or type the receipt, check what was read,
-share a link, and everyone taps what they had. The app shows who owes whom, to the centavo.
+**Snap the receipt, share one link, and everyone taps what they had.**
 
-No accounts. Friends join by link. Bills delete themselves 30 days after the last change.
+[![ci-cd](https://github.com/mrk-jsph-dev/receipt-splitter/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/mrk-jsph-dev/receipt-splitter/actions/workflows/ci-cd.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![.NET 10](https://img.shields.io/badge/.NET-10-512BD4)
+![Vue 3](https://img.shields.io/badge/Vue-3-42b883)
+<!-- [PLACEHOLDER] version badge: add once there is a first release tag. -->
 
-**Live:** [PLACEHOLDER: the Static Web App address, filled in after the first `web` deploy]
+**Live:** https://icy-hill-027848400.3.azurestaticapps.net
 
-## Try it in under a minute
+## Overview
 
-1. Open the live link and tap **Try the sample receipt**. No upload and no AI call: it builds a
-   bill from a bundled Ramen Nagi receipt with made-up names (Ana to Lia, 12 people).
+Splitting a group dinner by hand means a photo of the receipt in the group chat, someone doing
+maths on a calculator, and a discount or service charge that nobody shares out fairly. Receipt
+Splitter reads the receipt, lets you check every line, and gives the table one link. Friends open
+it, tap what they had, and see what they owe, to the smallest coin. Then it shows who pays whom
+with the fewest transfers.
+
+There are no accounts. Friends join by link. Bills delete themselves 30 days after the last change.
+
+**Who it's for:** anyone splitting a bill with friends, and developers who want to see a small,
+near-$0 Azure app built with .NET 10 and Vue.
+
+[PLACEHOLDER: demo GIF, recorded with the script in [`docs/DEMO.md`](docs/DEMO.md)]
+
+### Try it in under a minute
+
+1. Open the [live app](https://icy-hill-027848400.3.azurestaticapps.net) and tap
+   **Try the sample receipt**. No upload and no AI call: it builds a bill from a bundled Ramen Nagi
+   receipt with made-up names (Ana to Lia, 12 people).
 2. Pick a name under **Who are you?** and tap **Mine** on a couple of items.
 3. Tap **Breakdown** to see your share, with the discount and service charge applied.
 4. Open **Settle** to see who pays whom once everything is claimed.
 
-A 60-second demo script is in [`docs/DEMO.md`](docs/DEMO.md).
+## Key features
 
-## What it does
-
-- Scan a receipt (camera or gallery, several photos for a long receipt), type one in, or try the sample
-- Review every line before sharing; sharing stays locked until each receipt matches its printed total
-- Several receipts in one bill, each with its own fees, payer and list of who was there
-- Split by item, equally, or by shares
-- Discounts, service charge, tax and tip, each split by what people ordered or equally
-- Senior citizen and PWD discounts that stay with the card holder
-- Settle up with the fewest transfers across all receipts
-- The organizer can confirm payments, undo claims, lock the bill or delete it
+- **Start any way you like.** Scan a receipt from the camera or gallery (two photos for a long
+  one), type it in, or try the sample.
+- **Nothing is guessed.** You check every line before sharing, and sharing stays locked until
+  each receipt matches its printed total.
+- **Totals always add up.** Every split sums exactly to the receipt, down to the centavo, cent or
+  yen. Server-side maths, covered by tests.
+- **Fair fees and discounts.** Service charge, tax, tip and discounts split by what each person
+  ordered or equally. Senior citizen and PWD discounts stay with the card holder.
+- **Real dinners, not just one receipt.** Several receipts in one bill, each with its own fees,
+  payer and list of who was there. Split by item, equally, or by shares, and share a platter
+  between people.
+- **Settle up fast.** The fewest transfers across all receipts, a payment note on every card,
+  "I've paid" that the receiver confirms, and a plain-text summary to paste in the group chat.
+- **Join by link or QR.** No sign-up. The organizer can add an optional PIN, undo claims, lock
+  the bill or delete it.
+- **Works on any screen.** Phone, tablet and desktop layouts from 360 px to 1600 px, with
+  drag-and-drop on desktop and taps on touch screens.
 
 ## Privacy
 
@@ -58,6 +84,175 @@ A 60-second demo script is in [`docs/DEMO.md`](docs/DEMO.md).
 
 The full rules are in [`docs/SPEC.md`](docs/SPEC.md), sections "Privacy" and
 "Many bills, nothing leaking between them".
+
+## Tech stack
+
+| Layer | Technology | Hosting |
+|---|---|---|
+| Web app | Vue 3, TypeScript, Vite, Vue Router, Lucide icons | Azure Static Web Apps (Free) |
+| API | .NET 10 minimal API (ASP.NET Core) | Azure Container Apps (Consumption, scales to zero) |
+| Money maths | Pure C# library (`ReceiptSplitter.Core`), integer minor units, no I/O | Runs inside the API |
+| Storage | Azure Blob Storage, one JSON blob per bill, ETag concurrency | Standard LRS, lifecycle delete after 30 days |
+| Receipt scanning | Azure AI Document Intelligence, prebuilt receipt model | F0 (free) tier |
+| Infrastructure | Bicep | `infra/` |
+| CI/CD | GitHub Actions, one manual workflow, OIDC sign-in to Azure | Image on GitHub Container Registry |
+| Tests | xUnit (`dotnet test`), Vitest | Run by the workflow before any deploy |
+
+Managed identity everywhere. No connection strings or keys in code, config or GitHub secrets.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    user["Browser<br/>(phone, tablet, desktop)"]
+    swa["Static Web Apps<br/>Vue app"]
+    api["Container Apps<br/>.NET 10 minimal API"]
+    blob[("Blob Storage<br/>one JSON blob per bill")]
+    di["Document Intelligence<br/>receipt model, F0"]
+    budget["Budget alert"]
+    stop["Kill switch<br/>action group → runbook"]
+    gh["GitHub Actions<br/>ci-cd.yml"]
+    ghcr["GitHub Container Registry"]
+
+    user -->|loads the app| swa
+    user -->|JSON over HTTPS| api
+    api -->|read and write bills, ETags| blob
+    api -->|"photo in memory, then delete"| di
+    budget -->|spend past 100%| stop
+    stop -->|stops| api
+    gh -->|"OIDC: Bicep, web upload"| swa
+    gh -->|push image| ghcr
+    ghcr -->|pull image| api
+```
+
+The browser loads the Vue app from Static Web Apps and talks to the API directly. The API owns
+all money maths and returns computed breakdowns, so the browser never calculates money. Bills live
+as single JSON blobs with ETag checks, so two people claiming at once never overwrite each other,
+and a budget-driven kill switch stops the API if spending ever passes the cap.
+
+Sync is manual for now: a bill updates after your own changes and when you tap **Refresh**. This
+lets the API scale to zero between uses. Build the web app with `VITE_AUTO_SYNC=true` to turn
+polling back on.
+
+## Getting started
+
+### Prerequisites
+
+- [.NET 10 SDK](https://dotnet.microsoft.com/download) (`global.json` pins 10.0.100 or later)
+- [Node.js 22](https://nodejs.org/)
+- Optional: [Azurite](https://learn.microsoft.com/azure/storage/common/storage-use-azurite) to
+  run against local Blob Storage (see below)
+
+### Install and run
+
+```bash
+git clone https://github.com/mrk-jsph-dev/receipt-splitter.git
+cd receipt-splitter
+
+# API on http://localhost:5080
+dotnet test
+dotnet run --project src/ReceiptSplitter.Api
+
+# Web app on http://localhost:5173 (in a second terminal)
+cd web
+npm ci
+npm test
+npm run dev
+```
+
+Vite proxies `/api` and `/healthz` to `http://localhost:5080`, so the web app needs no
+configuration locally.
+
+### Configuration
+
+There are no secrets to set for local runs. The API reads `appsettings.json` and
+`appsettings.Development.json`, and any setting can be overridden with an environment variable
+(`Section__Key`):
+
+| Setting | Default | What it does |
+|---|---|---|
+| `Storage__ConnectionString` | `UseDevelopmentStorage=true` (Development) | Local Blob Storage through Azurite. Set it to an empty value to keep bills in memory instead. |
+| `Storage__BlobServiceUri` | empty | Production only. Blob endpoint reached with managed identity. |
+| `Scans__UseSample` | `false` | `true` makes every scanned photo read as the bundled Ramen Nagi receipt, with one price misread on purpose so the total check has work to do. |
+| `DocumentIntelligence__Endpoint` | empty | Production only. Without it (and without `Scans__UseSample`), scanning answers "not available" and the app offers typing the receipt in. Production refuses to start without it. |
+| `Scans__DailyCap` / `Scans__PerIpPerHour` | `15` / `3` | Scan limits that keep Document Intelligence inside its free tier. |
+
+The web app reads two build-time variables (see [`web/.env.example`](web/.env.example)):
+
+| Variable | Default | What it does |
+|---|---|---|
+| `VITE_API_BASE_URL` | empty | The API's address in production. Empty locally, where Vite proxies `/api`. The deploy workflow sets it. |
+| `VITE_AUTO_SYNC` | off | `true` turns automatic polling back on. |
+
+```bash
+cp web/.env.example web/.env.local   # only if you need to change either value
+```
+
+### Screenshots at every size
+
+`npm run screens` (in `web/`) screenshots each screen at 360, 390, 768, 1024, 1280 and 1600 px,
+light and dark, into `web/screens/` (git-ignored), and fails if a page scrolls sideways. It needs
+no API: requests are answered from `web/scripts/fixtures/`, which `node scripts/make-fixtures.mjs`
+rebuilds from a locally running API. First time only: `npx playwright install chromium`.
+Local only; it is not part of CI.
+
+## Usage examples
+
+### In the app
+
+The quickest path is **Try the sample receipt** on the home screen. To demo it to someone, follow
+the 60-second script in [`docs/DEMO.md`](docs/DEMO.md).
+
+### Against the API
+
+These calls work against a local API (`http://localhost:5080`) or a deployed one. They follow the
+deploy smoke test in [`infra/smoke.sh`](infra/smoke.sh). All money on the wire is integer minor
+units (centavos for PHP).
+
+Create a bill from the bundled sample. The organizer key comes back once and only its hash is kept:
+
+```bash
+API=http://localhost:5080
+
+curl -s -X POST "$API/api/bills" \
+  -H 'content-type: application/json' \
+  -d '{"source":"sample"}'
+```
+
+```json
+{ "id": "<22-character bill id>", "organizerKey": "<22-character key>" }
+```
+
+Read the bill and its computed breakdown. The response carries an `ETag`; send it back in
+`If-None-Match` and an unchanged bill answers `304 Not Modified`:
+
+```bash
+curl -s "$API/api/bills/$ID" | jq '{title: .bill.title, people: [.bill.people[].name], total: .breakdown.receipts[0].computedTotal}'
+```
+
+Pick a name as a friend, then claim an item with the person token that comes back in a header:
+
+```bash
+TOKEN=$(curl -s -o /dev/null -D - -X PATCH "$API/api/bills/$ID" \
+  -H 'content-type: application/json' \
+  -d "{\"op\":\"pick\",\"personId\":\"$PERSON\"}" \
+  | tr -d '\r' | awk -F': ' 'tolower($1) == "x-person-token" { print $2 }')
+
+curl -s -X PATCH "$API/api/bills/$ID" \
+  -H 'content-type: application/json' -H "X-Person-Token: $TOKEN" \
+  -d "{\"op\":\"claim\",\"unitId\":\"$UNIT\",\"personId\":\"$PERSON\",\"from\":[]}"
+```
+
+`from` is what you saw before the change. If someone else changed that item first, nothing is
+written and the API answers `409` with the latest bill.
+
+Delete the bill as the organizer:
+
+```bash
+curl -s -X DELETE "$API/api/bills/$ID" -H "X-Organizer-Key: $KEY"
+```
+
+Every endpoint, status code and header is listed in [`docs/SPEC.md`](docs/SPEC.md), section "API".
 
 ## Cost
 
@@ -105,33 +300,6 @@ After an automatic stop, find out what spent the money first (Cost Management > 
 the resource group), then turn the API back on with `kill-switch.sh on`. It stays off, even into
 the next month, until you do.
 
-## Run locally
-
-Needs the .NET 10 SDK and Node 22.
-
-```bash
-dotnet test
-dotnet run --project src/ReceiptSplitter.Api     # http://localhost:5080/healthz
-
-cd web
-npm ci
-npm test
-npm run dev                                       # http://localhost:5173
-```
-
-Scanning without Azure: start the API with `Scans__UseSample=true` and every photo reads as the
-bundled Ramen Nagi receipt (with one price misread on purpose, so the total check has work to do).
-Without it, and with no `DocumentIntelligence__Endpoint`, scanning answers "not available" and the
-app offers typing the receipt in. Production refuses to start without the endpoint.
-
-### Screenshots at every size
-
-`npm run screens` (in `web/`) screenshots each screen at 360, 390, 768, 1024, 1280 and 1600 px,
-light and dark, into `web/screens/` (git-ignored), and fails if a page scrolls sideways. It needs
-no API: requests are answered from `web/scripts/fixtures/`, which `node scripts/make-fixtures.mjs`
-rebuilds from a locally running API. First time only: `npx playwright install chromium`.
-Local only; it is not part of CI.
-
 ## Deploy
 
 One workflow, started by hand only: `.github/workflows/ci-cd.yml`.
@@ -168,13 +336,7 @@ step 6). Going public with this repo: follow [`docs/GO_PUBLIC.md`](docs/GO_PUBLI
 
 Details in [`infra/README.md`](infra/README.md), "Rollback".
 
-## Stack
-
-Vue + TypeScript + Vite on Azure Static Web Apps (Free) · .NET 10 minimal API on Azure
-Container Apps (Consumption, scales to zero) · Blob Storage · Azure AI Document Intelligence (F0).
-Managed identity everywhere, no stored keys. Infrastructure in Bicep.
-
-## Docs
+## Project docs
 
 | File | What it is |
 |---|---|
@@ -186,6 +348,23 @@ Managed identity everywhere, no stored keys. Infrastructure in Bicep.
 | [`docs/design/responsive.html`](docs/design/responsive.html) | Phone, tablet and desktop layouts and breakpoints |
 | [`docs/design/spec.html`](docs/design/spec.html) | Rendered spec with mockups |
 | [`CLAUDE.md`](CLAUDE.md) | Rules for Claude when working in this repo |
+
+## Contributing
+
+Bug reports and ideas are welcome as [issues](https://github.com/mrk-jsph-dev/receipt-splitter/issues).
+For a pull request:
+
+1. Open an issue first for anything bigger than a small fix, so we can agree on the approach.
+2. Keep each pull request to one change. Read [`docs/SPEC.md`](docs/SPEC.md) first: it is the
+   source of truth for the maths, the API and the privacy rules.
+3. Write the tests first for anything that touches money or security. Money is integer minor
+   units with `checked` arithmetic, never `double` or `float`.
+4. Run `dotnet test` and `cd web && npm ci && npm test` before you open it.
+5. Keep it near $0: no databases, accounts, real-time services or always-on compute. See
+   "Do not add" in [`CLAUDE.md`](CLAUDE.md).
+6. Never commit real receipt photos, real names, keys or connection strings.
+
+CI runs only when a maintainer starts it, so a maintainer will run the tests on your branch.
 
 ## License
 
