@@ -14,13 +14,21 @@ web/dist/
 .env.*
 appsettings.*.local.json
 *.pfx
+*.p12
+*.pem
+*.key
+.claude/settings.local.json
 __azurite_db_*
 __blobstorage__/
 
-# Receipt photos stay out of the repo (privacy)
+# Receipt photos, screenshots and saved breakdowns stay out of the repo (privacy)
 *.jpg
 *.jpeg
 *.heic
+*.heif
+*.png
+*.webp
+*.pdf
 receipts/
 # ...but the Receipts code slice is source, not photos
 !src/ReceiptSplitter.Core/Receipts/
@@ -35,3 +43,6 @@ receipts/
 !.vscode/extensions.json
 .DS_Store
 *.tsbuildinfo
+*.log
+test-results/
+playwright-report/
