@@ -9,8 +9,10 @@
 # resource group:
 #   - Contributor, to create and update the resources in main.bicep
 #   - User Access Administrator, limited by a condition to assigning only Storage Blob Data
-#     Contributor and Cognitive Services User (the two roles in infra/modules/roles.bicep)
-# Safe to run again. Prints the GitHub variables to add at the end.
+#     Contributor and Cognitive Services User (infra/modules/roles.bicep) and the kill switch's
+#     custom stop role (infra/modules/killswitch.bicep)
+# Safe to run again: it widens or narrows that condition to match. Prints the GitHub secrets and
+# variable to add at the end.
 set -euo pipefail
 
 if [[ $# -lt 3 ]]; then
@@ -26,12 +28,15 @@ app_name="github-${repo//\//-}-deploy"
 
 storage_blob_data_contributor=ba92f5b4-2d11-453d-a403-e96b0029c9fe
 cognitive_services_user=a97b65f3-24c7-4388-baec-2e87135dc908
+# The custom role's fixed id. Must match stopRoleId in infra/modules/killswitch.bicep.
+api_stop_role=f07c88ec-d902-4240-b0f0-31d94f3445c2
 
 az account set --subscription "$subscription"
 tenant=$(az account show --query tenantId -o tsv)
 
 echo "Registering resource providers (once per subscription)..."
-for namespace in Microsoft.App Microsoft.CognitiveServices Microsoft.Storage Microsoft.Web Microsoft.Consumption; do
+for namespace in Microsoft.App Microsoft.CognitiveServices Microsoft.Storage Microsoft.Web Microsoft.Consumption \
+  Microsoft.Automation Microsoft.Insights; do
   az provider register --namespace "$namespace" --output none
 done
 
@@ -78,11 +83,19 @@ echo "Role assignments on $group..."
 az role assignment create --assignee-object-id "$principal_id" --assignee-principal-type ServicePrincipal \
   --role Contributor --scope "$scope" --output none
 
-roles="$storage_blob_data_contributor, $cognitive_services_user"
+roles="$storage_blob_data_contributor, $cognitive_services_user, $api_stop_role"
 condition="((!(ActionMatches{'Microsoft.Authorization/roleAssignments/write'})) OR (@Request[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals {$roles})) AND ((!(ActionMatches{'Microsoft.Authorization/roleAssignments/delete'})) OR (@Resource[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals {$roles}))"
-az role assignment create --assignee-object-id "$principal_id" --assignee-principal-type ServicePrincipal \
-  --role "User Access Administrator" --scope "$scope" \
-  --condition "$condition" --condition-version 2.0 --output none
+# create returns an existing assignment unchanged, so an older condition is updated in place.
+existing=$(az role assignment list --assignee "$principal_id" --role "User Access Administrator" \
+  --scope "$scope" --query "[0]" -o json)
+if [[ -z "$existing" || "$existing" == null ]]; then
+  az role assignment create --assignee-object-id "$principal_id" --assignee-principal-type ServicePrincipal \
+    --role "User Access Administrator" --scope "$scope" \
+    --condition "$condition" --condition-version 2.0 --output none
+elif [[ $(jq -r .condition <<<"$existing") != "$condition" ]]; then
+  az role assignment update --output none \
+    --role-assignment "$(jq --arg c "$condition" '.condition = $c | .conditionVersion = "2.0"' <<<"$existing")"
+fi
 
 cat <<EOF
 
