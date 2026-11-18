@@ -189,4 +189,4 @@ Managed identity everywhere, no stored keys. Infrastructure in Bicep.
 
 ## License
 
-[PLACEHOLDER: license to be chosen]. See [`LICENSE`](LICENSE).
+MIT. See [`LICENSE`](LICENSE).
