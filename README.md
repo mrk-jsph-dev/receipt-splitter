@@ -2,7 +2,7 @@
 
 **Snap the receipt, share one link, and everyone taps what they had.**
 
-[![ci-cd](https://github.com/mrk-jsph-dev/receipt-splitter/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/mrk-jsph-dev/receipt-splitter/actions/workflows/ci-cd.yml)
+[![CI/CD: manual](https://img.shields.io/badge/CI%2FCD-manual%20run-2f6f6a)](https://github.com/mrk-jsph-dev/receipt-splitter/actions/workflows/ci-cd.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![.NET 10](https://img.shields.io/badge/.NET-10-512BD4)
 ![Vue 3](https://img.shields.io/badge/Vue-3-42b883)
