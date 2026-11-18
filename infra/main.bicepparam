@@ -9,5 +9,9 @@ param budgetAmount = 1
 // Must be the first of a month. Azure doesn't allow changing it once the budget exists.
 param budgetStartDate = '2026-11-01'
 
+param githubRepo = 'mrk-jsph-dev/receipt-splitter'
+
 param apiImage = readEnvironmentVariable('API_IMAGE', '')
+param runbookCommit = readEnvironmentVariable('RUNBOOK_COMMIT', 'main')
+param createStopWebhook = bool(readEnvironmentVariable('CREATE_STOP_WEBHOOK', 'false'))
 param budgetAlertEmail = readEnvironmentVariable('BUDGET_ALERT_EMAIL')
