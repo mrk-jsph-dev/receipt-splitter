@@ -23,7 +23,9 @@ There are no accounts. Friends join by link. Bills delete themselves 30 days aft
 **Who it's for:** anyone splitting a bill with friends, and developers who want to see a small,
 near-$0 Azure app built with .NET 10 and Vue.
 
-[PLACEHOLDER: demo GIF, recorded with the script in [`docs/DEMO.md`](docs/DEMO.md)]
+<p align="center"><img src="docs/media/demo.gif" alt="Trying the sample receipt: pick a name, tap Mine on two items, open the breakdown, then Settle" width="320"></p>
+
+<p align="center"><em>The sample bill on a phone: pick your name, claim two items, check your share, then settle up.</em></p>
 
 ### Try it in under a minute
 
@@ -102,28 +104,9 @@ Managed identity everywhere. No connection strings or keys in code, config or Gi
 
 ## Architecture
 
-```mermaid
-flowchart LR
-    user["Browser<br/>(phone, tablet, desktop)"]
-    swa["Static Web Apps<br/>Vue app"]
-    api["Container Apps<br/>.NET 10 minimal API"]
-    blob[("Blob Storage<br/>one JSON blob per bill")]
-    di["Document Intelligence<br/>receipt model, F0"]
-    budget["Budget alert"]
-    stop["Kill switch<br/>action group → runbook"]
-    gh["GitHub Actions<br/>ci-cd.yml"]
-    ghcr["GitHub Container Registry"]
+[![Receipt Splitter architecture: the browser loads the Vue app from Static Web Apps and calls the .NET API on Container Apps, which keeps bills in Blob Storage and reads photos with Document Intelligence. GitHub Actions pushes the API image to GitHub Container Registry, and a budget kill switch can stop the API.](docs/media/architecture.svg)](https://icy-hill-027848400.3.azurestaticapps.net/architecture.html)
 
-    user -->|loads the app| swa
-    user -->|JSON over HTTPS| api
-    api -->|read and write bills, ETags| blob
-    api -->|"photo in memory, then delete"| di
-    budget -->|spend past 100%| stop
-    stop -->|stops| api
-    gh -->|"OIDC: Bicep, web upload"| swa
-    gh -->|push image| ghcr
-    ghcr -->|pull image| api
-```
+**[Open the interactive version](https://icy-hill-027848400.3.azurestaticapps.net/architecture.html)** to step through the flow with Play, or tap a box to see what it does.
 
 The browser loads the Vue app from Static Web Apps and talks to the API directly. The API owns
 all money maths and returns computed breakdowns, so the browser never calculates money. Bills live
@@ -220,19 +203,35 @@ curl -s -X POST "$API/api/bills" \
 ```
 
 ```json
-{ "id": "<22-character bill id>", "organizerKey": "<22-character key>" }
+{ "id": "34KxpQWuvJRTl4FlhoNgaP", "organizerKey": "2yp6N5rZzE9dnHQuhTxshm" }
 ```
 
-Read the bill and its computed breakdown. The response carries an `ETag`; send it back in
-`If-None-Match` and an unchanged bill answers `304 Not Modified`:
+Save both, then read the bill and its computed breakdown:
 
 ```bash
+ID=<id from above>
+KEY=<organizerKey from above>
+
 curl -s "$API/api/bills/$ID" | jq '{title: .bill.title, people: [.bill.people[].name], total: .breakdown.receipts[0].computedTotal}'
 ```
+
+```json
+{
+  "title": "Ramen dinner",
+  "people": ["Ana", "Ben", "Carla", "Dan", "Eli", "Fay", "Gio", "Hana", "Ivan", "Jo", "Kai", "Lia"],
+  "total": 525580
+}
+```
+
+`525580` is ₱5,255.80 in centavos. The response carries an `ETag`; send it back in
+`If-None-Match` and an unchanged bill answers `304 Not Modified`, which keeps refreshes cheap.
 
 Pick a name as a friend, then claim an item with the person token that comes back in a header:
 
 ```bash
+PERSON=$(curl -s "$API/api/bills/$ID" | jq -r '.bill.people[1].id')   # Ben
+UNIT=$(curl -s "$API/api/bills/$ID" | jq -r '.bill.receipts[0].lines[0].units[0].id')
+
 TOKEN=$(curl -s -o /dev/null -D - -X PATCH "$API/api/bills/$ID" \
   -H 'content-type: application/json' \
   -d "{\"op\":\"pick\",\"personId\":\"$PERSON\"}" \
@@ -240,8 +239,16 @@ TOKEN=$(curl -s -o /dev/null -D - -X PATCH "$API/api/bills/$ID" \
 
 curl -s -X PATCH "$API/api/bills/$ID" \
   -H 'content-type: application/json' -H "X-Person-Token: $TOKEN" \
-  -d "{\"op\":\"claim\",\"unitId\":\"$UNIT\",\"personId\":\"$PERSON\",\"from\":[]}"
+  -d "{\"op\":\"claim\",\"unitId\":\"$UNIT\",\"personId\":\"$PERSON\",\"from\":[]}" \
+  | jq --arg p "$PERSON" '.breakdown.receipts[0].people[] | select(.personId == $p) | {subtotal, total}'
 ```
+
+```json
+{ "subtotal": 48500, "total": 34774 }
+```
+
+One Butao King (₱485.00), plus Ben's equal share of the service charge, less his share of the 40%
+discount: ₱347.74.
 
 `from` is what you saw before the change. If someone else changed that item first, nothing is
 written and the API answers `409` with the latest bill.
