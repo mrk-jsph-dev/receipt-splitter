@@ -38,7 +38,14 @@ STOP_WEBHOOK_URI=
 if ! az resource show --ids "$group_id/Microsoft.Insights/actionGroups/$prefix-api-stop" >/dev/null 2>&1; then
   account_url="https://management.azure.com$group_id/Microsoft.Automation/automationAccounts/$prefix-automation"
   api_version=2023-11-01
-  az rest --method delete --url "$account_url/webhooks/budget-stop?api-version=$api_version" >/dev/null 2>&1 || true
+  # Webhooks only answer to API version 2015-10-31. A webhook's address can't be changed, so an old
+  # one must be gone before the new address is set.
+  webhook_url="$account_url/webhooks/budget-stop?api-version=2015-10-31"
+  az rest --method delete --url "$webhook_url" >/dev/null 2>&1 || true
+  if az rest --method get --url "$webhook_url" >/dev/null 2>&1; then
+    echo "::error::Could not delete the old stop webhook." >&2
+    exit 1
+  fi
   if ! az rest --method get --url "$account_url?api-version=$api_version" >/dev/null 2>&1; then
     location=$(az group show -n "$RG" --query location -o tsv)
     az rest --method put --url "$account_url?api-version=$api_version" --output none --body "{
