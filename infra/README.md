@@ -148,13 +148,14 @@ BUDGET_ALERT_EMAIL=you@example.com az bicep build-params -f infra/main.biceppara
 
 ## Rollback
 
-Every release is tagged with its commit, so rolling back means pointing the app at the previous
-tag. Find it in the package's version list or with `git log`. The new revision passes `/healthz`
+Every image is tagged with its commit, and a release (README, "Releases") also with its version,
+so rolling back means pointing the app at the previous tag. Find it in the package's version list,
+the GitHub Releases page or `git log`. The new revision passes `/healthz`
 before it takes traffic, and later infra runs keep whatever image is running.
 
 ```bash
 az containerapp update -g <resource-group> -n receipt-splitter-api \
-  --image ghcr.io/mrk-jsph-dev/receipt-splitter-api:<previous-commit-sha>
+  --image ghcr.io/mrk-jsph-dev/receipt-splitter-api:<previous-version-or-commit-sha>
 ```
 
 To roll the web app back, run `target=web` from the previous commit on `main`.

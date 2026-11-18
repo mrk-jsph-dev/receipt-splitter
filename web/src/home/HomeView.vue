@@ -13,6 +13,7 @@ import { currencies, currency } from '../shared/currencies';
 import { scanQuota } from '../shared/api';
 import { fillTray } from '../scan/tray';
 import { formatMoney } from '../shared/money';
+import { appVersion } from '../shared/version';
 import { forgetDevice, getProfileName, setProfileName } from '../shared/storage';
 import { isSettled, useDeviceBills, type DeviceBill } from './deviceBills';
 import ScanCard from './ScanCard.vue';
@@ -23,6 +24,7 @@ const busy = ref(false);
 const error = ref('');
 const forgetting = ref(false);
 const name = ref(getProfileName());
+const version = appVersion();
 
 type Filter = 'all' | 'open' | 'settled';
 const filter = ref<Filter>('all');
@@ -162,6 +164,7 @@ onMounted(load);
         </div>
       </section>
     </div>
+    <p class="version sm muted">Version {{ version }}</p>
   </main>
 
   <Overlay :open="typing" title="Type in a receipt" @close="typing = false">
@@ -227,6 +230,7 @@ onMounted(load);
 .right { display: flex; align-items: center; gap: 12px; }
 .note { display: flex; gap: 10px; align-items: flex-start; padding: 4px 2px; }
 .note svg { margin-top: 2px; }
+.version { max-width: 1120px; margin: 24px auto 0; text-align: center; overflow-wrap: anywhere; }
 .inline { all: unset; cursor: pointer; color: var(--accent); font-weight: 550; display: inline; }
 .inline:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
 @media (hover: hover) {
