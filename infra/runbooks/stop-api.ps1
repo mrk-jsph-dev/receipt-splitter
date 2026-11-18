@@ -11,6 +11,7 @@ $ErrorActionPreference = 'Stop'
 $appId = Get-AutomationVariable -Name 'ApiAppId'
 $token = Invoke-RestMethod -Method Get -Headers @{ 'X-IDENTITY-HEADER' = $env:IDENTITY_HEADER } `
   -Uri "$($env:IDENTITY_ENDPOINT)?resource=https://management.azure.com/&api-version=2019-08-01"
+# Without a content type, Invoke-RestMethod posts as form data and Azure answers 415.
 Invoke-RestMethod -Method Post -Headers @{ Authorization = "Bearer $($token.access_token)" } `
-  -Uri "https://management.azure.com$appId/stop?api-version=2026-01-01" | Out-Null
+  -ContentType 'application/json' -Uri "https://management.azure.com$appId/stop?api-version=2026-01-01" | Out-Null
 Write-Output "Stop requested for $appId"
