@@ -77,9 +77,12 @@ resource webhook 'Microsoft.Automation/automationAccounts/webhooks@2015-10-31' =
   }
 }
 
+// Created only after the webhook succeeds. infra/deploy.sh treats an existing action group as proof
+// that its webhook exists, so one left behind by a failed webhook would point at nothing.
 resource actionGroup 'Microsoft.Insights/actionGroups@2023-01-01' = if (createWebhook) {
   name: actionGroupName
   location: 'global'
+  dependsOn: [ webhook ]
   properties: {
     groupShortName: 'api-stop'
     enabled: true
