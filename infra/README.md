@@ -94,7 +94,9 @@ the budget exists.
   start, change or delete anything.
 - A **webhook** on the runbook and an **action group** that calls it. Azure shows a webhook's
   address only when it is created, so `deploy.sh` creates both together, only when the action group
-  is missing, and later deploys leave them alone. The webhook lasts 10 years. Anyone with its
+  is missing, and later deploys leave them alone. Bicep can't read a new webhook's address back, so
+  `deploy.sh` generates it first (the `generateUri` action, masked in logs) and passes it to Bicep as
+  a secure parameter. The webhook lasts 10 years. Anyone with its
   address could stop the API, so it is kept only inside the action group, and never in GitHub,
   logs or deployment outputs.
 
