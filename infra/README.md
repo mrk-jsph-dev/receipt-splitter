@@ -11,9 +11,12 @@ modules/docintel.bicep   Document Intelligence F0 for receipt scanning
 modules/containerapp.bicep  Container Apps environment and the API app
 modules/staticwebapp.bicep  Static Web App (Free) for the Vue app
 modules/roles.bicep      the API identity's two data roles
-modules/budget.bicep     monthly cost budget with email alerts
+modules/budget.bicep     monthly cost budget: email alerts, and the automatic stop at 100%
+modules/killswitch.bicep Automation runbook, webhook and action group that stop the API
+runbooks/stop-api.ps1    the runbook: stops the API Container App
 setup-oidc.sh            one-time GitHub to Azure sign-in setup
 deploy.sh                deploys main.bicep, keeping the running image
+kill-switch.sh           turns the API off or on by hand
 smoke.sh                 post-deploy check against a running API
 ```
 
@@ -77,8 +80,27 @@ duplicates. These are the only roles the deploy identity is allowed to assign (s
 
 **`modules/budget.bicep`** creates a monthly cost budget on the resource group. Its default is $1,
 in your billing currency. It emails `BUDGET_ALERT_EMAIL` when actual spend passes 80%, or when Azure
-forecasts the month will pass 100%. It only alerts; it never stops anything. Azure doesn't allow
-changing the start date once the budget exists.
+forecasts the month will pass 100%. When actual spend passes 100%, it emails and also calls the
+kill switch's action group, which stops the API. Azure doesn't allow changing the start date once
+the budget exists.
+
+**`modules/killswitch.bicep`** is the automatic half of the kill switch:
+- An **Automation account** with a system-assigned identity, and a PowerShell runbook,
+  `Stop-Api` (`runbooks/stop-api.ps1`). The runbook gets a token from that identity and calls the
+  Container App's `stop` action. It is published from the raw file on GitHub, pinned to the last
+  commit that changed it, so the repository must be public.
+- A custom role, **Receipt Splitter API stop**, with only `containerApps/read` and
+  `containerApps/stop/action`, assigned to the runbook's identity on the API app alone. It can't
+  start, change or delete anything.
+- A **webhook** on the runbook and an **action group** that calls it. Azure shows a webhook's
+  address only when it is created, so `deploy.sh` creates both together, only when the action group
+  is missing, and later deploys leave them alone. The webhook lasts 10 years. Anyone with its
+  address could stop the API, so it is kept only inside the action group, and never in GitHub,
+  logs or deployment outputs.
+
+**`kill-switch.sh off|on|status`** stops or starts the API at once by hand, with your `az login`.
+`on` runs the smoke test. **`deploy.sh` refuses to run while the API is off**, so a deploy never
+turns it back on by accident.
 
 ## One-time setup
 
@@ -90,7 +112,8 @@ changing the start date once the budget exists.
    - adds federated credentials for this repo's `main` branch and its `production` environment;
    - gives the app **Contributor** on the resource group;
    - gives the app **User Access Administrator** on the resource group, with a condition that it
-     can only assign or remove the two roles above.
+     can only assign or remove the two roles above and the kill switch's custom stop role. Run it
+     again after pulling a change to that list: it updates the condition in place.
 3. Run the `gh secret set` and `gh variable set` lines it prints. `AZURE_CLIENT_ID`,
    `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID` and `BUDGET_ALERT_EMAIL` are repository **secrets**,
    so the public workflow logs show them as `***`. `AZURE_RESOURCE_GROUP` is a **variable**.
