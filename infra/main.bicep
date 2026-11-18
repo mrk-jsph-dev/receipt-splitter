@@ -22,6 +22,15 @@ param budgetStartDate string
 @description('Who gets the budget alert emails.')
 param budgetAlertEmail string
 
+@description('owner/repo on GitHub. The stop runbook is published from its raw file there.')
+param githubRepo string
+
+@description('Commit that the stop runbook is published from. infra/deploy.sh sets it.')
+param runbookCommit string
+
+@description('Create the stop webhook and its action group. infra/deploy.sh sets it when the action group is missing.')
+param createStopWebhook bool = false
+
 // Storage and Document Intelligence names are global, so they get a suffix unique to this group.
 var suffix = uniqueString(resourceGroup().id)
 
@@ -71,6 +80,18 @@ module roles 'modules/roles.bicep' = {
   }
 }
 
+module killSwitch 'modules/killswitch.bicep' = {
+  name: 'killswitch'
+  params: {
+    location: location
+    accountName: '${namePrefix}-automation'
+    actionGroupName: '${namePrefix}-api-stop'
+    appName: api.outputs.name
+    runbookUri: 'https://raw.githubusercontent.com/${githubRepo}/${runbookCommit}/infra/runbooks/stop-api.ps1'
+    createWebhook: createStopWebhook
+  }
+}
+
 module budget 'modules/budget.bicep' = {
   name: 'budget'
   params: {
@@ -78,6 +99,7 @@ module budget 'modules/budget.bicep' = {
     amount: budgetAmount
     startDate: budgetStartDate
     alertEmail: budgetAlertEmail
+    stopActionGroupId: killSwitch.outputs.actionGroupId
   }
 }
 
