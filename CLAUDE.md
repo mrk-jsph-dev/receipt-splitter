@@ -78,4 +78,5 @@ dotnet run --project src/ReceiptSplitter.Api      # http://localhost:5080
 cd web && npm ci && npm run dev                    # http://localhost:5173
 cd web && npm test
 gh workflow run ci-cd.yml -f target=test           # or infra | api | web | all
+gh workflow run ci-cd.yml -f target=all -f version=1.2.0   # a release: tag v1.2.0 + GitHub Release
 ```

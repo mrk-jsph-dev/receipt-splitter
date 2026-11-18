@@ -2,11 +2,12 @@
 # Smoke test against a running API: create the sample bill, claim one unclaimed item, check the
 # totals, then delete the bill. Leaves nothing behind, even when a check fails.
 #
-#   infra/smoke.sh https://<api-host>
+#   infra/smoke.sh https://<api-host> [expected-version]
 set -euo pipefail
 
-api=${1:?Usage: $0 https://<api-host>}
+api=${1:?Usage: $0 https://<api-host> [expected-version]}
 api=${api%/}
+expected_version=${2:-}
 
 fail() { echo "Smoke test failed: $*" >&2; exit 1; }
 
@@ -16,6 +17,11 @@ for attempt in $(seq 1 30); do
   [[ $attempt -eq 30 ]] && fail "/healthz did not answer"
   sleep 5
 done
+
+if [[ -n "$expected_version" ]]; then
+  running=$(curl -fsS "$api/healthz" | jq -r .version)
+  [[ "$running" == "$expected_version" ]] || fail "/healthz reports $running, expected $expected_version"
+fi
 
 created=$(curl -fsS -X POST "$api/api/bills" -H 'content-type: application/json' -d '{"source":"sample"}')
 id=$(jq -r .id <<<"$created")

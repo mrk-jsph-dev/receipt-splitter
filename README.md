@@ -150,17 +150,49 @@ for approval on the `production` environment, and sign in to Azure with OIDC (no
 After any deploy, a smoke test creates the sample bill, claims an item, checks the totals and
 deletes it.
 
+Add `-f version=X.Y.Z` to any deploy except `infra` to make it a release (see "Releases" below).
+
 First deploy, in order: the one-time setup in [`infra/README.md`](infra/README.md) (OIDC, GitHub
 secrets, `production` environment), then `target=all`, then make the image package public (setup
 step 6). Going public with this repo: follow [`docs/GO_PUBLIC.md`](docs/GO_PUBLIC.md).
 
+### Releases
+
+Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`, starting at
+`1.0.0`.
+
+| Part | Raise it when | Example |
+|---|---|---|
+| **Major** (`2.0.0`) | Something that worked stops working: old bill links break, the stored bill format changes, or the API changes in a way the old web app can't use | Bill links move to a new address |
+| **Minor** (`1.1.0`) | A new feature that doesn't break anything | The bill PIN, the full breakdown |
+| **Patch** (`1.0.1`) | Bug fixes, copy fixes and dependency updates | A rounding display fix |
+
+A release is a deploy with a version:
+
+```bash
+gh workflow run ci-cd.yml -f target=all -f version=1.1.0 --ref main
+```
+
+Before anything deploys, the workflow checks the version: `X.Y.Z` with no leading zeros, run from
+`main`, a deploy target (`api`, `web`, `api-web` or `all`), not released before, and higher than
+the last release. After every deploy job and the smoke test pass, it tags the commit `v1.1.0` and
+publishes a GitHub Release with notes built from the PRs merged since the last one. A failed deploy
+gets no tag and no release. The API image gets a `1.1.0` tag as well as its commit tag.
+
+`/healthz` and the home screen show the running version. A deploy without a version shows the last
+release plus the commit, for example `1.1.0+abc1234`, so you can tell an unreleased build apart.
+Local runs show `0.0.0-dev` (API) and `dev` (web).
+
+A tag ruleset (Settings > Rules > Rulesets) keeps `v*` tags from being moved or deleted.
+
 ### Rollback
 
-- **API:** every image is tagged with its commit. Point the Container App back at the previous tag:
+- **API:** every image is tagged with its commit, and a release also with its version. Point the
+  Container App back at the previous one:
 
   ```bash
   az containerapp update -g <resource-group> -n receipt-splitter-api \
-    --image ghcr.io/mrk-jsph-dev/receipt-splitter-api:<previous-commit-sha>
+    --image ghcr.io/mrk-jsph-dev/receipt-splitter-api:<previous-version-or-commit-sha>
   ```
 
   The new revision must pass `/healthz` before it takes traffic.

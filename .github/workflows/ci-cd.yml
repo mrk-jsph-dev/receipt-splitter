@@ -1,5 +1,7 @@
 # One manual pipeline. Nothing runs on push or pull request, to save Actions minutes.
 # Run:  gh workflow run ci-cd.yml -f target=test   (or infra | api | web | api-web | all)
+# Release: add -f version=1.2.0 to a deploy. Once everything passed, it tags v1.2.0 and publishes a
+# GitHub Release (see "Releases" in README.md).
 name: ci-cd
 
 on:
@@ -10,6 +12,10 @@ on:
         type: choice
         default: test
         options: [test, infra, api, web, api-web, all]
+      version:
+        description: Release version, MAJOR.MINOR.PATCH (e.g. 1.2.0). Empty deploys without a release.
+        type: string
+        default: ''
 
 permissions:
   contents: read
@@ -27,8 +33,42 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    outputs:
+      app_version: ${{ steps.version.outputs.app_version }}
+      release: ${{ steps.version.outputs.release }}
     steps:
       - uses: actions/checkout@v4
+
+      # Checked before anything else, so a bad version never starts a deploy. A release is
+      # MAJOR.MINOR.PATCH, from main, with a deploy target, new, and higher than the last release.
+      # Without one, the build is labelled with the last release plus the commit: 1.2.0+abc1234.
+      - name: Version
+        id: version
+        env:
+          VERSION: ${{ inputs.version }}
+          TARGET: ${{ inputs.target }}
+        run: |
+          fail() { echo "::error::$*"; exit 1; }
+          v=${VERSION#v}
+          released=$(git ls-remote --tags --refs origin 'refs/tags/v*' | sed 's#.*refs/tags/v##' \
+            | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' || true)
+          latest=$(sort -V <<<"$released" | tail -n1)
+          if [ -z "$v" ]; then
+            echo "app_version=${latest:-0.0.0}+${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          [[ "$v" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]] \
+            || fail "Version must be MAJOR.MINOR.PATCH, like 1.2.0. Got: $VERSION"
+          [ "$GITHUB_REF" = refs/heads/main ] || fail "Releases run from main only."
+          [[ "$TARGET" =~ ^(api|web|api-web|all)$ ]] || fail "A release needs target api, web, api-web or all."
+          grep -qx "$v" <<<"$released" && fail "v$v is already released."
+          if [ -n "$latest" ] && [ "$(printf '%s\n%s\n' "$latest" "$v" | sort -V | tail -n1)" != "$v" ]; then
+            fail "v$v is lower than the last release, v$latest."
+          fi
+          echo "Releasing v$v (last release: ${latest:-none})"
+          echo "app_version=$v" >> "$GITHUB_OUTPUT"
+          echo "release=true" >> "$GITHUB_OUTPUT"
 
       - uses: actions/setup-dotnet@v4
         with:
@@ -124,10 +164,18 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # Every image is tagged with its commit. A release also tags it with its version.
       - name: Build and push
+        env:
+          APP_VERSION: ${{ needs.test.outputs.app_version }}
+          RELEASE: ${{ needs.test.outputs.release }}
         run: |
-          docker build -f src/ReceiptSplitter.Api/Dockerfile -t "$IMAGE" .
+          docker build -f src/ReceiptSplitter.Api/Dockerfile --build-arg APP_VERSION="$APP_VERSION" -t "$IMAGE" .
           docker push "$IMAGE"
+          if [ "$RELEASE" = true ]; then
+            docker tag "$IMAGE" "${IMAGE%:*}:$APP_VERSION"
+            docker push "${IMAGE%:*}:$APP_VERSION"
+          fi
 
       - uses: azure/login@v2
         with:
@@ -138,7 +186,7 @@ jobs:
       # The same Bicep as infra with the new image, so port, probes, settings and roles stay in one
       # place. The image is public, so the app pulls it with no credential. The new revision takes
       # traffic only once its /healthz probe passes.
-      - name: Release
+      - name: Roll out
         env:
           RG: ${{ vars.AZURE_RESOURCE_GROUP }}
           BUDGET_ALERT_EMAIL: ${{ secrets.BUDGET_ALERT_EMAIL }}
@@ -207,6 +255,8 @@ jobs:
 
       - name: Build
         working-directory: web
+        env:
+          VITE_APP_VERSION: ${{ needs.test.outputs.app_version }}
         run: |
           npm ci
           npm run build
@@ -239,9 +289,11 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Create, claim, check totals, delete
+      # When this run released the API, /healthz must also report this run's version.
+      - name: Version, create, claim, check totals, delete
         env:
           RG: ${{ vars.AZURE_RESOURCE_GROUP }}
+          EXPECTED_VERSION: ${{ needs.api.result == 'success' && needs.test.outputs.app_version || '' }}
         run: |
           app=$(az resource show -g "$RG" -n "$API_APP" --resource-type Microsoft.App/containerApps -o json 2>/dev/null || true)
           image=$(jq -r '.properties.template.containers[0].image // empty' <<<"$app")
@@ -250,4 +302,24 @@ jobs:
             echo "No API released yet, nothing to check. Run target=api."
             exit 0
           fi
-          infra/smoke.sh "https://$(jq -r .properties.configuration.ingress.fqdn <<<"$app")"
+          infra/smoke.sh "https://$(jq -r .properties.configuration.ingress.fqdn <<<"$app")" "$EXPECTED_VERSION"
+
+  # Only with a version, and only once every deploy and the smoke test passed: tags the deployed
+  # commit vX.Y.Z and publishes a GitHub Release with notes from the PRs merged since the last one.
+  release:
+    needs: [test, infra, api, web, smoke]
+    if: >-
+      always() && needs.test.outputs.release == 'true' && needs.smoke.result == 'success'
+      && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - name: Tag and publish the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.test.outputs.app_version }}
+        run: |
+          gh release create "v$VERSION" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+            --title "v$VERSION" --generate-notes
