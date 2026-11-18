@@ -69,7 +69,7 @@ Built to cost close to $0 a month, using free tiers and scale-to-zero:
 | Container Apps | Consumption, 0 to 1 replicas | 180,000 vCPU-seconds, 360,000 GiB-seconds and 2 million requests per subscription per month |
 | Document Intelligence | F0 | 500 pages a month. The app caps scans at 15 a day and 3 per IP per hour, so a 31-day month stays at 465 |
 | Blob Storage | Standard LRS | Not free, but small JSON files cost cents a month at most |
-| Container image | GitHub Container Registry, private | Free |
+| Container image | GitHub Container Registry, public | Free |
 
 Prices and free tiers can change. A **budget alert** watches the resource group: $1 a month in
 your billing currency. It emails `BUDGET_ALERT_EMAIL` when actual spend passes 80% or the forecast
@@ -121,8 +121,8 @@ After any deploy, a smoke test creates the sample bill, claims an item, checks t
 deletes it.
 
 First deploy, in order: the one-time setup in [`infra/README.md`](infra/README.md) (OIDC, GitHub
-variables, `production` environment), then `target=infra`, then the registry token (setup step 6),
-then `target=all`.
+secrets, `production` environment), then `target=all`, then make the image package public (setup
+step 6). Going public with this repo: follow [`docs/GO_PUBLIC.md`](docs/GO_PUBLIC.md).
 
 ### Rollback
 
@@ -151,6 +151,7 @@ Managed identity everywhere, no stored keys. Infrastructure in Bicep.
 | [`docs/SPEC.md`](docs/SPEC.md) | Data model, maths rules, API, security, deployment |
 | [`docs/EXECUTION_PLAN.md`](docs/EXECUTION_PLAN.md) | Build order with Claude Code CLI prompts and done criteria |
 | [`docs/DEMO.md`](docs/DEMO.md) | 60-second demo script using the sample |
+| [`docs/GO_PUBLIC.md`](docs/GO_PUBLIC.md) | Checklist for making the repository public |
 | [`docs/design/walkthrough.html`](docs/design/walkthrough.html) | Every screen in order (open in a browser) |
 | [`docs/design/responsive.html`](docs/design/responsive.html) | Phone, tablet and desktop layouts and breakpoints |
 | [`docs/design/spec.html`](docs/design/spec.html) | Rendered spec with mockups |
@@ -158,5 +159,4 @@ Managed identity everywhere, no stored keys. Infrastructure in Bicep.
 
 ## License
 
-Private. Copyright © 2026 MJ Dev. All rights reserved. This code is not licensed for use,
-copying or distribution. Choose a license before making the repository public.
+[PLACEHOLDER: license Mark picks]. See [`LICENSE`](LICENSE).

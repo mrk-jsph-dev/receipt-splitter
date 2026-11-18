@@ -427,7 +427,7 @@ Details settled while building the API (module 2):
             ├─▶ Blob Storage (same)  limits/{date}/{ipHash}.json   2-day lifecycle delete
             └─▶ Azure AI Document Intelligence — F0, prebuilt receipt model
           RBAC only: Storage Blob Data Contributor, Cognitive Services User.
-          No keys or connection strings anywhere. Image pulled from GitHub Container Registry (private, read:packages token kept only as a Container App secret).
+          No keys or connection strings anywhere. Image pulled from GitHub Container Registry (public, no registry credential).
 
 ### Why Container Apps for a minimal API
 
@@ -455,7 +455,7 @@ Bills grow with items and people, and a Table property caps at 64 KB. A blob per
 |------------------------------|-------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------|
 | Static Web Apps              | Free plan                                                                                                                     | None on Free; bandwidth limits apply                                                                                             |
 | Container Apps (Consumption) | Min replicas 0, max 1, 0.25 vCPU / 0.5 GiB, no Log Analytics workspace (no logs destination). Application Insights is off because it needs a Log Analytics workspace | Above the monthly free grant of 180,000 vCPU-seconds and 360,000 GiB-seconds. A 2-hour dinner with polling keeps one small replica awake about 2 hours. |
-| Container registry           | GitHub Container Registry, private image, pulled with a read-only token stored as a Container App secret                      | None. Azure Container Registry Basic would be a fixed monthly charge, so it is not used.                                         |
+| Container registry           | GitHub Container Registry, public image, pulled with no credential                                                              | None. Azure Container Registry Basic would be a fixed monthly charge, so it is not used.                                         |
 | Document Intelligence        | F0 tier, daily cap `SCAN_DAILY_CAP` = 15, 3 scans per IP per hour                                                             | None on F0; F0 refuses beyond 500 pages a month and reads only the first 2 pages of a file. 15/day keeps a 31-day month at 465.                    |
 | Storage (LRS)                | Small JSON, 304 polling, 30-day delete                                                                                        | Cents per month at most                                                                                                          |
 | Application Insights         | Not deployed: it would need a Log Analytics workspace                                                                | None                                                                                                                             |

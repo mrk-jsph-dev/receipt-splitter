@@ -2,10 +2,8 @@
 // replica, which the in-memory rate-limit cache relies on. The environment has no logs destination,
 // so there is no Log Analytics workspace to pay for.
 //
-// The image is private on GHCR. The app pulls it with a read:packages GitHub token kept only as a
-// Container App secret: set once by hand (infra/README.md), then read back and passed in by
-// infra/deploy.sh on every deploy, because a deploy replaces the app's whole configuration.
-// Before the first release there is no image or token yet, so the app runs a public placeholder.
+// The image is public on GHCR, so the app pulls it with no registry credential and holds no secret.
+// Before the first release there is no image yet, so the app runs a public placeholder.
 
 param location string
 param environmentName string
@@ -14,19 +12,12 @@ param appName string
 @description('API image. Empty runs the placeholder.')
 param image string
 
-@description('GitHub user the registry token belongs to.')
-param registryUsername string
-
-@secure()
-@description('read:packages token for ghcr.io. Empty means no registry credential.')
-param registryToken string
 param blobEndpoint string
 param docIntelEndpoint string
 param webOrigin string
 
 var placeholderImage = 'mcr.microsoft.com/k8se/quickstart:latest'
 var usePlaceholder = empty(image) || image == placeholderImage
-var hasRegistry = !empty(registryToken)
 
 resource environment 'Microsoft.App/managedEnvironments@2024-03-01' = {
   name: environmentName
@@ -44,8 +35,9 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
     managedEnvironmentId: environment.id
     configuration: {
       activeRevisionsMode: 'Single'
-      secrets: hasRegistry ? [ { name: 'ghcr-token', value: registryToken } ] : []
-      registries: hasRegistry ? [ { server: 'ghcr.io', username: registryUsername, passwordSecretRef: 'ghcr-token' } ] : []
+      // Empty on purpose: clears the old ghcr.io token and registry entry from before the image was public.
+      secrets: []
+      registries: []
       ingress: {
         external: true
         targetPort: usePlaceholder ? 80 : 8080

@@ -13,13 +13,6 @@ param namePrefix string = 'receipt-splitter'
 @description('API container image. Empty runs a public placeholder until the first release.')
 param apiImage string = ''
 
-@description('GitHub user that owns the ghcr.io registry token.')
-param registryUsername string = ''
-
-@secure()
-@description('read:packages token for the private ghcr.io image. infra/deploy.sh reads it back from the app.')
-param registryToken string = ''
-
 @description('Monthly budget in the billing currency.')
 param budgetAmount int = 1
 
@@ -63,8 +56,6 @@ module api 'modules/containerapp.bicep' = {
     environmentName: '${namePrefix}-env'
     appName: '${namePrefix}-api'
     image: apiImage
-    registryUsername: registryUsername
-    registryToken: registryToken
     blobEndpoint: storage.outputs.blobEndpoint
     docIntelEndpoint: docIntel.outputs.endpoint
     webOrigin: web.outputs.origin

@@ -1,5 +1,5 @@
-// Settings for main.bicep. No secrets here. The image, registry token and alert email come from
-// the environment that infra/deploy.sh sets, so this file stays the same between releases.
+// Settings for main.bicep. No secrets here. The image and alert email come from the environment
+// that infra/deploy.sh sets, so this file stays the same between releases.
 using 'main.bicep'
 
 param namePrefix = 'receipt-splitter'
@@ -10,6 +10,4 @@ param budgetAmount = 1
 param budgetStartDate = '2026-11-01'
 
 param apiImage = readEnvironmentVariable('API_IMAGE', '')
-param registryUsername = readEnvironmentVariable('REGISTRY_USERNAME', '')
-param registryToken = readEnvironmentVariable('REGISTRY_TOKEN', '')
 param budgetAlertEmail = readEnvironmentVariable('BUDGET_ALERT_EMAIL')

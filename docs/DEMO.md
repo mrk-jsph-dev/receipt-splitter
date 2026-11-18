@@ -7,8 +7,6 @@ devices: a phone for the organizer and a second phone (or a private browser wind
 - Open the live site on both devices. On the organizer phone, use a fresh browser profile or tap
   **Forget this device** first, so the welcome screen shows.
 - Put the phone in light mode with the font at its default size.
-- Changes reach the other device within about 10 seconds. Pause on that step instead of cutting
-  away.
 
 | Time | On screen | Say |
 |---|---|---|
@@ -18,7 +16,7 @@ devices: a phone for the organizer and a second phone (or a private browser wind
 | 0:20 | Tap **Share the bill**. The claim link and QR code appear | "One link for the table. Friends scan it or tap it in the group chat." |
 | 0:25 | Friend's phone: open the claim link, pick **Ben** under **Who are you?** | "Ben opens it. No account to make, just pick a name." |
 | 0:30 | Friend taps **Mine** on Gyu King, then **Breakdown** | "Tap what you had, and your share shows up, with your part of the discount and the service charge." |
-| 0:40 | Organizer phone: the Gyu King card shows Ben | "On my side, Ben's claim shows up on its own." |
+| 0:40 | Organizer phone: tap **Refresh** (the circular arrow at the top). The Gyu King card shows Ben | "On my side, one tap and Ben's claim is there." |
 | 0:45 | Organizer opens **Settle**: "Transfers show here once every item is claimed." | "Once everything's claimed, this shows who pays whom, with the fewest transfers." |
 | 0:52 | Back on Items | "No accounts. Photos are never stored. The bill deletes itself 30 days after the last change." |
 | 0:60 | End | |
