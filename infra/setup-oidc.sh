@@ -4,15 +4,15 @@
 #   az login
 #   infra/setup-oidc.sh <subscription-id> <resource-group> <region> [owner/repo]
 #
-# Creates (or reuses) the resource group, an Entra app registration with federated credentials
-# for this repo's main branch and its "production" environment, and two role assignments on the
-# resource group:
+# Creates (or reuses) the resource group, an Entra app registration with one federated credential
+# for this repo's "production" environment (so only approved deploy jobs can reach Azure), and two
+# role assignments on the resource group:
 #   - Contributor, to create and update the resources in main.bicep
 #   - User Access Administrator, limited by a condition to assigning only Storage Blob Data
 #     Contributor and Cognitive Services User (infra/modules/roles.bicep) and the kill switch's
 #     custom stop role (infra/modules/killswitch.bicep)
-# Safe to run again: it widens or narrows that condition to match. Prints the GitHub secrets and
-# variable to add at the end.
+# Safe to run again: it widens or narrows that condition to match, and removes the older
+# main-branch credential. Prints the GitHub secrets and variable to add at the end.
 set -euo pipefail
 
 if [[ $# -lt 3 ]]; then
@@ -76,8 +76,11 @@ add_credential() {
   fi
 }
 echo "Federated credentials for $prefix..."
-add_credential github-main "$prefix:ref:refs/heads/main"
 add_credential github-production "$prefix:environment:production"
+# Earlier versions also trusted any job on main; Azure access now needs the approved environment.
+if [[ -n $(az ad app federated-credential list --id "$client_id" --query "[?name=='github-main'].name" -o tsv) ]]; then
+  az ad app federated-credential delete --id "$client_id" --federated-credential-id github-main --output none
+fi
 
 echo "Role assignments on $group..."
 az role assignment create --assignee-object-id "$principal_id" --assignee-principal-type ServicePrincipal \
@@ -99,12 +102,13 @@ fi
 
 cat <<EOF
 
-Done. Add these to GitHub (Settings > Secrets and variables > Actions). The ids and the email are
-secrets so that public workflow logs show them as ***; the resource group name is a variable.
+Done. Create the "production" environment first (Settings > Environments), then add these. The
+ids and the email are environment secrets, readable only by approved deploy jobs and shown as ***
+in public logs; the resource group name is a repository variable.
 
-  gh secret set AZURE_CLIENT_ID       --body $client_id
-  gh secret set AZURE_TENANT_ID       --body $tenant
-  gh secret set AZURE_SUBSCRIPTION_ID --body $subscription
-  gh secret set BUDGET_ALERT_EMAIL    --body <your email>
+  gh secret set AZURE_CLIENT_ID       --env production --body $client_id
+  gh secret set AZURE_TENANT_ID       --env production --body $tenant
+  gh secret set AZURE_SUBSCRIPTION_ID --env production --body $subscription
+  gh secret set BUDGET_ALERT_EMAIL    --env production --body <your email>
   gh variable set AZURE_RESOURCE_GROUP --body $group
 EOF
