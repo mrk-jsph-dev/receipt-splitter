@@ -2,7 +2,7 @@
 
 ## Module
 
-<!-- e.g. Module 1: maths engine (docs/EXECUTION_PLAN.md) -->
+<!-- e.g. Module 1: maths engine -->
 
 ## Checks
 
