@@ -43,7 +43,7 @@ public sealed record ReceiptBreakdown(
     public bool Matches => Difference == 0;
 }
 
-/// <summary>The maths for one receipt. Nothing here reads another receipt. See docs/SPEC.md steps 1 to 10.</summary>
+/// <summary>The maths for one receipt. Nothing here reads another receipt.</summary>
 public static class ReceiptCalculator
 {
     public static ReceiptBreakdown Calculate(IReadOnlyList<Person> people, Receipt receipt)

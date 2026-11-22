@@ -2,7 +2,7 @@ using static ReceiptSplitter.Core.Tests.Build;
 
 namespace ReceiptSplitter.Core.Tests.Receipts;
 
-/// <summary>The senior lunch from docs/SPEC.md: four people, ₱2,240.00 of food, Lola has a senior card.</summary>
+/// <summary>A senior lunch: four people, ₱2,240.00 of food, Lola has a senior card.</summary>
 public class PersonScopedDiscountTests
 {
     private static readonly IReadOnlyList<Person> People =

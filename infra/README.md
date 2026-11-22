@@ -43,7 +43,7 @@ their last change, and `limits/` blobs (rate-limit counters and the salt for pri
 2 days.
 
 **`modules/docintel.bicep`** creates an Azure AI Document Intelligence account on the free F0 tier,
-for module 8's receipt scanning. Local auth is off, so API keys are disabled and the API signs in
+for receipt scanning. Local auth is off, so API keys are disabled and the API signs in
 with its managed identity. The custom subdomain is what makes Entra sign-in work. A subscription can
 hold only one F0 account of this kind. If you delete it, Azure keeps it soft-deleted for a while:
 purge it with `az cognitiveservices account purge` before deploying again.

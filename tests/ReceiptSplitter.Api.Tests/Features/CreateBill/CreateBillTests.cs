@@ -49,11 +49,11 @@ public class CreateBillTests(ApiFactory factory) : IClassFixture<ApiFactory>
     }
 
     [Fact]
-    public async Task Sample_claimed_as_in_the_walkthrough_gives_the_published_numbers()
+    public async Task Sample_with_the_shared_claims_gives_the_expected_totals()
     {
         using var client = factory.NewClient();
         var created = await client.CreateSampleAsync();
-        await client.ClaimLikeWalkthroughAsync(created.Id);
+        await client.ClaimSampleAsync(created.Id);
 
         var (after, breakdown) = await client.GetBillAsync(created.Id);
         Assert.Equal(40474, breakdown.Owed(after, "Ana"));

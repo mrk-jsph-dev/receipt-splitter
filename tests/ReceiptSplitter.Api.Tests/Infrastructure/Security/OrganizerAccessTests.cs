@@ -3,7 +3,7 @@ using ReceiptSplitter.Api.Infrastructure.Security;
 
 namespace ReceiptSplitter.Api.Tests.Infrastructure.Security;
 
-/// <summary>docs/SPEC.md section 9.3: the organizer key is needed to edit, confirm, undo, lock or delete.</summary>
+/// <summary>The organizer key is needed to edit, confirm, undo, lock or delete.</summary>
 public class OrganizerAccessTests(ApiFactory factory) : IClassFixture<ApiFactory>
 {
     public static TheoryData<string> Routes() => new()
