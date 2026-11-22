@@ -217,10 +217,10 @@ gh workflow run ci-cd.yml -f target=api-web # api, then web, without infra
 gh workflow run ci-cd.yml -f target=all     # infra, then api, then web
 ```
 
-Nothing runs on push or pull request, to save Actions minutes. Tests always run first. Deploys run
-only from `main`, wait for approval on the `production` environment and sign in to Azure with
-OIDC. After any deploy, a smoke test creates the sample bill, claims an item, checks the totals and
-deletes it.
+Nothing runs on push or pull request, to save Actions minutes. Tests always run first. Deploy and
+smoke jobs run only from `main`, in the `production` environment after approval, and sign in to
+Azure with OIDC; no other job can reach Azure. The smoke job starts after the deploys, so it asks
+for its own approval. It creates the sample bill, claims an item, checks the totals and deletes it.
 
 **Rollback:** every API image is tagged with its commit (and a release with its version). Point the
 Container App back at a previous one:
@@ -257,11 +257,16 @@ and the `AZURE_RESOURCE_GROUP` variable. Then run `target=all` and make the
 
 ## Repository settings (owner checklist)
 
-- Ruleset on `main`: require a pull request, block force pushes and deletion.
+- Ruleset on `main`: require a pull request, block force pushes and deletion. `CODEOWNERS` names
+  the owner for every path.
 - `production` environment: owner as required reviewer, deployment branches limited to `main`.
-- Code security: secret scanning with push protection, Dependabot alerts and Dependabot security
-  updates. No CodeQL.
-- Actions secrets hold the alert email and Azure ids; the only variable is the resource group name.
+  It holds the Azure ids and the alert email as environment secrets; the only repository variable
+  is the resource group name.
+- Actions → General: only GitHub-owned actions plus `azure/login`, `docker/login-action` and
+  `Azure/static-web-apps-deploy`; full-SHA pinning required; read-only default token; approval
+  required for all outside contributors.
+- Code security: secret scanning with push protection, Dependabot alerts, Dependabot security
+  updates and private vulnerability reporting. No CodeQL. See [`SECURITY.md`](SECURITY.md).
 
 ## Cost guardrails
 

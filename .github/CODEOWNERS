@@ -1,0 +1,4 @@
+# Every change needs the owner's review; pipelines and infrastructure especially.
+*               @mrk-jsph-dev
+/.github/       @mrk-jsph-dev
+/infra/         @mrk-jsph-dev
