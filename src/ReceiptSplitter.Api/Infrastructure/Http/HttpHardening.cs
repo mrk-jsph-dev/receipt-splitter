@@ -3,7 +3,7 @@ using ReceiptSplitter.Api.Infrastructure.Security;
 
 namespace ReceiptSplitter.Api.Infrastructure.Http;
 
-/// <summary>Headers, CORS and client IP handling from docs/SPEC.md section 9.6.</summary>
+/// <summary>Response headers (no-referrer, noindex, nosniff), the CORS policy, request size limits and the trusted client IP.</summary>
 public static class HttpHardening
 {
     public const string CorsPolicy = "app";

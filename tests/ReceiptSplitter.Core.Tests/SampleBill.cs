@@ -3,9 +3,8 @@ using static ReceiptSplitter.Core.Tests.Build;
 namespace ReceiptSplitter.Core.Tests;
 
 /// <summary>
-/// The Ramen Nagi receipt (mrk-jsph-dev/ramen-nagi-bill @ 0797ae0) with made-up names, as in
-/// docs/SPEC.md. Who claimed what for Fay to Lia is not in the spec; it was chosen so that every
-/// published number holds.
+/// The Ramen Nagi receipt with made-up names. The claims are chosen so the totals asserted in the
+/// tests hold.
 /// </summary>
 internal static class SampleBill
 {

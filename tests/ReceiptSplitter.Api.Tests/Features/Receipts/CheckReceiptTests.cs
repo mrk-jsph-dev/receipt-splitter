@@ -49,7 +49,7 @@ public class CheckReceiptTests(ApiFactory factory) : IClassFixture<ApiFactory>
         var misread = await (await client.OrganizerAsync(HttpMethod.Post, url, created.OrganizerKey, new { draft = RamenDraft(10500) })).ReadAsync<ReceiptCheck>();
         var fixedUp = await (await client.OrganizerAsync(HttpMethod.Post, url, created.OrganizerKey, new { draft = RamenDraft(19500) })).ReadAsync<ReceiptCheck>();
 
-        // Walkthrough step 6: adds up to 5,165.80, 90.00 short of 5,255.80.
+        // Kakuni Belly read as 105.00: adds up to 5,165.80, 90.00 short of 5,255.80.
         Assert.Equal(753500, misread!.Items);
         Assert.Equal([388000, 19000, 11500, 9500, 28500, 159000, 10500, 119000, 8500], misread.LineTotals);
         Assert.Equal(516580, misread.ComputedTotal);

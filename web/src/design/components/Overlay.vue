@@ -3,7 +3,7 @@ import { X } from 'lucide-vue-next';
 import { computed, nextTick, onBeforeUnmount, ref, useId, watch } from 'vue';
 import { prefersReducedMotion, useBreakpoint } from '../useBreakpoint';
 
-// One overlay for every size (docs/SPEC.md "Breakpoints"): a bottom sheet on phones, a centred
+// One overlay for every size: a bottom sheet on phones, a centred
 // dialog on tablets, and on laptops a side drawer for breakdowns ("detail") or a dialog for edits.
 // Escape and the close button close it; focus moves in on open and back on close.
 

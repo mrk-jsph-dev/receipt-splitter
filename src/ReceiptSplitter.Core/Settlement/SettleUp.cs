@@ -4,7 +4,7 @@ namespace ReceiptSplitter.Core.Settlement;
 
 public sealed record Transfer(string FromPersonId, string ToPersonId, long Amount);
 
-/// <summary>Who pays whom, netted once across the whole bill. See docs/SPEC.md step 11.</summary>
+/// <summary>Who pays whom, netted once across the whole bill.</summary>
 public static class SettleUp
 {
     /// <summary>

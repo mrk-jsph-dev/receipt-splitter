@@ -1,4 +1,4 @@
-/* Design tokens from docs/SPEC.md "Responsive layout": graphite neutrals, one deep teal accent.
+/* Design tokens: graphite neutrals, one deep teal accent.
    Teal means yours, amber still unclaimed, green paid, red check this. */
 :root {
   --bg: #F6F7F7; --surface: #FFFFFF; --ink: #111618; --ink-2: #3B4548; --muted: #6B777B;

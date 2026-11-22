@@ -2,7 +2,6 @@ namespace ReceiptSplitter.Core.Shared;
 
 /// <summary>
 /// Money is always an integer count of the currency's minor unit (centavos for PHP, yen for JPY).
-/// See docs/SPEC.md "Splitting maths rules".
 /// </summary>
 public readonly record struct Money(long Minor, string Currency);
 

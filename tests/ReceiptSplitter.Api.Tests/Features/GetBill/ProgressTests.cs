@@ -9,7 +9,7 @@ public class ProgressTests(ApiFactory factory) : IClassFixture<ApiFactory>
     {
         using var client = factory.NewClient();
         var created = await client.CreateSampleAsync();
-        await client.ClaimLikeWalkthroughAsync(created.Id);
+        await client.ClaimSampleAsync(created.Id);
         var bill = (await client.GetBillAsync(created.Id)).Bill;
 
         // Ana paid the whole dinner, so the other 11 owe her.
@@ -17,7 +17,7 @@ public class ProgressTests(ApiFactory factory) : IClassFixture<ApiFactory>
             await client.OrganizerAsync(HttpMethod.Post, $"/api/bills/{created.Id}/confirm", created.OrganizerKey, new { personId = bill.PersonId(name) });
         var progress = (await client.GetBillAsync(created.Id)).Breakdown!.Progress;
 
-        // Ben 385.74 + Carla 533.74 collected; the 11 owe 4,851.06 in all (walkthrough step 20).
+        // Ben 385.74 + Carla 533.74 collected; the 11 owe 4,851.06 in all.
         Assert.Equal(new BillProgress(525580, 11, 2, 18, 91948, 485106 - 91948), progress);
     }
 

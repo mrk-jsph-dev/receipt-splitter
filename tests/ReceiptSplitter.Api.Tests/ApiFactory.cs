@@ -167,8 +167,8 @@ internal static class Api
         return client.SendAsync(request);
     }
 
-    /// <summary>Who had what in the walkthrough. Fay to Lia are not in the spec; chosen so every published number holds.</summary>
-    public static readonly (string Line, int Unit, string Person)[] WalkthroughClaims =
+    /// <summary>Claims on the sample bill shared by the API tests. Chosen so the totals asserted in CreateBillTests hold.</summary>
+    public static readonly (string Line, int Unit, string Person)[] SampleClaims =
     [
         ("Butao King", 1, "Ana"), ("Butao King", 2, "Ben"), ("Butao King", 3, "Eli"), ("Butao King", 4, "Fay"),
         ("Butao King", 5, "Gio"), ("Butao King", 6, "Hana"), ("Butao King", 7, "Kai"), ("Butao King", 8, "Lia"),
@@ -179,10 +179,10 @@ internal static class Api
         ("Red King", 1, "Dan"), ("Red King", 2, "Jo"), ("Tamago", 1, "Kai"),
     ];
 
-    public static async Task ClaimLikeWalkthroughAsync(this HttpClient client, string id)
+    public static async Task ClaimSampleAsync(this HttpClient client, string id)
     {
         var bill = (await client.GetBillAsync(id)).Bill;
-        foreach (var (line, unit, person) in WalkthroughClaims)
+        foreach (var (line, unit, person) in SampleClaims)
             Assert.Equal(System.Net.HttpStatusCode.OK, (await client.ClaimAsync(id, bill.UnitId(line, unit), bill.PersonId(person))).StatusCode);
     }
 

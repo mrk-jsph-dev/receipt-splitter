@@ -3,7 +3,7 @@ using ReceiptSplitter.Core.Shared;
 
 namespace ReceiptSplitter.Api.Shared;
 
-// The stored bill: one JSON blob per bill. Mirrors docs/SPEC.md "Data model".
+// The stored bill: one JSON blob per bill.
 // Money is in integer minor units. Only the API reads and writes this shape; responses use BillView.
 
 public enum BillStatus { Draft, Shared, Locked }
