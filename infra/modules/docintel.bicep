@@ -1,4 +1,4 @@
-// Azure AI Document Intelligence on the free tier, for receipt scanning (module 8). Local auth is
+// Azure AI Document Intelligence on the free tier, for receipt scanning. Local auth is
 // off, so API keys don't work; the API signs in with its managed identity. A custom subdomain is
 // required for Entra sign-in. A subscription can hold only one F0 account of this kind.
 

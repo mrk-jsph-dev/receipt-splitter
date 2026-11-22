@@ -1,5 +1,5 @@
 // Screenshots every built screen at six widths, light and dark, into web/screens/ (git-ignored),
-// and fails if any page scrolls sideways. Local only, never in CI (docs/SPEC.md "Checks").
+// and fails if any page scrolls sideways. Local only, never in CI.
 //   npm run screens               all routes
 //   npm run screens -- home bill  only routes whose name contains "home" or "bill"
 // First time on a machine: npx playwright install chromium

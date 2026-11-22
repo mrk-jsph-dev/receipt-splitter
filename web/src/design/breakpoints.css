@@ -1,4 +1,4 @@
-/* The one place the sizes live (docs/SPEC.md "Breakpoints"). Mobile first: the base rules are
+/* The one place the breakpoint sizes live. Mobile first: the base rules are
    the phone layout and each size adds rules with min-width. CSS custom media isn't available
    without a build plugin, so components repeat these numbers in their own min-width queries:
 

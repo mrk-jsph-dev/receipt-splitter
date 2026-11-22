@@ -4,7 +4,7 @@ using ReceiptSplitter.Api.Infrastructure.Security;
 
 namespace ReceiptSplitter.Api.Tests.Infrastructure.Security;
 
-/// <summary>docs/SPEC.md section 9: many bills, nothing leaking between them.</summary>
+/// <summary>Bill isolation: no cross-bill ops, identical 404s, no listing route, no key hashes or personal data in responses and logs.</summary>
 public class BillIsolationTests(ApiFactory factory) : IClassFixture<ApiFactory>
 {
     [Fact]
