@@ -1,6 +1,6 @@
-# Builds docs/media/architecture.svg (animated, for the README) and web/public/architecture.html
+# Builds media/architecture.svg (animated, for the README) and web/public/architecture.html
 # (interactive) from one list of boxes and arrows. Run from the repo root:
-#   python3 docs/media/architecture/make.py
+#   python3 media/architecture/make.py
 import json, html
 NW,NH = 280,100
 G=230
@@ -87,7 +87,7 @@ def svg(interactive):
     o.append('</svg>')
     return '\n'.join(o)
 
-open('docs/media/architecture.svg','w').write(svg(False)+'\n')
+open('media/architecture.svg','w').write(svg(False)+'\n')
 data = {'nodes':{n[0]:{'title':n[3],'detail':n[7]} for n in N},'steps':[{'edges':s[0],'nodes':s[1],'text':s[2]} for s in STEPS]}
-page = open('docs/media/architecture/page.template.html').read().replace('%%SVG%%', svg(True)).replace('%%DATA%%', json.dumps(data))
+page = open('media/architecture/page.template.html').read().replace('%%SVG%%', svg(True)).replace('%%DATA%%', json.dumps(data))
 open('web/public/architecture.html','w').write(page)
