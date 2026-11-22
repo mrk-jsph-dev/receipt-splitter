@@ -20,22 +20,22 @@ transfers to settle up. No accounts; bills delete themselves 30 days after the l
 - **Three ways in:** scan from the camera or gallery (two photos for a long receipt), type it in,
   or load the bundled sample (**Try the sample receipt**: a Ramen Nagi bill with 12 made-up names,
   no upload and no Document Intelligence call).
-- **Nothing is auto-confirmed:** every scanned line is reviewed, and sharing stays blocked until
-  each receipt's computed total matches its printed total.
+- **Nothing is auto-confirmed:** the organizer checks every line before sharing, and sharing stays
+  blocked until each receipt matches its printed total.
 - **Exact splits:** integer minor units with `checked` arithmetic and largest-remainder
   allocation (ties broken by people order), so every split sums to the receipt to the smallest
   coin.
-- **Fees and discounts per receipt:** service charge, tax, tip and discounts split by item
-  subtotal or equally, and never leak into another receipt. Senior citizen, PWD and other
+- **Fees and discounts per receipt:** service charge, tax, tip and discounts split by what each
+  person ordered or equally, and never touch another receipt. Senior citizen, PWD and other
   person-scoped discounts stay with their holders in every split mode.
-- **Multi-receipt bills:** each receipt has its own fees, payer and attendees. Split by item,
-  equally or by shares; one unit can be shared between people.
-- **Settle up:** the fewest transfers netted across all receipts, payment notes, an "I've paid"
-  flag the receiver confirms, and a plain-text summary for the group chat.
+- **Multi-receipt bills:** each receipt has its own fees, payer and list of who was there. Split by
+  item, equally or by shares, and share a platter between people.
+- **Settle up:** the fewest transfers across all receipts, a payment note on every card, an
+  "I've paid" mark the receiver confirms, and a plain-text summary for the group chat.
 - **Organizer controls:** join by link or QR, optional bill PIN, undo claims, lock or delete the
   bill.
 - **Responsive:** phone, tablet and desktop layouts from 360 px to 1600 px, with drag-and-drop
-  on desktop and tap targets on touch screens.
+  on desktop and taps on touch screens.
 
 ## Privacy
 
@@ -47,8 +47,8 @@ transfers to settle up. No accounts; bills delete themselves 30 days after the l
   `#`, so it never reaches server logs. The API stores only its SHA-256 hash and compares in
   constant time.
 - **Receipt photos are never stored.** A photo is held in memory for one request and sent to
-  Document Intelligence; the API then deletes the analysis on the service side. If that delete
-  fails, Microsoft removes it after 24 hours
+  Document Intelligence. The API then asks the service to delete the photo and its result; if
+  that delete fails, the service drops both after 24 hours
   ([data and privacy notes](https://learn.microsoft.com/en-us/azure/foundry/responsible-ai/document-intelligence/data-privacy-security)).
   Tests assert the bytes never reach storage or logs.
 - **Minimal data:** item names, prices, fees, discounts, shop name, date and total, plus people's
@@ -59,7 +59,8 @@ transfers to settle up. No accounts; bills delete themselves 30 days after the l
   other sites.
 - **Retention:** a storage lifecycle rule deletes each bill **30 days after its last change**. The
   organizer can delete it at once, and **Forget this device** clears everything the app saved in
-  the browser: the saved name, organizer keys and the list of bills.
+  the browser: the saved name, friends, recent bills, who you are in each bill, organizer keys
+  and PIN tokens.
 
 ## Architecture
 
@@ -87,13 +88,14 @@ transfers to settle up. No accounts; bills delete themselves 30 days after the l
 | Node.js | 22 (LTS) | Frontend toolchain and CI. |
 
 ```
-src/ReceiptSplitter.Core/   money maths: Shared/ (bill model, Money, Allocate), Receipts/, Bills/, Settlement/
-src/ReceiptSplitter.Api/    minimal API: Features/ (one folder per endpoint), Infrastructure/ (storage, auth, rate limits)
-tests/                      xUnit projects mirroring the src/ folders
-web/                        Vue 3 + Vite + TypeScript: welcome/, home/, bill/, design/, shared/
-infra/                      Bicep (main.bicep, modules/), setup, smoke test and kill-switch scripts
+src/ReceiptSplitter.Core/   money maths, no I/O: Shared/ (Model, Money, Allocation), Receipts/, Bills/, Settlement/
+src/ReceiptSplitter.Api/    minimal API: Features/ (one folder per endpoint), Infrastructure/ (Http, RateLimits,
+                            Scanning, Security, Storage), Shared/ (stored bill and response shapes)
+tests/                      ReceiptSplitter.Core.Tests and ReceiptSplitter.Api.Tests (xUnit)
+web/                        Vue 3 + Vite + TypeScript: welcome/, home/, bill/, scan/, profile/, design/, shared/
+infra/                      Bicep (main.bicep, modules/), runbooks/, setup, deploy, smoke and kill-switch scripts
 samples/                    the bundled sample receipt
-.github/                    ci-cd.yml (manual only) and README media
+.github/                    ci-cd.yml (manual only), PR template, README media
 ```
 
 ## Versioning
@@ -103,9 +105,9 @@ Releases follow [Semantic Versioning](https://semver.org): `MAJOR.MINOR.PATCH`, 
 
 | Part | Bump when | Example |
 |---|---|---|
-| **MAJOR** | old bill links break, the stored bill format changes, or the API changes in a way the old web app can't use | `1.4.2` → `2.0.0` |
-| **MINOR** | a backward-compatible feature | `1.4.2` → `1.5.0` |
-| **PATCH** | a bug, copy or dependency fix | `1.4.2` → `1.4.3` |
+| **MAJOR** | old bill links break, the stored bill format changes, or the API changes in a way the old web app can't use | Bill links move to a new address |
+| **MINOR** | a backward-compatible feature | The bill PIN, the full breakdown |
+| **PATCH** | a bug, copy or dependency fix | A rounding display fix |
 
 - A release is a deploy with a version: `gh workflow run ci-cd.yml -f target=all -f version=1.1.0 --ref main`.
 - The workflow validates the version first (`X.Y.Z`, no leading zeros, from `main`, a deploy
@@ -255,11 +257,11 @@ and the `AZURE_RESOURCE_GROUP` variable. Then run `target=all` and make the
 
 ## Repository settings (owner checklist)
 
+- Ruleset on `main`: require a pull request, block force pushes and deletion.
 - `production` environment: owner as required reviewer, deployment branches limited to `main`.
-- Tag ruleset on `v*`: block updates and deletion.
-- Code security: secret scanning with push protection, and Dependabot alerts. No CodeQL.
-- Actions secrets hold every personal value (alert email, Azure ids); variables hold only the
-  resource group name.
+- Code security: secret scanning with push protection, Dependabot alerts and Dependabot security
+  updates. No CodeQL.
+- Actions secrets hold the alert email and Azure ids; the only variable is the resource group name.
 
 ## Cost guardrails
 
@@ -283,9 +285,10 @@ Sources: [Static Web Apps](https://azure.microsoft.com/pricing/details/app-servi
 [Automation](https://azure.microsoft.com/pricing/details/automation/),
 [Azure Monitor](https://azure.microsoft.com/pricing/details/monitor/).
 
-A $1 monthly budget on the resource group (`infra/main.bicepparam`) emails `BUDGET_ALERT_EMAIL`
-at 80% actual and 100% forecast spend. At 100% actual spend it calls an action group, whose webhook
-runs a runbook that stops the Container App. Cost data can lag up to a day and budgets are
+A monthly budget on the resource group (`budgetAmount = 1` in `infra/main.bicepparam`, in the
+billing currency) emails `BUDGET_ALERT_EMAIL` when actual spend passes 80% and 100%, and when the
+forecast passes 100%. At 100% actual spend it also calls an action group, whose webhook starts an
+Automation runbook (`infra/runbooks/stop-api.ps1`) that stops the Container App. Cost data can lag up to a day and budgets are
 evaluated daily, so this caps the damage rather than catching a spike in real time.
 
 Trade-off: with the API scaled to zero, the first request after an idle period waits for a cold
