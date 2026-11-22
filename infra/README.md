@@ -111,16 +111,18 @@ turns it back on by accident.
    `infra/setup-oidc.sh 0000... rg-receipt-splitter southeastasia`. It is safe to run again. It:
    - registers the resource providers;
    - creates the resource group and an Entra app registration;
-   - adds federated credentials for this repo's `main` branch and its `production` environment;
+   - adds one federated credential for this repo's `production` environment, and removes the
+     older `main`-branch credential if it exists, so only approved deploy jobs can sign in;
    - gives the app **Contributor** on the resource group;
    - gives the app **User Access Administrator** on the resource group, with a condition that it
      can only assign or remove the two roles above and the kill switch's custom stop role. Run it
      again after pulling a change to that list: it updates the condition in place.
-3. Run the `gh secret set` and `gh variable set` lines it prints. `AZURE_CLIENT_ID`,
-   `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID` and `BUDGET_ALERT_EMAIL` are repository **secrets**,
-   so the public workflow logs show them as `***`. `AZURE_RESOURCE_GROUP` is a **variable**.
-4. In GitHub, create an environment named `production` (Settings > Environments). Add yourself as
+3. In GitHub, create an environment named `production` (Settings > Environments). Add yourself as
    a required reviewer and limit deployment branches to `main`.
+4. Run the `gh secret set` and `gh variable set` lines it prints. `AZURE_CLIENT_ID`,
+   `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID` and `BUDGET_ALERT_EMAIL` are `production`
+   **environment secrets**: only jobs that passed approval can read them, and public workflow logs
+   show them as `***`. `AZURE_RESOURCE_GROUP` is a repository **variable**.
 5. Run `target=infra` once (below). It creates the Container App with a placeholder image.
 6. After the first `target=api` run creates the `receipt-splitter-api` package, make it public:
    GitHub > your profile > Packages > `receipt-splitter-api` > Package settings > Change
