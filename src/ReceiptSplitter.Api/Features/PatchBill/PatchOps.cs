@@ -6,7 +6,7 @@ namespace ReceiptSplitter.Api.Features.PatchBill;
 
 // One op per PATCH, picked by "op". Every op that changes existing data carries "from": what the
 // person saw. If the bill no longer matches it, nothing is written and the client gets 409 with the
-// latest bill. See docs/SPEC.md "Two people, same item".
+// latest bill.
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "op")]
 [JsonDerivedType(typeof(AddPersonOp), "addPerson")]

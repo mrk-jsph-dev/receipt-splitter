@@ -1,6 +1,6 @@
 namespace ReceiptSplitter.Core.Shared;
 
-// Bill data as the maths engine sees it. Mirrors docs/SPEC.md "Data model".
+// Bill data as the maths engine sees it.
 // All money is in minor units (long). Weights and shares are whole numbers; the API scales
 // fractional shares (a kid at 0.5) to integers before calling Core.
 

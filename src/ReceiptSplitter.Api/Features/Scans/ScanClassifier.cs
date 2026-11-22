@@ -8,9 +8,8 @@ namespace ReceiptSplitter.Api.Features.Scans;
 
 /// <summary>
 /// Turns what the receipt model read into a draft. Service charges and discounts are not receipt
-/// fields, so they arrive as items; their words and sign move them into fees and discounts
-/// (docs/SPEC.md "How a scan finds fees and discounts"). Every guess is flagged for review in the
-/// editor, and the total check catches anything missed. Nothing is ever auto-confirmed.
+/// fields, so they arrive as items; their words and sign move them into fees and discounts.
+/// Every guess is flagged for review in the editor, and the total check catches anything missed. Nothing is ever auto-confirmed.
 /// </summary>
 public static partial class ScanClassifier
 {

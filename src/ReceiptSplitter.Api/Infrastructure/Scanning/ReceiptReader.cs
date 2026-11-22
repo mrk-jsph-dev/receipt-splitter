@@ -118,7 +118,8 @@ public sealed class DocumentIntelligenceReader(DocumentIntelligenceClient client
 
 /// <summary>
 /// For running locally with no Azure: every photo "reads" as the Ramen Nagi receipt, with the
-/// Kakuni Belly misread as 105.00 like the walkthrough. Never used in production.
+/// Kakuni Belly misread as 105.00 (printed 195.00), so the total check reports 90.00 short.
+/// Never used in production.
 /// </summary>
 public sealed class SampleReceiptReader : IReceiptReader
 {

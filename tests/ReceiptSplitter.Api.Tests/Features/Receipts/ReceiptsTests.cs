@@ -79,7 +79,7 @@ public class ReceiptsTests(ApiFactory factory) : IClassFixture<ApiFactory>
     {
         using var client = factory.NewClient();
         var created = await client.CreateSampleAsync();
-        await client.ClaimLikeWalkthroughAsync(created.Id);
+        await client.ClaimSampleAsync(created.Id);
         var bill = (await client.GetBillAsync(created.Id)).Bill;
         var receipt = bill.Receipts[0];
 
@@ -139,7 +139,7 @@ public class ReceiptsTests(ApiFactory factory) : IClassFixture<ApiFactory>
     {
         using var client = factory.NewClient();
         var created = await client.CreateSampleAsync();
-        await client.ClaimLikeWalkthroughAsync(created.Id);
+        await client.ClaimSampleAsync(created.Id);
         var bill = (await client.GetBillAsync(created.Id)).Bill;
         string[] fourOfUs = [bill.PersonId("Ana"), bill.PersonId("Ben"), bill.PersonId("Carla"), bill.PersonId("Dan")];
 
