@@ -18,7 +18,11 @@ appsettings.*.local.json
 *.p12
 *.pem
 *.key
-.claude/settings.local.json
+/docs/
+CLAUDE.md
+CLAUDE.local.md
+.claude/
+.mcp.json
 __azurite_db_*
 __blobstorage__/
 

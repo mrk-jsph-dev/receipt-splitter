@@ -23,13 +23,13 @@ There are no accounts. Friends join by link. Bills delete themselves 30 days aft
 **Who it's for:** anyone splitting a bill with friends, and developers who want to see a small,
 near-$0 Azure app built with .NET 10 and Vue.
 
-<p align="center"><img src="docs/media/demo-desktop.gif" alt="Trying the sample receipt on a laptop: pick a name, claim an item, drag two items onto friends, check your share, then Settle" width="900"></p>
+<p align="center"><img src="media/demo-desktop.gif" alt="Trying the sample receipt on a laptop: pick a name, claim an item, drag two items onto friends, check your share, then Settle" width="900"></p>
 
 <p align="center"><em>The sample bill on a laptop: pick your name, claim an item, drag items onto friends, check your share, then settle up.</em></p>
 
 <details>
 <summary>See it on a phone</summary>
-<p align="center"><img src="docs/media/demo-phone.gif" alt="The same sample bill on a phone, using Mine buttons instead of drag and drop" width="320"></p>
+<p align="center"><img src="media/demo-phone.gif" alt="The same sample bill on a phone, using Mine buttons instead of drag and drop" width="320"></p>
 </details>
 
 ### Try it in under a minute
@@ -89,9 +89,6 @@ near-$0 Azure app built with .NET 10 and Vue.
 - **Forget this device** (home screen) clears everything the app saved in the browser: your name,
   organizer keys and the list of bills on this device.
 
-The full rules are in [`docs/SPEC.md`](docs/SPEC.md), sections "Privacy" and
-"Many bills, nothing leaking between them".
-
 ## Tech stack
 
 | Layer | Technology | Hosting |
@@ -109,7 +106,7 @@ Managed identity everywhere. No connection strings or keys in code, config or Gi
 
 ## Architecture
 
-[![Receipt Splitter architecture: the browser loads the Vue app from Static Web Apps and calls the .NET API on Container Apps, which keeps bills in Blob Storage and reads photos with Document Intelligence. GitHub Actions pushes the API image to GitHub Container Registry, and a budget kill switch can stop the API.](docs/media/architecture.svg)](https://icy-hill-027848400.3.azurestaticapps.net/architecture.html)
+[![Receipt Splitter architecture: the browser loads the Vue app from Static Web Apps and calls the .NET API on Container Apps, which keeps bills in Blob Storage and reads photos with Document Intelligence. GitHub Actions pushes the API image to GitHub Container Registry, and a budget kill switch can stop the API.](media/architecture.svg)](https://icy-hill-027848400.3.azurestaticapps.net/architecture.html)
 
 **[Open the interactive version](https://icy-hill-027848400.3.azurestaticapps.net/architecture.html)** to step through the flow with Play, or tap a box to see what it does.
 
@@ -188,8 +185,8 @@ Local only; it is not part of CI.
 
 ### In the app
 
-The quickest path is **Try the sample receipt** on the home screen. To demo it to someone, follow
-the 60-second script in [`docs/DEMO.md`](docs/DEMO.md).
+The quickest path is **Try the sample receipt** on the home screen. It loads a ready-made bill
+you can claim, split and settle in under a minute.
 
 ### Against the API
 
@@ -264,8 +261,6 @@ Delete the bill as the organizer:
 curl -s -X DELETE "$API/api/bills/$ID" -H "X-Organizer-Key: $KEY"
 ```
 
-Every endpoint, status code and header is listed in [`docs/SPEC.md`](docs/SPEC.md), section "API".
-
 ## Cost
 
 Built to cost close to $0 a month, using free tiers and scale-to-zero. Every resource, and what
@@ -334,7 +329,7 @@ Add `-f version=X.Y.Z` to any deploy except `infra` to make it a release (see "R
 
 First deploy, in order: the one-time setup in [`infra/README.md`](infra/README.md) (OIDC, GitHub
 secrets, `production` environment), then `target=all`, then make the image package public (setup
-step 6). Going public with this repo: follow [`docs/GO_PUBLIC.md`](docs/GO_PUBLIC.md).
+step 6).
 
 ### Releases
 
@@ -380,32 +375,18 @@ A tag ruleset (Settings > Rules > Rulesets) keeps `v*` tags from being moved or 
 
 Details in [`infra/README.md`](infra/README.md), "Rollback".
 
-## Project docs
-
-| File | What it is |
-|---|---|
-| [`docs/SPEC.md`](docs/SPEC.md) | Data model, maths rules, API, security, deployment |
-| [`docs/EXECUTION_PLAN.md`](docs/EXECUTION_PLAN.md) | Build order with Claude Code CLI prompts and done criteria |
-| [`docs/DEMO.md`](docs/DEMO.md) | 60-second demo script using the sample |
-| [`docs/GO_PUBLIC.md`](docs/GO_PUBLIC.md) | Checklist for making the repository public |
-| [`docs/design/walkthrough.html`](docs/design/walkthrough.html) | Every screen in order (open in a browser) |
-| [`docs/design/responsive.html`](docs/design/responsive.html) | Phone, tablet and desktop layouts and breakpoints |
-| [`docs/design/spec.html`](docs/design/spec.html) | Rendered spec with mockups |
-| [`CLAUDE.md`](CLAUDE.md) | Rules for Claude when working in this repo |
-
 ## Contributing
 
 Bug reports and ideas are welcome as [issues](https://github.com/mrk-jsph-dev/receipt-splitter/issues).
 For a pull request:
 
 1. Open an issue first for anything bigger than a small fix, so we can agree on the approach.
-2. Keep each pull request to one change. Read [`docs/SPEC.md`](docs/SPEC.md) first: it is the
-   source of truth for the maths, the API and the privacy rules.
+2. Keep each pull request to one change, and keep the maths, API and privacy rules described
+   above intact.
 3. Write the tests first for anything that touches money or security. Money is integer minor
    units with `checked` arithmetic, never `double` or `float`.
 4. Run `dotnet test` and `cd web && npm ci && npm test` before you open it.
-5. Keep it near $0: no databases, accounts, real-time services or always-on compute. See
-   "Do not add" in [`CLAUDE.md`](CLAUDE.md).
+5. Keep it near $0: no databases, accounts, real-time services or always-on compute.
 6. Never commit real receipt photos, real names, keys or connection strings.
 
 CI runs only when a maintainer starts it, so a maintainer will run the tests on your branch.
