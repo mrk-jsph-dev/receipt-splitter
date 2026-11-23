@@ -12,10 +12,12 @@ for a fix before any disclosure.
   federated credential bound to the `production` environment. The API reaches Blob Storage and
   Document Intelligence with its managed identity and holds no app secrets.
 - The Azure ids and the budget alert email are `production` environment secrets, readable only by
-  jobs that passed approval and masked in workflow logs.
+  jobs on `main` that use that environment, and masked in workflow logs. Every such job waits for
+  the approval gate.
 - The only workflow, `ci-cd.yml`, runs when the owner starts it (`workflow_dispatch`). Pushes and
   pull requests, including from forks, never trigger it. Deploy jobs run only from `main`, only in
-  the `production` environment, and only after the owner approves.
+  the `production` environment, and only after the owner approves the run once on the
+  `production-approval` environment.
 - Actions are pinned to full commit SHAs, only GitHub-owned and listed actions may run, and the
   default token is read-only.
 - `main` requires a pull request and blocks force pushes and deletion.

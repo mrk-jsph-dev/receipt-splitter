@@ -206,7 +206,7 @@ written and the API answers `409` with the latest bill.
 
 | Workflow | Runs on | Does |
 |---|---|---|
-| `ci-cd.yml` | manual only (`workflow_dispatch`) | tests, then the selected deploy target after `production` approval |
+| `ci-cd.yml` | manual only (`workflow_dispatch`) | tests, then one approval, then the selected deploy target |
 
 ```sh
 gh workflow run ci-cd.yml -f target=test    # tests only, any branch
@@ -217,10 +217,11 @@ gh workflow run ci-cd.yml -f target=api-web # api, then web, without infra
 gh workflow run ci-cd.yml -f target=all     # infra, then api, then web
 ```
 
-Nothing runs on push or pull request, to save Actions minutes. Tests always run first. Deploy and
-smoke jobs run only from `main`, in the `production` environment after approval, and sign in to
-Azure with OIDC; no other job can reach Azure. The smoke job starts after the deploys, so it asks
-for its own approval. It creates the sample bill, claims an item, checks the totals and deletes it.
+Nothing runs on push or pull request, to save Actions minutes. Tests always run first. A deploy
+then waits for one approval on the `production-approval` environment, and that approval covers the
+whole run. Deploy and smoke jobs run only from `main`, in the `production` environment, and sign in
+to Azure with OIDC; no other job can reach Azure. The smoke job creates the sample bill, claims an
+item, checks the totals and deletes it.
 
 **Rollback:** every API image is tagged with its commit (and a release with its version). Point the
 Container App back at a previous one:
@@ -259,9 +260,11 @@ and the `AZURE_RESOURCE_GROUP` variable. Then run `target=all` and make the
 
 - Ruleset on `main`: require a pull request, block force pushes and deletion. `CODEOWNERS` names
   the owner for every path.
-- `production` environment: owner as required reviewer, deployment branches limited to `main`.
-  It holds the Azure ids and the alert email as environment secrets; the only repository variable
-  is the resource group name.
+- `production-approval` environment: owner as required reviewer, deployment branches limited to
+  `main`, no secrets. The one approval gate for every deploy.
+- `production` environment: deployment branches limited to `main`, no reviewer (the gate above
+  covers it). It holds the Azure ids and the alert email as environment secrets; the only
+  repository variable is the resource group name.
 - Actions → General: only GitHub-owned actions plus `azure/login`, `docker/login-action` and
   `Azure/static-web-apps-deploy`; full-SHA pinning required; read-only default token; approval
   required for all outside contributors.
