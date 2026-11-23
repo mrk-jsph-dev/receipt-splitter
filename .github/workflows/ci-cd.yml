@@ -122,12 +122,22 @@ jobs:
           fi
           echo "No blocking npm advisories (allowed: $ALLOWED)."
 
-  # Deploy jobs. Each runs only from main, needs the tests, and waits for approval on the
-  # GitHub "production" environment. Azure sign-in is OIDC: no Azure password or key is stored in
-  # GitHub. The Azure ids and the alert email are repository secrets only so that logs mask them.
+  # One approval per run. This job waits on the "production-approval" environment (owner as
+  # required reviewer, main only, no secrets); every deploy job needs it. The deploy jobs then use
+  # the "production" environment, which holds the Azure ids and the alert email and is limited to
+  # main. Azure sign-in is OIDC, bound to "production": no Azure password or key is stored in GitHub.
+  approve:
+    needs: test
+    if: inputs.target != 'test'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: production-approval
+    steps:
+      - name: Deploys run from main only
+        run: test "$GITHUB_REF" = refs/heads/main || { echo "::error::Deploy from main only."; exit 1; }
 
   infra:
-    needs: test
+    needs: [test, approve]
     if: contains(fromJSON('["infra", "all"]'), inputs.target)
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -155,9 +165,9 @@ jobs:
         run: infra/deploy.sh
 
   api:
-    needs: [test, infra]
+    needs: [test, approve, infra]
     if: >-
-      always() && needs.test.result == 'success'
+      always() && needs.test.result == 'success' && needs.approve.result == 'success'
       && contains(fromJSON('["success", "skipped"]'), needs.infra.result)
       && contains(fromJSON('["api", "api-web", "all"]'), inputs.target)
     runs-on: ubuntu-latest
@@ -224,9 +234,9 @@ jobs:
           exit 1
 
   web:
-    needs: [test, infra, api]
+    needs: [test, approve, infra, api]
     if: >-
-      always() && needs.test.result == 'success'
+      always() && needs.test.result == 'success' && needs.approve.result == 'success'
       && contains(fromJSON('["success", "skipped"]'), needs.infra.result)
       && contains(fromJSON('["success", "skipped"]'), needs.api.result)
       && contains(fromJSON('["web", "api-web", "all"]'), inputs.target)
@@ -287,11 +297,11 @@ jobs:
           skip_app_build: true
           skip_api_build: true
 
-  # Runs after any deploy. Signs in with the main-branch credential, so it needs no second approval.
+  # Runs after any deploy, under the same approval.
   smoke:
-    needs: [test, infra, api, web]
+    needs: [test, approve, infra, api, web]
     if: >-
-      always() && inputs.target != 'test'
+      always() && needs.approve.result == 'success'
       && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -326,7 +336,7 @@ jobs:
   # Only with a version, and only once every deploy and the smoke test passed: tags the deployed
   # commit vX.Y.Z and publishes a GitHub Release with notes from the PRs merged since the last one.
   release:
-    needs: [test, infra, api, web, smoke]
+    needs: [test, approve, infra, api, web, smoke]
     if: >-
       always() && needs.test.outputs.release == 'true' && needs.smoke.result == 'success'
       && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')

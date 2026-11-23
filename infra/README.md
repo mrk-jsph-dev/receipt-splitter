@@ -112,16 +112,19 @@ turns it back on by accident.
    - registers the resource providers;
    - creates the resource group and an Entra app registration;
    - adds one federated credential for this repo's `production` environment, and removes the
-     older `main`-branch credential if it exists, so only approved deploy jobs can sign in;
+     older `main`-branch credential if it exists, so only deploy jobs can sign in;
    - gives the app **Contributor** on the resource group;
    - gives the app **User Access Administrator** on the resource group, with a condition that it
      can only assign or remove the two roles above and the kill switch's custom stop role. Run it
      again after pulling a change to that list: it updates the condition in place.
-3. In GitHub, create an environment named `production` (Settings > Environments). Add yourself as
-   a required reviewer and limit deployment branches to `main`.
+3. In GitHub, create two environments (Settings > Environments), both with deployment branches
+   limited to `main`:
+   - `production-approval`: add yourself as a required reviewer. No secrets. Every deploy waits
+     here once.
+   - `production`: no reviewer. It holds the secrets below.
 4. Run the `gh secret set` and `gh variable set` lines it prints. `AZURE_CLIENT_ID`,
    `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID` and `BUDGET_ALERT_EMAIL` are `production`
-   **environment secrets**: only jobs that passed approval can read them, and public workflow logs
+   **environment secrets**: only deploy jobs on `main` can read them, and public workflow logs
    show them as `***`. `AZURE_RESOURCE_GROUP` is a repository **variable**.
 5. Run `target=infra` once (below). It creates the Container App with a placeholder image.
 6. After the first `target=api` run creates the `receipt-splitter-api` package, make it public:
@@ -139,7 +142,8 @@ gh workflow run ci-cd.yml -f target=api-web # api, then web; skips infra (use wh
 gh workflow run ci-cd.yml -f target=all     # infra, then api, then web
 ```
 
-Deploy jobs run only from `main` and wait for your approval on the `production` environment. After
+Deploy jobs run only from `main`. Each run waits once for your approval on the
+`production-approval` environment, and that approval covers every deploy job and the smoke test. After
 any deploy, the smoke job runs `smoke.sh` against the live API. You can also run it yourself with
 `infra/smoke.sh https://<api-host>`.
 

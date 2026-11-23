@@ -5,7 +5,7 @@
 #   infra/setup-oidc.sh <subscription-id> <resource-group> <region> [owner/repo]
 #
 # Creates (or reuses) the resource group, an Entra app registration with one federated credential
-# for this repo's "production" environment (so only approved deploy jobs can reach Azure), and two
+# for this repo's "production" environment (so only deploy jobs can reach Azure), and two
 # role assignments on the resource group:
 #   - Contributor, to create and update the resources in main.bicep
 #   - User Access Administrator, limited by a condition to assigning only Storage Blob Data
@@ -102,8 +102,9 @@ fi
 
 cat <<EOF
 
-Done. Create the "production" environment first (Settings > Environments), then add these. The
-ids and the email are environment secrets, readable only by approved deploy jobs and shown as ***
+Done. Create the "production-approval" and "production" environments first (see infra/README.md,
+step 3), then add these. The ids and the email are environment secrets, readable only by deploy jobs
+on main and shown as ***
 in public logs; the resource group name is a repository variable.
 
   gh secret set AZURE_CLIENT_ID       --env production --body $client_id
